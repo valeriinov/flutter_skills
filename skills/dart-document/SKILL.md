@@ -1,6 +1,6 @@
 ---
 name: dart-document
-description: Write or update Dartdoc comments for Dart public interfaces, abstract classes, and extensions. Use this skill whenever the user asks to document Dart code, add Dartdoc, write docs for public APIs, or mentions that interfaces/classes/extensions lack documentation — even if they don't explicitly say 'document'. Also use when the user wants to update existing documentation comments in Dart files.
+description: Write or update Dartdoc comments for Dart public interfaces, abstract classes, extensions, and their members (methods, getters, constructors, fields). Use this skill whenever the user asks to document Dart code, add Dartdoc, write docs for public APIs, mentions that code lacks documentation, or needs to bring documentation up to project standards — even if they don't explicitly say 'document'. Also use when the user wants to update existing documentation comments in Dart files.
 ---
 
 Add or update Dartdoc comments in `$ARGUMENTS`. If no argument is given, ask the user which file to document.
@@ -17,8 +17,14 @@ This skill is **Dart-only**. For other languages, use the appropriate language-s
 ## Scope
 
 - Document **only** public **interfaces**, **abstract classes**, and **extensions**. These form the contract other code depends on, so their behavior must be discoverable without reading implementation details.
-- Document public methods, getters, setters, and properties of those types.
-- Skip docs for private members and trivial public API where meaning is obvious. Over-documenting creates noise and makes truly important contracts harder to find.
+- Document their public members: **methods**, **getters**, **setters**, **fields**, and **constructors**.
+  - This includes **abstract methods and getters** — they define the contract that implementations must follow.
+  - Constructors often have parameters that need explanation.
+  - Getters are part of the public contract; document what they represent.
+- Skip docs for private members and trivial public API where meaning is obvious.
+  - *Trivial* means the name and return type fully explain the behavior (e.g., `String get name` on a `Person` class).
+  - *Non-trivial* getters with side effects or computed values must be documented.
+  - Over-documenting creates noise and makes truly important contracts harder to find.
 
 ## Format
 
@@ -128,11 +134,44 @@ extension DateTimeInfo on DateTime {
 }
 ```
 
+## Constructor Template
+
+```dart
+/// Creates a [DataSource] with the given [baseUrl].
+///
+/// The [baseUrl] parameter is the root URL for all API requests.
+///
+/// Example:
+/// ```dart
+/// final source = DataSource(baseUrl: 'https://api.example.com');
+/// ```
+DataSource({required this.baseUrl});
+```
+
+## Getter Template
+
+```dart
+/// Whether the data source is currently connected to the network.
+///
+/// Example:
+/// ```dart
+/// if (dataSource.isOnline) {
+///   await dataSource.fetch('/users');
+/// }
+/// ```
+bool get isOnline;
+```
+
 ## Verification Checklist
 
 Before finishing, confirm:
 
 - All new/edited interface, abstract class, and extension members have documentation.
+- Constructors and getters are documented if they are public.
+- Abstract methods and getters are documented if they are public.
+- Non-void methods always have a `Returns` line, even if the return type seems obvious.
+- `Example:` blocks are present for constructors, methods, and getters.
+- Fields only need examples when usage is non-obvious.
 - Examples use valid Dart syntax and refer to real member names from the file.
 - Parameters follow: `The [parameterName] parameter is …`
 - Label is `Example:` (not "Example usage:").
