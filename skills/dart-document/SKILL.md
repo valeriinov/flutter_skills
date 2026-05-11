@@ -1,42 +1,43 @@
 ---
-name: document-code
-description: Write or update documentation comments for public interfaces, classes, and extensions. Use when adding documentation to public APIs, abstract interfaces, or extension methods/properties.
+name: dart-document
+description: Write or update Dartdoc comments for Dart public interfaces, abstract classes, and extensions. Use this skill whenever the user asks to document Dart code, add Dartdoc, write docs for public APIs, or mentions that interfaces/classes/extensions lack documentation — even if they don't explicitly say 'document'. Also use when the user wants to update existing documentation comments in Dart files.
 ---
 
-Add or update documentation comments in `$ARGUMENTS`. If no argument is given, ask the user which file to
-document.
+Add or update Dartdoc comments in `$ARGUMENTS`. If no argument is given, ask the user which file to document.
+
+This skill is **Dart-only**. For other languages, use the appropriate language-specific tooling.
 
 ## Workflow
 
 1. Read the target file to understand its public interfaces, classes, and extensions.
 2. Identify all members that need documentation per the scope rules below.
 3. Write documentation comments following the format and templates.
-4. If the file is Dart/Flutter: run `dart format .` then `flutter analyze` — fix all issues before finishing.
-5. If the file is another language: run the relevant linter/formatter if available.
+4. Run `dart format .` then `flutter analyze` — fix all issues before finishing.
 
 ## Scope
 
-- Document **only** public **interfaces**, **abstract classes**, and **extensions**.
+- Document **only** public **interfaces**, **abstract classes**, and **extensions**. These form the contract other code depends on, so their behavior must be discoverable without reading implementation details.
 - Document public methods, getters, setters, and properties of those types.
-- Skip docs for private members and trivial public API where meaning is obvious.
+- Skip docs for private members and trivial public API where meaning is obvious. Over-documenting creates noise and makes truly important contracts harder to find.
 
 ## Format
 
-- Use the idiomatic documentation comment style for the language (`///` for Dart, `/** */` or `//` for others).
+- Use Dartdoc `///` comments.
 - Language: **English**.
-- Optional category tag at the top: `/// {@category <Name>}` (Dart) or equivalent.
+- Optional category tag at the top: `/// {@category <Name>}`.
 - Order inside a block:
-    1. One-sentence summary (what it is).
-    2. Details (optional; when it helps understanding).
-    3. Parameters: `The [parameterName] parameter is ...`
-    4. Returns (if non-void): concise sentence.
-    5. Throws (optional).
-    6. `Example:` code block.
+    1. **One-sentence summary** (what it is).
+    2. **Details** (optional; when it helps understanding).
+    3. **Parameters** using the exact phrasing: `The [parameterName] parameter is ...`
+    4. **Returns** (if non-void): concise sentence.
+    5. **Throws** (optional).
+    6. **Example:** code block labeled with `Example:`.
 
 ## Style
 
 - Be concise; avoid redundancy with names/types.
 - Prefer present tense ("Returns…", "Provides…").
+- Keep lines short and readable.
 - Don't restate obvious types or names.
 - Use meaningful examples; keep them minimal and runnable.
 - **Do:** explain side effects, preconditions, postconditions.
@@ -132,7 +133,7 @@ extension DateTimeInfo on DateTime {
 Before finishing, confirm:
 
 - All new/edited interface, abstract class, and extension members have documentation.
-- Examples compile syntactically and illustrate intended usage.
+- Examples use valid Dart syntax and refer to real member names from the file.
 - Parameters follow: `The [parameterName] parameter is …`
 - Label is `Example:` (not "Example usage:").
-- Language-specific formatters and linters pass with zero issues.
+- `dart format .` and `flutter analyze` pass with zero issues.
