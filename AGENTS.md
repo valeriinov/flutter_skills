@@ -10,6 +10,7 @@ Merge with project-specific instructions as needed.
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -32,12 +33,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it — don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -48,40 +51,40 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multi-step tasks, state a brief plan:
+
 ```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 3. [Step] → verify: [check]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant
+clarification.
 
 ## Language-Specific Style Rules (Dart / Flutter)
 
 ### General Principles
 
-- Code must be easily readable and follow the principles of *Clean Code* by Robert C. Martin.
-- Avoid nested structures (loops or conditionals). The structure should remain flat:
-    - use early returns (guard clauses);
-    - split logic into small private methods.
-- Extract conditions into predicate methods when it improves clarity:
-    - do not extract trivial branches if their meaning is already obvious at the point of use.
-- Method bodies must always use curly braces; never use `() => ...`.
-- Method and variable names must be clear, consistent, and stylistically unified. Avoid names that are excessively short or long.
-- Do not explicitly declare the variable type on the left side of `=` if the type is already defined or obvious on the right side.
+- Prefer obvious, boring code over clever code.
+- Avoid nested structures (loops or conditionals). The structure must remain flat:
+    - use early returns (guard clauses) — always with curly braces: `if (condition) { return; }`;
+    - extract deeply nested blocks into private methods when it eliminates the nesting.
+- Extract conditions into predicate methods and logic into private methods to keep code readable.
+  Exception: do not extract if the inline version is equally obvious and the block is not reused.
+- Use arrow syntax only for single-expression bodies where meaning is obvious. Prefer curly braces
+  for multi-line or conditional logic.
+- Method and variable names must be clear, consistent, and stylistically unified. Avoid names that
+  are excessively short or long.
+- Do not explicitly declare the variable type on the left side of `=` if the type is already defined
+  or obvious on the right side.
 - After every code change: run formatting and static analysis with zero errors.
-  - With FVM (`.fvmrc` or `.fvm/` exists):
-    - `fvm dart format .`
-    - `fvm flutter analyze`
-  - Without FVM:
-    - `dart format .`
-    - `flutter analyze`
-  - Fix **all** errors and warnings before finishing. Zero tolerance for analysis issues.
+    - Run `fvm dart format . && fvm flutter analyze` (or without `fvm` prefix if not used)
 
 ### Member Ordering
 
@@ -134,13 +137,16 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - `build` is the anchor; lifecycle methods stay **above** it and `dispose` stays **below** it.
 - Do not move UI into private methods like `_buildHeader()` / `_buildTile()`.
     - If a UI section is large, extract it into a separate widget file.
-    - If a UI section is small and local, use a private widget class in the same file (for example: `_EmailField`, `_SubmitButton`).
+    - If a UI section is small and local, use a private widget class in the same file (for example:
+      `_EmailField`, `_SubmitButton`).
 
 **Private method ordering**
 
 - Private methods must be ordered according to the effective first usage in the file.
-- If a private method is used in multiple places, its latest usage determines its placement (i.e., treat the last call site as the "first" for ordering).
-- The goal is for the reader to encounter call sites first, and then see implementations below, maintaining a top-down reading flow.
+- If a private method is used in multiple places, its latest usage determines its placement (i.e.,
+  treat the last call site as the "first" for ordering).
+- The goal is for the reader to encounter call sites first, and then see implementations below,
+  maintaining a top-down reading flow.
 
 ### Documentation Style (Dart)
 
