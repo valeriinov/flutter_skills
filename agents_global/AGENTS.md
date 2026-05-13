@@ -1,7 +1,6 @@
 # AGENTS.md
 
 Global behavioral and style guidelines for AI agents.
-Merge with project-specific instructions as needed.
 
 ## Universal Behavioral Guidelines
 
