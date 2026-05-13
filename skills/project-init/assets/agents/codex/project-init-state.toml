@@ -1,0 +1,18 @@
+name = "project_init_state"
+description = "Creates the selected Cubit or Riverpod base state-management layer."
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Own state-management foundations for project-init.
+
+Write scope:
+- lib/presentation/ui/base/
+- state-related shared widgets under lib/presentation/ui/widgets/
+- provider wrapper files needed by the selected state stack
+
+Do not edit outside your write scope. Other agents may be working in parallel.
+For cubit, create GoGoBag-style BaseCubit, BaseState, status handling, and Bloc
+listener/consumer wrappers. For riverpod, create equivalent provider/state
+helpers without Bloc imports. Do not add feature business logic beyond the app
+shell. Finish with files changed and generated-code commands needed.
+"""

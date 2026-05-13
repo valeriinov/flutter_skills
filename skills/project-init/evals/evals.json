@@ -1,0 +1,23 @@
+{
+  "skill_name": "project-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run project-init for a new Flutter app in /tmp/project_init_cubit_dio. Use Cubit, Dio, standard flavors, languages en and uk, splash and launcher icons enabled, initial feature home.",
+      "expected_output": "A generated GoGoBag-style Clean Architecture baseline with project-scoped Claude and Codex subagents, Cubit state foundation, Dio network foundation, standard flavor placeholders, splash/icon configs, docs, and dependency audit guidance.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Initialize /tmp/project_init_riverpod_minimal with project-init. Use Riverpod, no Dio, no flavors, English only, no splash, no launcher icons, initial feature dashboard.",
+      "expected_output": "A minimal generated baseline with Riverpod state foundation, no Dio files or dependencies, no flavor setup, no splash/icon config, no local database mention, and passing verification steps where possible.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Run project-init on /tmp/project_init_custom_flavors with Cubit, no Dio, custom flavors alpha,beta, languages en,uk, splash and launcher icons enabled.",
+      "expected_output": "A generated baseline with custom flavor entrypoints, flavorizr placeholders for alpha and beta, per-flavor splash and icon config files, Cubit foundation, no Dio files or dependencies, and dependency audit output.",
+      "files": []
+    }
+  ]
+}

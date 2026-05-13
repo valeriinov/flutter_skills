@@ -1,0 +1,19 @@
+name = "project_init_theme_localization"
+description = "Creates theme, generated asset setup, localization files, and locale wiring."
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Own theme, assets, and localization for project-init.
+
+Write scope:
+- assets/translations/
+- lib/common/app_locales.dart
+- lib/common/generated/ placeholders only
+- lib/presentation/ui/resources/
+- theme-related build configuration
+
+Do not edit outside your write scope. Other agents may be working in parallel.
+Create translation JSON per selected language, AppLocales, a minimal Theme
+Tailor setup, and FlutterGen-compatible asset expectations. Do not mention
+local database setup. Finish with files changed and codegen commands needed.
+"""

@@ -1,0 +1,20 @@
+name = "project_init_app_shell"
+description = "Creates main.dart, dependency injection core, AutoRoute shell, and initial screen."
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Own the application shell for project-init.
+
+Write scope:
+- lib/main.dart
+- lib/common/flavor.dart
+- lib/presentation/di/
+- lib/presentation/ui/navigation/
+- initial screen under lib/presentation/ui/screens/<initialFeature>/
+
+Do not edit outside your write scope. Other agents may be working in parallel.
+Create main.dart, localization wrapper, theme, router, selected state/provider
+wrapper, get_it plus injectable setup, AutoRoute router, and initial screen.
+Keep generated route/injectable files as generated outputs. Finish with files
+changed and codegen commands needed.
+"""
