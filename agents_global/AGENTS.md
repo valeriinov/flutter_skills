@@ -73,15 +73,21 @@ clarification.
 - Prefer obvious, boring code over clever code.
 - Avoid nested structures (loops or conditionals). The structure must remain flat:
     - use early returns (guard clauses) — always with curly braces: `if (condition) { return; }`;
-    - extract deeply nested blocks into private methods when it eliminates the nesting.
-- Extract conditions into predicate methods and logic into private methods to keep code readable.
-  Exception: do not extract if the inline version is equally obvious and the block is not reused.
+    - never nest more than one level deep inside any block — extract deeper logic
+      into a private method.
+- Extract logic into private methods and conditions into predicate methods to
+  keep code readable.
+    - When a condition contains more than one `&&`/`||` operator, always extract
+      it into a named private predicate method.
 - Use arrow syntax only for single-expression bodies where meaning is obvious. Prefer curly braces
   for multi-line or conditional logic.
 - Method and variable names must be clear, consistent, and stylistically unified. Avoid names that
   are excessively short or long.
+- Never use `var`. Prefer `final` for immutable bindings. For mutable variables, declare the type
+  explicitly: `int index = 0`.
 - Do not explicitly declare the variable type on the left side of `=` if the type is already defined
   or obvious on the right side.
+- Never use the `!` null assertion operator. Instead, handle nullability explicitly.
 - After every code change: run formatting and static analysis with zero errors.
     - Run `fvm dart format . && fvm flutter analyze` (or without `fvm` prefix if not used)
 
