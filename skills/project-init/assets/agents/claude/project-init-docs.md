@@ -21,12 +21,12 @@ same run. Do not revert or reformat files outside your ownership.
 Tasks:
 1. Document project setup, commands, architecture, DI, navigation, state
    management, localization, theme, env files, splash, and icons.
-2. If multi-flavor setup is selected, document that the user must fill
-   `flavorizr.yaml` placeholders and run `flutter_flavorizr` manually.
+2. If multi-flavor setup is selected, document the required manual
+   `flavorizr.yaml` placeholder values and `flutter_flavorizr` command.
 3. Document splash and launcher icon commands only when those options are
    enabled.
 4. Document dependency audit output as advisory only.
-5. Do not mention local database setup.
+5. Cover only the selected project-init options.
 
 Finish with:
 - Files changed.

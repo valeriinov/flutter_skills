@@ -34,8 +34,8 @@ npx skills list
 
 ### project-init
 
-`project-init` initializes an existing Flutter project into a GoGoBag-style
-Clean Architecture baseline. It is an explicit skill: invoke it directly when
+`project-init` initializes an existing Flutter project into a Clean
+Architecture Flutter baseline. It is an explicit skill: invoke it directly when
 you want to mutate a target project.
 
 Install the skill as usual, then run it from the target Flutter project:
@@ -86,8 +86,8 @@ and invoke `project-init` again.
 #### Dependencies
 
 The skill uses tested caret constraints from
-`skills/project-init/references/dependency_catalog.yaml`. It does not install
-blind latest package versions.
+`skills/project-init/references/dependency_catalog.yaml`. Dependency versions
+come from the catalog for the selected project profile.
 
 After generation, the skill runs `pub outdated --json` when possible and
 reports:
@@ -95,7 +95,7 @@ reports:
 - compatible updates that may be safe within the tested major line
 - newer major versions that need separate validation
 
-It does not update dependency constraints from the audit report.
+The audit report is advisory and leaves dependency constraints unchanged.
 
 #### Flavors, Splash, And Icons
 

@@ -14,6 +14,7 @@ Write scope:
 
 Do not edit outside your write scope. Other agents may be working in parallel.
 Create translation JSON per selected language, AppLocales, a minimal Theme
-Tailor setup, and FlutterGen-compatible asset expectations. Do not mention
-local database setup. Finish with files changed and codegen commands needed.
+Tailor setup, and FlutterGen-compatible asset expectations. Commit only source
+files and intentional generated placeholders needed by this baseline. Finish
+with files changed and codegen commands needed.
 """

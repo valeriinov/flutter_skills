@@ -15,6 +15,7 @@ Write scope:
 Do not edit outside your write scope. Other agents may be working in parallel.
 Create main.dart, localization wrapper, theme, router, selected state/provider
 wrapper, get_it plus injectable setup, AutoRoute router, and initial screen.
-Keep generated route/injectable files as generated outputs. Finish with files
-changed and codegen commands needed.
+Produce route and injectable outputs through codegen. Add manual placeholders
+only when they are required for analyzer-ready source before codegen runs. Finish
+with files changed and codegen commands needed.
 """

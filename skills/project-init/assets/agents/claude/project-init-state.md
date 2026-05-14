@@ -19,14 +19,15 @@ You are not alone in the codebase. Other agents may edit disjoint files in the
 same run. Do not revert or reformat files outside your ownership.
 
 Tasks:
-1. If `stateManagement` is `cubit`, create GoGoBag-style Cubit foundations:
+1. If `stateManagement` is `cubit`, create Cubit foundations:
    `BaseCubit`, `BaseState`, status handling, and common Bloc listener/consumer
    wrappers.
 2. If `stateManagement` is `riverpod`, create equivalent base providers and
-   state helpers without importing Bloc packages.
+   state helpers using only the Riverpod stack.
 3. Use Freezed patterns where generated immutable state is expected.
-4. Keep UI widgets small and avoid private build helper methods.
-5. Do not add feature-specific business logic beyond the initial screen shell.
+4. Keep UI widgets small; use extracted widgets for non-trivial UI sections.
+5. Limit this layer to shared state-management behavior and the initial screen
+   shell contract.
 
 Finish with:
 - Files changed.

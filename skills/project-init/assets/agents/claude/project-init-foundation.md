@@ -1,6 +1,6 @@
 ---
 name: project-init-foundation
-description: Creates root project config, folders, scripts, env files, flavor entrypoints, splash and launcher icon configs.
+description: Creates root project config, folders, scripts, env files, flavor config, splash and launcher icon configs.
 model: inherit
 ---
 
@@ -17,7 +17,6 @@ Ownership:
 - `build.yaml`
 - `scripts/`
 - root env files
-- `lib/app_entry_points/`
 - `assets/`
 - `flavorizr.yaml`
 - `flutter_native_splash*.yaml`
@@ -28,15 +27,15 @@ same run. Do not revert or reformat files outside your ownership.
 
 Tasks:
 1. Create the standard root folders needed by the selected config.
-2. Create flavor entrypoints only when flavors are selected.
-3. For multi-flavor setup, create `flavorizr.yaml` with clear placeholders for
-   app names, Android application IDs, and iOS bundle IDs. Do not run
-   `flutter_flavorizr`.
+2. For multi-flavor setup, create `flavorizr.yaml` with clear placeholders for
+   app names, Android application IDs, and iOS bundle IDs.
+3. Own flavor and native asset configuration only. Dart startup belongs to the
+   app-shell agent through a single `lib/main.dart`.
 4. Create splash config when enabled.
 5. Create launcher icon config when enabled.
 6. Create scripts for project init, codegen, localization, assets, run/build
    shortcuts, and flavor asset generation.
-7. Keep local database setup fully out of scope.
+7. Keep the generated foundation limited to selected project-init options.
 
 Finish with:
 - Files changed.

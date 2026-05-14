@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Run project-init for a new Flutter app in /tmp/project_init_cubit_dio. Use Cubit, Dio, standard flavors, languages en and uk, splash and launcher icons enabled, initial feature home.",
-      "expected_output": "A generated GoGoBag-style Clean Architecture baseline with project-scoped Claude and Codex subagents, Cubit state foundation, Dio network foundation, standard flavor placeholders, splash/icon configs, docs, and dependency audit guidance.",
+      "expected_output": "A generated Clean Architecture Flutter baseline with project-scoped Claude and Codex subagents, Cubit state foundation, Dio network foundation, standard flavor placeholders, splash/icon configs, docs, and dependency audit guidance.",
       "files": []
     },
     {
@@ -16,7 +16,7 @@
     {
       "id": 3,
       "prompt": "Run project-init on /tmp/project_init_custom_flavors with Cubit, no Dio, custom flavors alpha,beta, languages en,uk, splash and launcher icons enabled.",
-      "expected_output": "A generated baseline with custom flavor entrypoints, flavorizr placeholders for alpha and beta, per-flavor splash and icon config files, Cubit foundation, no Dio files or dependencies, and dependency audit output.",
+      "expected_output": "A generated baseline with custom flavor config, flavorizr placeholders for alpha and beta, per-flavor splash and icon config files, Cubit foundation, no Dio files or dependencies, and dependency audit output.",
       "files": []
     }
   ]

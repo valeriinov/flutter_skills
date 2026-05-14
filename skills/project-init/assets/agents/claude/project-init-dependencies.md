@@ -22,11 +22,11 @@ Tasks:
 1. Read the dependency catalog and selected config.
 2. Add only the catalog entries required by the selected stack.
 3. Preserve existing app metadata in `pubspec.yaml`.
-4. Keep constraints as catalog caret constraints. Do not upgrade to blind latest.
+4. Apply catalog caret constraints exactly.
 5. Add `flutter` assets for generated folders and env files.
 6. If multi-flavor is selected, include `flutter_flavorizr` and keep generation
    instructions for the docs agent.
-7. Do not add local database packages.
+7. Apply only dependency groups selected by the project-init config.
 
 Finish with:
 - Files changed.

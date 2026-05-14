@@ -27,8 +27,8 @@ Tasks:
 3. Create `get_it` + `injectable` setup.
 4. Create `auto_route` router and initial route/screen.
 5. Wire the initial feature using the selected state-management stack.
-6. Keep generated route and injectable files as generated outputs, not manual
-   source files unless placeholders are unavoidable.
+6. Produce route and injectable outputs through codegen. Add manual placeholders
+   only when they are required for analyzer-ready source before codegen runs.
 
 Finish with:
 - Files changed.

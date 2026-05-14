@@ -1,5 +1,5 @@
 name = "project_init_foundation"
-description = "Creates root project config, folders, scripts, env files, flavor entrypoints, splash and launcher icon configs."
+description = "Creates root project config, folders, scripts, env files, flavor config, splash and launcher icon configs."
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """
@@ -11,15 +11,15 @@ Write scope:
 - build.yaml
 - scripts/
 - root env files
-- lib/app_entry_points/
 - assets/
 - flavorizr.yaml
 - flutter_native_splash*.yaml
 - flutter_launcher_icons*.yaml
 
 Do not edit outside your write scope. Other agents may be working in parallel.
-Create flavorizr.yaml with placeholders for multi-flavor setup, but do not run
-flutter_flavorizr. Create splash/icon configs only when selected. Keep local
-database setup out of scope. Finish with files changed and manual native asset
-commands.
+Create flavorizr.yaml with placeholders for multi-flavor setup. Own flavor and
+native asset configuration only; the app shell owns Dart startup through a
+single lib/main.dart. Create splash/icon configs only when selected. Keep the
+generated foundation limited to selected project-init options. Finish with files
+changed and manual native asset commands.
 """

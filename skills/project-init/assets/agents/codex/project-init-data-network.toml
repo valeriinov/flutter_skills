@@ -15,6 +15,7 @@ Write scope:
 Do not edit outside your write scope. Other agents may be working in parallel.
 Create DataResult and failure types backed by dartz. If useDio is true, add Dio,
 env provider, error handling, constants, and DI modules. If useDio is false, do
-not leave dangling Dio imports. Do not add backend-specific SDKs or local
-database scaffolding.
+only the minimal data-result foundation. Keep this layer generic: include
+backend-specific SDKs and local persistence only when another selected
+project-init option owns them.
 """

@@ -1,19 +1,19 @@
 ---
 name: project-init
-description: Initialize an existing Flutter project into the GoGoBag-style Clean Architecture baseline. Use when the user explicitly asks to run project-init, initialize a Flutter starter, bootstrap a Flutter app architecture, install project initialization subagents, or create the base app template.
+description: Initialize an existing Flutter project into a Clean Architecture Flutter baseline. Use when the user explicitly asks to run project-init, initialize a Flutter starter, bootstrap a Flutter app architecture, install project initialization subagents, or create the base app template.
 disable-model-invocation: true
 argument-hint: "[target-project-path]"
 ---
 
 # Project Init
 
-Initialize an existing `flutter create` project with a GoGoBag-style Clean
-Architecture baseline. This skill is intentionally user-invoked only because it
+Initialize an existing `flutter create` project with a Clean Architecture
+Flutter baseline. This skill is intentionally user-invoked only because it
 creates and edits many project files.
 
 Use `$ARGUMENTS` as the target project path when provided. If it is empty, use
-the current working directory. Do not run `flutter create`; the target must
-already contain `pubspec.yaml` and `lib/`.
+the current working directory. The target is an existing Flutter project with
+`pubspec.yaml` and `lib/`.
 
 ## Workflow
 
@@ -50,13 +50,13 @@ When the user does not choose differently, use:
 - launcher icons setup: enabled
 - initial feature: `home`
 
-Local database setup is intentionally out of scope for this skill. Do not prompt
-for it and do not mention it in generated project docs.
+Scope excludes local database setup. Collect only the configuration listed
+above and keep generated project docs focused on selected project-init options.
 
 ## Dependency Policy
 
 Use `references/dependency_catalog.yaml` as the only source of dependency
-constraints. Do not install blind latest versions.
+constraints. Apply catalog constraints exactly for the selected stack.
 
 After generation:
 
@@ -66,14 +66,15 @@ After generation:
 3. Run `scripts/audit_dependencies.dart` with the outdated JSON and the catalog.
 4. Report compatible updates and breaking-major candidates to the user.
 
-Do not update constraints based on the audit report. Dependency catalog upgrades
-belong to a future separate skill.
+The dependency audit is advisory. Leave generated constraints unchanged when
+reporting compatible updates or breaking-major candidates.
 
 ## Flavor And Asset Rules
 
 For multi-flavor projects, generate `flavorizr.yaml` with placeholders for app
-names, Android application IDs, and iOS bundle IDs. Do not run
-`flutter_flavorizr`; tell the user to fill the placeholders and run it manually.
+names, Android application IDs, and iOS bundle IDs. Leave generation as a manual
+follow-up: tell the user to fill the placeholders and run `flutter_flavorizr`.
+The app-shell agent owns Dart startup through a single `lib/main.dart`.
 
 When splash setup is enabled, generate `flutter_native_splash.yaml` for
 single-flavor projects or one `flutter_native_splash-<flavor>.yaml` file per

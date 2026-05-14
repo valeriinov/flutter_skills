@@ -26,8 +26,9 @@ Tasks:
 3. Create a minimal Theme Tailor setup with app theme, color, text, spacing,
    and component extension entry points.
 4. Add FlutterGen-compatible asset folder expectations.
-5. Keep generated files out of source unless they are intentional placeholders.
-6. Do not mention local database setup.
+5. Commit only source files and intentional generated placeholders needed by
+   this baseline.
+6. Cover only theme, assets, and localization responsibilities.
 
 Finish with:
 - Files changed.

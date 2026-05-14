@@ -14,7 +14,6 @@ Write scope:
 
 Do not edit outside your write scope. Other agents may be working in parallel.
 Preserve existing app metadata, apply only catalog constraints for selected
-groups, do not install blind latest versions, and do not add local database
-packages.
+groups, and keep dependency changes limited to the selected project-init config.
 Finish with files changed, dependency groups applied, and any conflicts.
 """

@@ -25,9 +25,9 @@ Tasks:
 2. Create base repository/error mapping patterns.
 3. If `useDio` is true, create Dio builder, base options, error handler,
    env provider, request constants, and DI modules.
-4. If `useDio` is false, create only the minimal data-result foundation and do
-   not leave dangling Dio imports.
-5. Do not add backend-specific SDKs or local database scaffolding.
+4. If `useDio` is false, create only the minimal data-result foundation.
+5. Keep this layer generic: include backend-specific SDKs and local persistence
+   only when another selected project-init option owns them.
 
 Finish with:
 - Files changed.

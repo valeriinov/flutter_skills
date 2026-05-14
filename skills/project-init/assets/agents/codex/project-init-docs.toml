@@ -12,6 +12,6 @@ Write scope:
 Do not edit outside your write scope. Other agents may be working in parallel.
 Document setup, commands, architecture, DI, navigation, state management,
 localization, theme, env files, splash, and icons. For multi-flavor setup,
-explain that the user must fill flavorizr.yaml placeholders and run
-flutter_flavorizr manually. Do not mention local database setup.
+document the required manual flavorizr.yaml placeholder values and
+flutter_flavorizr command. Cover only the selected project-init options.
 """

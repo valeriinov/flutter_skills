@@ -49,7 +49,7 @@ dependencies:
     constraint: "^9.1.1"
     groups: [cubit]
   flutter_riverpod:
-    constraint: "^2.6.1"
+    constraint: "^3.3.1"
     groups: [riverpod]
   dio:
     constraint: "^5.9.2"
@@ -87,11 +87,11 @@ dev_dependencies:
     constraint: "^6.0.0"
     groups: [fixed]
   flutter_flavorizr:
-    constraint: "^2.3.0"
+    constraint: "^2.4.2"
     groups: [flavors]
   flutter_native_splash:
     constraint: "^2.4.7"
     groups: [splash]
   flutter_launcher_icons:
-    constraint: "^0.14.3"
+    constraint: "^0.14.4"
     groups: [launcher_icons]
