@@ -6,20 +6,20 @@
 
 - Domain entities use context-first names: start with the feature or bounded
   context when it disambiguates the model, then describe the role, and end with
-  `Data` for data models. Examples: `TripSearchListRequestData`,
-  `ParcelClientListItemData`, `RoutePointData`.
+  `Data` for data models. Examples: `OrderSearchListRequestData`,
+  `ProductCatalogListItemData`, `DeliveryAddressData`.
 - Shared/base types and enums may omit the feature prefix when the name is
   already clear. Examples: `DataResult`, `AppFailure`, `OrderStatus`.
 - Repository contracts use `Repository`; implementations use `RepositoryImpl`.
-  Examples: `TripRepository`, `TripRepositoryImpl`.
+  Examples: `OrderRepository`, `OrderRepositoryImpl`.
 - Use cases use the `UseCase` suffix and group related actions by feature.
-  Examples: `TripSearchUseCase`, `AuthUseCase`.
+  Examples: `OrderSearchUseCase`, `AuthUseCase`.
 - Data sources use `RemoteDataSource` or `LocalDataSource` suffix.
-  Examples: `TripRemoteDataSource`, `AuthLocalDataSource`.
+  Examples: `OrderRemoteDataSource`, `AuthLocalDataSource`.
 - Data-layer transfer models use the `Dto` suffix, including request and
-  response DTOs. Examples: `TripSearchListRequestDataDto`,
-  `TripDetailsResponseDto`.
-- Mapper files use `<feature>_mapper.dart`. Examples: `trip_mapper.dart`,
+  response DTOs. Examples: `OrderSearchListRequestDataDto`,
+  `OrderDetailsResponseDto`.
+- Mapper files use `<feature>_mapper.dart`. Examples: `order_mapper.dart`,
   `auth_mapper.dart`.
 
 ### Hard rules

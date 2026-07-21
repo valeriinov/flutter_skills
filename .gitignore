@@ -53,3 +53,10 @@ __pycache__/
 *~
 .env
 .env.local
+# Skills CLI install artifacts (managed by `npx skills`, not distributed)
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Working plans
+plan/

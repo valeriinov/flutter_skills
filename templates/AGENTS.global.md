@@ -2,6 +2,8 @@
 
 Global behavioral and style guidelines for AI agents.
 
+Install as `~/.claude/CLAUDE.md` (Claude Code) or `~/.agents/AGENTS.md`.
+
 ## Universal Behavioral Guidelines
 
 ### 1. Think Before Coding
@@ -65,6 +67,22 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant
 clarification.
+
+### 5. Communication
+
+- Respond in Russian when the user writes in Russian. Code, identifiers,
+  commit messages, and Dartdoc stay in English.
+
+### Review Routing
+
+- "Сделай ревью" / "проанализируй изменения" / "review the diff" defaults to
+  the `review-changes` skill (deep review via the code-reviewer agent).
+
+### 6. Naming
+
+- A name must state what the code actually does — nothing more.
+- Ground proposed names in existing project vocabulary (grep for siblings
+  first, then name).
 
 ## Language-Specific Style Rules (Dart / Flutter)
 
