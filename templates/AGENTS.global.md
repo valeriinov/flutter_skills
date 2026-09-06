@@ -1,8 +1,6 @@
-# AGENTS.md
+# Global rules
 
-Global behavioral and style guidelines for AI agents.
-
-Install as `~/.claude/CLAUDE.md` (Claude Code) or `~/.agents/AGENTS.md`.
+Behavioral and style guidelines for AI agents, shared across projects.
 
 ## Universal Behavioral Guidelines
 
@@ -16,6 +14,9 @@ Before implementing:
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Never assert a fact about the codebase, the running app, the device or the git
+  state you haven't read or checked. Cite `file:line` or the command output, or
+  say the claim is unverified.
 
 ### 2. Simplicity First
 
@@ -47,6 +48,11 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
+### Git and Worktree Transfers
+
+- When moving changes between worktrees or branches, do not commit them without
+  the user's explicit request.
+
 ### 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
@@ -68,6 +74,22 @@ For multi-step tasks, state a brief plan:
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant
 clarification.
 
+A loop that repeats a round — review → fix → re-review, generate → judge → regenerate —
+names its exit condition before the first round runs, and the condition is something
+other than a reviewer's approval. A review agent returns "needs revision" by
+construction, so "loop until it approves" has no floor. Name a round cap, a
+severity floor, or a green command, and stop there even if findings remain.
+
+A check reported as passed names the command or measurement it ran and the threshold it
+was held to — analyze, tests, a device capture. A number outside the threshold the
+user set is not "ok", whatever verdict the tool prints; say which gate ran before saying
+done.
+
+A workflow or fan-out spawns at most five agents per run, counted along the run's longest
+path — sweep, lenses, verifiers, fixer and gate together. Over five, collapse the fan
+(one lens instead of three, one sceptic over the list instead of one per candidate, a
+pipeline instead of a fan-out); never raise the cap.
+
 ### 5. Communication
 
 - Respond in Russian when the user writes in Russian. Code, identifiers,
@@ -77,12 +99,36 @@ clarification.
 
 - "Сделай ревью" / "проанализируй изменения" / "review the diff" defaults to
   the `review-changes` skill (deep review via the code-reviewer agent).
+- Built-in `/code-review` — only when named explicitly.
+- Tests: creating, updating or refactoring anything under `test/` goes through
+  the `dart-flutter-tests` skill — never ad hoc test files.
+- Name checks ("удачное ли имя", "консистентность нейминга", "чисто и консистентно с
+  проектом" / "разве не консистентней" said of a name) → `naming` skill; the same words
+  said of an approach or a pattern → `review-changes`.
+- "Имплементируй план" → `implement-plan` skill; "сделай ревью плана" / "проанализируй
+  план" → `review-plan` skill — also when the request adds "используй субагентов".
+
+### Skills and agents
+
+- A skill or agent body describes the mechanism, not the instance: no ticket id, project
+  name, device model or harness feature that another machine or agent will not have.
+  Examples come from the skill's own domain; a project-bound example belongs in that
+  project's own skill.
 
 ### 6. Naming
 
 - A name must state what the code actually does — nothing more.
-- Ground proposed names in existing project vocabulary (grep for siblings
-  first, then name).
+- Ground proposed names in existing project vocabulary (grep the neighbouring
+  names first, then name).
+
+### 7. Documentation
+
+**A document states what is true now, never what changed.**
+
+- No "used to", "no longer", "previously", no rationale framed as a diff from an
+  earlier version. Superseded text is deleted, not kept as contrast.
+- Every surface: markdown, Dartdoc, comments. History lives in git and the PR.
+- Exception: a migration or compatibility note the reader must act on, if asked.
 
 ## Language-Specific Style Rules (Dart / Flutter)
 
@@ -107,57 +153,26 @@ clarification.
   or obvious on the right side.
 - Never use the `!` null assertion operator. Instead, handle nullability explicitly.
 - After every code change: run formatting and static analysis with zero errors.
-    - Run `fvm dart format . && fvm flutter analyze` (or without `fvm` prefix if not used)
+    - Run `fvm dart format . && fvm dart analyze` (or without `fvm` prefix if not used)
 
 ### Member Ordering
 
-#### General Types (classes, mixins, enums, extensions)
+General types (classes, mixins, enums, extensions):
 
-**Order:**
+Static fields → public fields (non-nullable) → public nullable fields → private fields
+(non-nullable) → private nullable fields → constructors → named constructors → factory
+constructors → public getters → public setters → private getters → private setters →
+overridden public methods (`@override` from interfaces/superclasses) → public methods →
+private methods.
 
-1. Static fields
-2. Public fields (non-nullable)
-3. Public nullable fields
-4. Private fields (non-nullable)
-5. Private nullable fields
-6. Constructors
-7. Named constructors
-8. Factory constructors
-9. Public getters
-10. Public setters
-11. Private getters
-12. Private setters
-13. Overridden public methods (e.g., `@override` from interfaces/superclasses)
-14. Public methods
-15. Private methods
-
-#### Flutter Widgets (StatelessWidget / StatefulWidget / State)
-
-**Order:**
-
-1. Static fields
-2. Public fields (non-nullable)
-3. Public nullable fields
-4. Private fields (non-nullable)
-5. Private nullable fields
-6. Constructors
-7. Named constructors
-8. Factory constructors
-9. Public getters
-10. Public setters
-11. Private getters
-12. Private setters
-13. initState (State only)
-14. didChangeDependencies (State only)
-15. didUpdateWidget (State only)
-16. build
-17. Public methods
-18. Private methods
-19. dispose (State only)
+Flutter widgets (StatelessWidget / StatefulWidget / State) share those first twelve
+positions, then diverge: `initState` → `didChangeDependencies` → `didUpdateWidget` →
+`build` → public methods → private methods → `dispose` (lifecycle members State-only).
+Widgets have no overridden-public-methods slot. `build` is the anchor: lifecycle methods
+stay **above** it and `dispose` stays **below** everything else.
 
 **Notes:**
 
-- `build` is the anchor; lifecycle methods stay **above** it and `dispose` stays **below** it.
 - Do not move UI into private methods like `_buildHeader()` / `_buildTile()`.
     - If a UI section is large, extract it into a separate widget file.
     - If a UI section is small and local, use a private widget class in the same file (for example:
@@ -173,37 +188,6 @@ clarification.
 
 ### Documentation Style (Dart)
 
-**Scope**
-
-- Document **only** public **interfaces** (`abstract interface class …`) and **extensions**.
-- Skip docs for private members and trivial/public API where meaning is obvious.
-
-**Format**
-
-- Use Dartdoc `///` comments.
-- Language: **English**.
-- Optional category tag at the top: `/// {@category <Name>}`.
-- Order inside a block:
-
-    1. **One-sentence summary** (what it is).
-    2. **Details** (optional; when it helps understanding).
-    3. **Parameters** using the exact phrasing:
-       `The [parameterName] parameter is ...`
-    4. **Returns** (if non-void): concise sentence.
-    5. **Throws** (optional).
-    6. **Example:** code block labeled with `Example:`.
-
-**Style**
-
-- Be concise; avoid redundancy with names/types.
-- Prefer present tense ("Returns…", "Provides…").
-- Keep lines short and readable.
-- Don't restate obvious types or names.
-- Use meaningful examples; keep them minimal and runnable.
-
-**Do / Don't**
-
-- **Do:** document interface contracts and extension behavior.
-- **Do:** explain side effects, preconditions, postconditions.
-- **Don't:** document private helpers or self-evident getters/setters.
-- **Don't:** duplicate information already clear from names or types.
+Scope, format, style rules and templates live in the `dart-documentation` skill — load it
+when writing or reviewing Dartdoc. A project `AGENTS.md` may extend the scope, the
+`{@category}` whitelist and the line limit; those additions win.
