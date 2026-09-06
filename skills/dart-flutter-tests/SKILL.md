@@ -1,19 +1,17 @@
 ---
 name: dart-flutter-tests
-description: Create, update, or refactor Dart and Flutter tests. Use when adding new tests, fixing broken tests, or improving test structure and coverage.
-argument-hint: [ file or feature to test ]
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+description: Create, update, or refactor Dart and Flutter tests. Use for "напиши тесты", "почини тесты", "add tests", "fix broken tests", or when improving test structure and coverage.
 ---
 
-Generate or update Dart/Flutter tests for `$ARGUMENTS` (if the placeholder is not expanded, take the
-target from the user's request). If no target is given, ask the user what to test.
+Generate or update Dart/Flutter tests for the user-specified file or feature. If none is given, ask the user what
+to test.
 
 ## Workflow
 
 1. Read the source file(s) under test to understand the code.
 2. Check if a test file already exists — if yes, read it before making changes.
 3. Write or update the test file following the rules below.
-4. Run `dart format .` then `flutter analyze` — fix all issues before finishing.
+4. Run `dart format .` then `dart analyze` — fix all issues before finishing.
 5. Run the full test suite and ensure all tests pass.
 
 ## Structure Rules

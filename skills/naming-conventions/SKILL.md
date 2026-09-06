@@ -1,14 +1,11 @@
 ---
 name: naming-conventions
-description: Analyze the project's actual naming conventions across layers
-  (data/domain/presentation) and record them as a Naming Conventions section
-  in the project AGENTS.md. Use for "проанализируй нейминг проекта",
-  "зафиксируй нейминг-конвенции".
-argument-hint: [ optional layer or directory to focus on ]
+description: Analyze naming conventions across data/domain/presentation layers and record them as a Naming Conventions section in AGENTS.md. Use for "проанализируй нейминг проекта", "record naming conventions".
 ---
 
 1. Map the project layout: locate the data / domain / presentation layers
-   (or the project's actual layer structure).
+   (or the project's actual layer structure). Narrow to the layer or directory
+   the user names, when they name one.
 2. Per layer, collect the real vocabulary via grep, counting occurrences —
    the dominant pattern is the rule, deviations become listed exceptions:
    - class suffixes/prefixes and which layer owns which (Entity, Data/Dto,

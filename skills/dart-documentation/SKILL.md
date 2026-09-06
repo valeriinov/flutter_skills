@@ -1,19 +1,17 @@
 ---
 name: dart-documentation
-description: Write or update Dartdoc comments for public interfaces and extensions; honors the project's AGENTS.md Documentation section (scope, category whitelist, line limits) when present. Use when documenting a Dart file's public API.
-argument-hint: [ file to document ]
-allowed-tools: Read, Edit, Bash, Glob, Grep
+description: Write or update Dartdoc for public interfaces and extensions, honoring the project AGENTS.md Documentation section. Use for "задокументируй", "напиши Dartdoc", "document the public API".
 ---
 
-Add or update Dartdoc comments in `$ARGUMENTS` (if the placeholder is not expanded, take the file
-from the user's request). If no file is given, ask the user which file to document.
+Add or update Dartdoc comments in the user-specified file. If none is given, ask the user which file to
+document.
 
 ## Workflow
 
 1. Read the target file to understand its public interfaces and extensions.
 2. Identify all members that need documentation per the scope rules below.
 3. Write Dartdoc comments following the format and templates.
-4. Run `dart format .` then `flutter analyze` — fix all issues before finishing.
+4. Run `dart format .` then `dart analyze` — fix all issues before finishing.
 
 ## Scope
 
@@ -36,6 +34,10 @@ from the user's request). If no file is given, ask the user which file to docume
     4. Returns (if non-void): concise sentence.
     5. Throws (optional).
     6. `Example:` code block.
+- The `The [parameterName] parameter is ...` phrasing applies to method and
+  constructor doc blocks only. Class fields are documented per-field, with a
+  plain `///` comment directly above the field — no "parameter is" phrasing
+  there; skip trivial field docs that only restate the name or type.
 
 ## Style
 
@@ -45,6 +47,8 @@ from the user's request). If no file is given, ask the user which file to docume
 - Use meaningful examples; keep them minimal and runnable.
 - **Do:** explain side effects, preconditions, postconditions.
 - **Don't:** duplicate information already clear from names or types.
+- **Don't:** narrate what changed ("used to", "no longer", "previously"). Doc
+  states the current contract; history lives in git.
 
 ## Interface Template
 
@@ -137,6 +141,7 @@ Before finishing, confirm:
 
 - All new/edited interface and extension members have Dartdoc.
 - Examples compile syntactically and illustrate intended usage.
-- Parameters follow: `The [parameterName] parameter is …`
+- Method/constructor parameters follow: `The [parameterName] parameter is …`;
+  class fields use a plain per-field `///` above the field.
 - Label is `Example:` (not "Example usage:").
-- `dart format .` and `flutter analyze` pass with zero issues.
+- `dart format .` and `dart analyze` pass with zero issues.
