@@ -60,22 +60,22 @@ Review only what is uncommitted. Already-committed code is context, not the subj
 
 ## Output
 
-### 🎯 Verdict (TL;DR)
-One line: Approve / Approve with minor changes / Needs revision.
+Findings only. No headers, no sections, no preamble.
 
-### 📋 Change Summary
-One paragraph restating what the uncommitted changes do, in your own words.
+Line 1 — the verdict, alone: **Approve** / **Approve with minor changes** / **Needs revision**.
+Mapping: any Blocking or Significant issue → Needs revision. Only Minor issues → Approve with minor changes. No issues above Minor → Approve. Never soften a verdict.
 
-### 🔍 Codebase Context
-What you examined and the relevant conventions/patterns you found. Name specific files.
+Then one finding per block, most severe first:
 
-### 🚨 Issues
-For each: **Category** (Correctness | Simplicity | Consistency | Architecture | Duplication | Risk | Plan-Deviation) · **Severity** (Blocking | Significant | Minor) · the issue · **Location** (`file:line`) · **Reference** (file/symbol it conflicts with or duplicates, if any) · **Suggestion** (concrete fix). State "None found" for empty categories.
+```
+🔴 Blocking · Correctness
+lib/data/cart_repo.dart:88 — saveCart() is not awaited; races with refresh().
+Fix: await it, as in lib/data/order_repo.dart:52.
+```
 
-### ✅ Verdict
-Exactly one: **Approve** / **Approve with minor changes** (list them) / **Needs revision** (list what must change). Never soften a verdict — if the change has blocking issues, say so.
+Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Correctness | Simplicity | Consistency | Architecture | Duplication | Risk | Plan-Deviation. Every finding carries `file:line`, and a Fix naming the concrete change — plus the precedent file/symbol when the finding is Consistency or Duplication.
 
-Mapping: any **Blocking** or **Significant** issue → **Needs revision**. Only **Minor** issues → **Approve with minor changes**. No issues above Minor → **Approve**.
+If nothing is wrong, the whole output is the verdict line.
 
 ## Rules
 
@@ -84,5 +84,6 @@ Mapping: any **Blocking** or **Significant** issue → **Needs revision**. Only 
 - If there are no uncommitted changes, say so and stop — there is nothing to review.
 - If you cannot access the codebase or git, say so and mark the review as limited — a stated limitation.
 - Be direct; do not pad with encouragement and do not manufacture issues.
-- Match review depth to change scope: a one-line fix gets a proportionate review, a multi-file change gets thorough scrutiny.
+- Match review depth to change scope: a one-line fix gets a proportionate review, a multi-file change gets thorough scrutiny. Depth belongs in the investigation, never in the word count.
 - Learn conventions from file contents, not git history.
+- Never restate what the diff does — the reader wrote it. Never narrate what you examined or how you searched; the `file:line` citations are the evidence. Never list categories with no findings.

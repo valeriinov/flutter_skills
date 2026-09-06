@@ -1,0 +1,14 @@
+{
+  "name": "flutter-skills",
+  "description": "Flutter/Dart workflow skills and review subagents by valeriinov.",
+  "owner": {
+    "name": "valeriinov"
+  },
+  "plugins": [
+    {
+      "name": "flutter-skills",
+      "source": "./",
+      "description": "Workflow skills and review subagents for Flutter/Dart teams: planning, implementation, reviews, naming, tests, Dartdoc, commits, backend contracts."
+    }
+  ]
+}
