@@ -1,19 +1,7 @@
 ---
 name: code-reviewer
 description: |
-  Use this agent to review uncommitted changes (staged, unstaged, and untracked) after code has been written but before it is committed. It checks the diff for correctness, simplicity, consistency with the project's existing conventions, architectural fit, duplication of existing logic, and bottlenecks or risks, grounding every finding in the actual codebase. Do not use it to write or modify code.
-
-  <example>
-  user: I just finished the new feature — can you look it over before I commit?
-  assistant: Let me run your uncommitted changes through the code-reviewer agent before you commit.
-  <commentary>Code has been written but not committed. Invoke code-reviewer to assess correctness, simplicity, consistency, architecture, duplication, and risks against the diff.</commentary>
-  </example>
-
-  <example>
-  user: Fixed the refresh bug by storing the scroll offset in a static variable. Done.
-  assistant: Let me have the code-reviewer agent check the diff before this is committed — static cross-request state is worth scrutinizing.
-  <commentary>A bugfix was implemented with a potentially fragile approach. Use code-reviewer to catch correctness issues and risks in the actual change.</commentary>
-  </example>
+  Reviews uncommitted changes (staged, unstaged, untracked) before a commit: correctness, simplicity, consistency with project conventions, architectural fit, duplication, risks — every finding grounded in the codebase. Read-only; never writes code.
 tools: Read, Grep, Glob, Bash
 model: opus
 color: green
