@@ -124,6 +124,7 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 | `naming-conventions` | Record the project's naming conventions into `AGENTS.md` | any | — |
 | `review-changes` | Review uncommitted changes before committing | any | `code-reviewer` |
 | `review-plan` | Review a plan file before any code is written | any | `plan-reviewer` |
+| `review-pr` | Review a GitHub PR against its base branch into a document pasted back as comments | any | `code-reviewer` |
 
 ## Subagents
 
