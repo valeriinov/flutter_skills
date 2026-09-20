@@ -11,7 +11,9 @@ to test.
 1. Read the source file(s) under test to understand the code.
 2. Check if a test file already exists — if yes, read it before making changes.
 3. Write or update the test file following the rules below.
-4. Run `dart format .` then `dart analyze` — fix all issues before finishing.
+4. Format and analyze the way the project's rules say — its lint skill or `AGENTS.md` command
+   when there is one, otherwise `dart format .` then `dart analyze` — and fix all issues before
+   finishing.
 5. Run the full test suite and ensure all tests pass.
 
 ## Structure Rules
@@ -31,6 +33,7 @@ to test.
 - Put reusable helpers below the tests that use them.
 - Use `const` for immutable fixtures; reuse top-level `final` finders/constants across tests.
 - Dispose controllers/handlers explicitly at the end of tests.
+- A doc comment on a test or helper only for what its name cannot say — rare.
 
 ## Widget Tests
 

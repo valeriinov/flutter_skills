@@ -11,12 +11,16 @@ document.
 1. Read the target file to understand its public interfaces and extensions.
 2. Identify all members that need documentation per the scope rules below.
 3. Write Dartdoc comments following the format and templates.
-4. Run `dart format .` then `dart analyze` — fix all issues before finishing.
+4. Format and analyze the way the project's rules say — its lint skill or `AGENTS.md` command
+   when there is one, otherwise `dart format .` then `dart analyze` — and fix all issues before
+   finishing.
 
 ## Scope
 
 - Document **only** public **interfaces** (`abstract interface class …`) and **extensions**.
-- Skip docs for private members and trivial public API where meaning is obvious.
+- Skip trivial public API and private members; a private member gets a doc
+  comment only for what code cannot say (SDK behaviour, an external contract, a
+  silent ordering) — the rare case.
 - If the project AGENTS.md has a "Documentation" section, it extends and
   overrides these defaults — scope additions (e.g. utilities, reusable
   widgets), the `{@category}` whitelist, and line-length limits come from
@@ -139,9 +143,10 @@ extension DateTimeInfo on DateTime {
 
 Before finishing, confirm:
 
-- All new/edited interface and extension members have Dartdoc.
+- New/edited interface and extension members have Dartdoc unless name and type
+  already say it.
 - Examples compile syntactically and illustrate intended usage.
 - Method/constructor parameters follow: `The [parameterName] parameter is …`;
   class fields use a plain per-field `///` above the field.
 - Label is `Example:` (not "Example usage:").
-- `dart format .` and `dart analyze` pass with zero issues.
+- The project's format and analyze commands pass with zero issues.

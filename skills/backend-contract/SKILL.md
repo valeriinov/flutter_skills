@@ -97,6 +97,10 @@ inserts — text an earlier round wrote stays byte for byte, and the whole file 
 - Every non-obvious requirement carries its reference to the acceptance criterion.
 - Tables for anything enumerable; a minimal, realistic JSON example per payload, no ellipsis.
 - One fact per row, one rule per bullet. No retelling of the client's screens.
+- Only what the backend has to change or decide: what already matches, what was agreed and what
+  a call closed are left out, not listed as done.
+- The document stands alone: no path into the client repository, no image or file on the
+  author's machine, and an acceptance criterion is cited with its ticket (`<TICKET> AC §4.3`).
 - Path: beside the existing contracts of the repository; ask when there are none.
 
 ## 10. Report

@@ -29,21 +29,23 @@ Review only what is uncommitted. Already-committed code is context, not the subj
 
 2. **Simplicity** — Is this the simplest code that correctly solves the problem? Flag unnecessary abstraction, indirection, or layers, and flag missing structure where it is clearly needed. Name a simpler concrete alternative when one exists.
 
-3. **Consistency** — Examine the existing codebase (and any project guideline files such as CLAUDE.md, AGENTS.md, style guides, or contributing docs). Determine the project's actual conventions for naming, file/folder structure, and recurring approaches (error handling, data flow, dependency wiring, state management, async). For every deviation, name the specific file or pattern it conflicts with.
+3. **Comments** — Flag every added comment the code could say instead: restated name, body or guard; a fact stated twice; a doc comment on a private member or test without an SDK, contract or silent-ordering ground. Read untracked files; name the replacing rename or predicate. One finding per file, 🟡 Significant.
 
-4. **Architectural fit** — Determine the project's existing layer/module boundaries from the actual structure. Flag logic placed in the wrong layer, leaked implementation details, or placement inconsistent with where similar logic already lives.
+4. **Consistency** — Examine the existing codebase (and any project guideline files such as CLAUDE.md, AGENTS.md, style guides, or contributing docs). Determine the project's actual conventions for naming, file/folder structure, and recurring approaches (error handling, data flow, dependency wiring, state management, async). For every deviation, name the specific file or pattern it conflicts with.
 
-5. **Duplication** — Search for existing utilities, helpers, extensions, base classes, or logic that already solves the same problem, and point to the exact file/symbol to reuse or extend instead of the new code. Also flag duplication internal to the change — the same logic repeated across new code instead of extracted once.
+5. **Architectural fit** — Determine the project's existing layer/module boundaries from the actual structure. Flag logic placed in the wrong layer, leaked implementation details, or placement inconsistent with where similar logic already lives.
 
-6. **Bottlenecks and risks** — Flag performance problems, missing error/loading/empty/null states, unhandled edge cases, fragile assumptions, race conditions, leaked resources, and anything likely to need rework soon.
+6. **Duplication** — Search for existing utilities, helpers, extensions, base classes, or logic that already solves the same problem, and point to the exact file/symbol to reuse or extend instead of the new code. Also flag duplication internal to the change — the same logic repeated across new code instead of extracted once.
 
-7. **Plan compliance** (only when your prompt includes a plan or plan file path) — Compare the implementation against the plan: every planned step present, nothing extra beyond the plan's scope. List each deviation — missing step, extra change, or a step implemented differently than planned — and classify it as justified (say why) or a defect. Skip this criterion entirely when no plan was provided.
+7. **Bottlenecks and risks** — Flag performance problems, missing error/loading/empty/null states, unhandled edge cases, fragile assumptions, race conditions, leaked resources, and anything likely to need rework soon.
+
+8. **Plan compliance** (only when your prompt includes a plan or plan file path) — Compare the implementation against the plan: every planned step present, nothing extra beyond the plan's scope. List each deviation — missing step, extra change, or a step implemented differently than planned — and classify it as justified (say why) or a defect. Skip this criterion entirely when no plan was provided.
 
 ## Workflow
 
 1. Gather the full uncommitted change set (see Mandate).
 2. Explore the codebase before judging: structure, guideline files, files in the same area/layer, and existing utilities relevant to the change.
-3. Apply all criteria (1-6, plus 7 when a plan was provided), grounded in what you found. Cite `file:line` for each finding.
+3. Apply all criteria (1-7, plus 8 when a plan was provided), grounded in what you found. Cite `file:line` for each finding.
 4. Output the review below.
 
 ## Output
@@ -61,7 +63,7 @@ lib/data/cart_repo.dart:88 — saveCart() is not awaited; races with refresh().
 Fix: await it, as in lib/data/order_repo.dart:52.
 ```
 
-Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Correctness | Simplicity | Consistency | Architecture | Duplication | Risk | Plan-Deviation. Every finding carries `file:line`, and a Fix naming the concrete change — plus the precedent file/symbol when the finding is Consistency or Duplication.
+Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Correctness | Simplicity | Comments | Consistency | Architecture | Duplication | Risk | Plan-Deviation. Every finding carries `file:line`, and a Fix naming the concrete change — plus the precedent file/symbol when the finding is Consistency or Duplication.
 
 If nothing is wrong, the whole output is the verdict line.
 

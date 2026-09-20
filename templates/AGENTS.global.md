@@ -14,9 +14,13 @@ Before implementing:
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
-- Never assert a fact about the codebase, the running app, the device or the git
-  state you haven't read or checked. Cite `file:line` or the command output, or
-  say the claim is unverified.
+- A question is answered, not executed: "can we do without X?" gets what X gives
+  and what dropping it costs; the code, the plan and the document stay as they
+  were until the user says to change them.
+- Never assert a fact you haven't read or checked — about the codebase, the
+  running app, the device, the git state or an agreement — in dialogue, a report,
+  a contract or a diagram alike. Cite `file:line` or the command output, or say
+  the claim is unverified; a proposal is written as a proposal, never as settled.
 
 ### 2. Simplicity First
 
@@ -129,6 +133,18 @@ pipeline instead of a fan-out); never raise the cap.
   earlier version. Superseded text is deleted, not kept as contrast.
 - Every surface: markdown, Dartdoc, comments. History lives in git and the PR.
 - Exception: a migration or compatibility note the reader must act on, if asked.
+
+### 8. Comments
+
+**Say it in code; comment only what code cannot say.**
+
+- First rename, extract a predicate or method, or name the constant.
+- Allowed: SDK or framework behaviour, an external contract, an ordering whose
+  breach fails silently — one sentence naming the mechanism, never domain "why".
+  Doc comments on private members and tests meet this bar too — a rare case.
+- Never: restating adjacent code, one fact twice. Existing comments are no
+  precedent.
+- Before done, check every added comment line, new files included.
 
 ## Language-Specific Style Rules (Dart / Flutter)
 
