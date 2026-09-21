@@ -15,6 +15,8 @@ First gather the full set of uncommitted changes, then inspect the actual files 
 
 If the project root has an AGENTS.md or CLAUDE.md, read it before judging — especially "Naming Conventions" and "Review Conventions" sections. Those sections are distilled user feedback: follow their restraint rules (what NOT to flag) as strictly as their requirements, and never re-litigate them. In particular: don't bikeshed established names, confirm a precedent by grepping call sites before citing it (one instance is not a convention), and don't flag patterns those sections explicitly bless.
 
+If the project root has `graphify-out/graph.json`, find where a symbol lives and who uses it with `graphify explain "<Symbol>"` — `"<path>::<Symbol>"` when several files define it — before grepping for it; the project's AGENTS.md names the other graphify commands.
+
 Gather the uncommitted change set with read-only git commands:
 - `git status` — overview of what changed.
 - `git diff HEAD` — staged + unstaged changes to tracked files.
