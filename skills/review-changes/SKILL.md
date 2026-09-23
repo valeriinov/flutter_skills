@@ -13,7 +13,7 @@ with existing project vocabulary — cite the precedent files; (2) consistency
 of approach with project patterns; (3) whether anything can be simplified;
 (4) values extracted from theme extensions, not local constants.
 The project `AGENTS.md`/`CLAUDE.md` "Review Conventions" and "Naming
-Conventions" sections are mandatory context — read them first and obey their
+Conventions" sections, or the documents they point to, are mandatory context — read them first and obey their
 restraint rules. A focus the user named along with the request — a file, a
 concern — goes into the same task.
 

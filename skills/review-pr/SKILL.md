@@ -59,7 +59,7 @@ Every agent prompt states: the changes are **not** uncommitted, review
 Carry the same emphasis `review-changes` uses — naming against the project's real
 vocabulary with cited precedent, consistency of approach, what can be simplified, theme
 values from the theme extensions — and the restraint rules of the project's
-"Review Conventions".
+"Review Conventions" (or the document that section points to).
 
 ## 4. Verify before writing anything down
 

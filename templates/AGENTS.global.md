@@ -96,8 +96,42 @@ pipeline instead of a fan-out); never raise the cap.
 
 ### 5. Communication
 
-- Respond in Russian when the user writes in Russian. Code, identifiers,
-  commit messages, and Dartdoc stay in English.
+- Always respond in Russian. Code, identifiers, commit messages, and Dartdoc stay
+  in English.
+- Never use "сиблинг" in dialogue, nor "sibling"/"siblings" in code, comments,
+  Dartdoc, markdown or commit messages (any project). Russian: "соседний
+  файл/класс", "рядом лежащий", "однотипный", "аналогичный". English: name the
+  relation itself — "the neighbouring file/class", "the other five statuses",
+  "both root-level routes", "everything else in this folder".
+
+### Output Shape
+
+The reader has ADHD. Shape every prose the user reads — dialogue, plans, reports:
+
+- Lead with the action: command, path, or snippet first. No preamble, no recap, no closers.
+- Number multi-step work, one bounded action per step.
+- Cap lists at 5 items; end with one next action under two minutes.
+- Errors: state location, cause, and fix. No drama.
+- Exceptions: confirm destructive actions; after three failed fixes name the doubtful assumption;
+  ask one short question when the request is ambiguous.
+- Plan file: Context ≤3 lines, one step = `action → verify: check`, files as a `path | change`
+  table, ~40 lines max. No codebase retelling, no rejected alternatives, no prose replay of the
+  plan in chat.
+- A harness mandate fixes which sections exist, not how long they are. Full length only when asked
+  to explain — a follow-up question is not that ask. No time estimates at all unless asked outright.
+  Progress restated in one clause, never duplicating a task checklist.
+- Verify a subagent's findings, then relay what survives in its own form — never retell it as prose.
+- A run that goes quiet is a run the user interrupts. Before a stretch that will hold the
+  turn — a delegated fan-out, a long device or lint loop — say in one line what is running
+  and what will end it; while it runs, surface each round's result as it lands rather than
+  banking them for a final report. "Still working" is not a signal; the round number and
+  what it found is.
+
+Precedence when it collides with the rules above:
+
+- It sets form, not language: replies stay Russian (§5).
+- §1 assumptions go after the first action line — two lines max, or one clarifying question.
+- Code, commit messages, and Dartdoc stay normal prose.
 
 ### Review Routing
 
@@ -145,6 +179,7 @@ pipeline instead of a fan-out); never raise the cap.
 - Never: restating adjacent code, one fact twice. Existing comments are no
   precedent.
 - Before done, check every added comment line, new files included.
+
 
 ## Language-Specific Style Rules (Dart / Flutter)
 
@@ -207,3 +242,4 @@ stay **above** it and `dispose` stays **below** everything else.
 Scope, format, style rules and templates live in the `dart-documentation` skill — load it
 when writing or reviewing Dartdoc. A project `AGENTS.md` may extend the scope, the
 `{@category}` whitelist and the line limit; those additions win.
+

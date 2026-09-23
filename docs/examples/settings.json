@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'ADHD MODE ACTIVE: ответ по-русски; первая строка — действие (команда/путь/сниппет); многошаговое — нумерованным списком; без преамбул, рекапов и закрывашек; в конце одно действие на <2 мин. План-файл: Context ≤3 строк, шаг = строка + verify, файлы таблицей, ~40 строк максимум; без пересказа кодовой базы и альтернатив; план в чате не пересказывать.'",
+            "command": "echo 'Ответ всегда по-русски. ADHD-режим: первая строка — действие; без преамбул, рекапов и закрывашек.'",
             "timeout": 5
           }
         ]
@@ -45,7 +45,8 @@
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
     "caveman@caveman": true,
-    "i-have-adhd@i-have-adhd": true
+    "i-have-adhd@i-have-adhd": true,
+    "skill-creator@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -72,8 +73,5 @@
         "repo": "ayghri/i-have-adhd"
       }
     }
-  },
-  "skillOverrides": {
-    "caveman-commit": "off"
   }
 }

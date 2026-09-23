@@ -15,11 +15,13 @@ description: Analyze naming conventions across data/domain/presentation layers a
    - constructor/method argument naming;
    - key formats if present: routes, locale keys, analytics events.
 3. Write a compact "## Naming Conventions" section (~15-20 lines) into the
-   project AGENTS.md: one rule per category + 1-2 real precedent paths.
+   project AGENTS.md — or, when that section there is only a pointer, into the
+   document it names: one rule per category + 1-2 real precedent paths.
    Areas without a clear winner: mark "no dominant convention". If the
    section already exists — update it in place, don't duplicate.
-   Touch only the "## Naming Conventions" section: never rewrite or delete
-   other sections (e.g. "## Review Conventions" — maintained by hand from
-   user feedback, not derivable from code).
+   Touch only the "## Naming Conventions" section, and leave a pointer in
+   AGENTS.md as it is: never rewrite or delete other sections (e.g.
+   "## Review Conventions" — maintained by hand from user feedback, not
+   derivable from code).
 4. Report in Russian: what was recorded, dominant patterns, and found
    inconsistencies worth cleaning up (file:line).

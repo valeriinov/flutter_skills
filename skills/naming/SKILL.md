@@ -4,8 +4,8 @@ description: Check whether a name (field, method, class, key) fits project vocab
 ---
 
 For the symbol the user names — `file:line` or a bare symbol name; ask which one if none is given:
-1. If the project AGENTS.md has a "Naming Conventions" section — read it
-   first and check the name against it.
+1. If the project AGENTS.md has a "Naming Conventions" section — read it,
+   or the document it points to, first and check the name against it.
 2. Read the declaration and its usages.
 3. Grep the project for neighbouring patterns (same layer, same suffix/prefix
    family) — collect the actual vocabulary in use.
