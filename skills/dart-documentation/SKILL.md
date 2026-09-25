@@ -8,10 +8,8 @@ document.
 
 ## Workflow
 
-1. Read the target file to understand its public interfaces and extensions.
-2. Identify all members that need documentation per the scope rules below.
-3. Write Dartdoc comments following the format and templates.
-4. Format and analyze the way the project's rules say — its lint skill or `AGENTS.md` command
+1. Document the members the scope rules below select, in the format and templates below.
+2. Format and analyze the way the project's rules say — its lint skill or `AGENTS.md` command
    when there is one, otherwise `dart format .` then `dart analyze` — and fix all issues before
    finishing.
 
@@ -45,9 +43,7 @@ document.
 
 ## Style
 
-- Be concise; avoid redundancy with names/types.
 - Prefer present tense ("Returns…", "Provides…").
-- Don't restate obvious types or names.
 - Use meaningful examples; keep them minimal and runnable.
 - **Do:** explain side effects, preconditions, postconditions.
 - **Don't:** duplicate information already clear from names or types.
