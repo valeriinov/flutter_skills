@@ -86,9 +86,10 @@ the delta invalidates goes into the delta's open questions instead.
 
 ## 8. Audit mode
 
-Re-check the document against the acceptance criteria and the client code, then append: missing
-rules into their own section, and everything unresolved into the open questions. Edits are
-inserts — text an earlier round wrote stays byte for byte, and the whole file is never rewritten.
+Re-check the document against the acceptance criteria and the client code, then bring it to what
+is true now: missing rules go into their own section and everything unresolved into the open
+questions; negotiation rounds, answered questions and whatever the backend no longer has to
+decide are removed.
 
 ## 9. Writing rules
 

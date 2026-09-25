@@ -6,7 +6,8 @@ description: Analyze naming conventions across data/domain/presentation layers a
 1. Map the project layout: locate the data / domain / presentation layers
    (or the project's actual layer structure). Narrow to the layer or directory
    the user names, when they name one.
-2. Per layer, collect the real vocabulary via grep, counting occurrences —
+2. Per layer, collect the real vocabulary with the code-search tool the project
+   rules name (grep when they name none), counting occurrences —
    the dominant pattern is the rule, deviations become listed exceptions:
    - class suffixes/prefixes and which layer owns which (Entity, Data/Dto,
      Repository, UseCase, Cubit/State, Screen/Widget, ...);

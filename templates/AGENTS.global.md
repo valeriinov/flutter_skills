@@ -21,6 +21,9 @@ Before implementing:
   running app, the device, the git state or an agreement — in dialogue, a report,
   a contract or a diagram alike. Cite `file:line` or the command output, or say
   the claim is unverified; a proposal is written as a proposal, never as settled.
+  A document handed to people — a contract, a decision or design doc — carries
+  no "unverified" marker: the point is researched before writing, and what
+  cannot be obtained is stated as a fact about its availability.
 
 ### 2. Simplicity First
 
@@ -156,8 +159,9 @@ Precedence when it collides with the rules above:
 ### 6. Naming
 
 - A name must state what the code actually does — nothing more.
-- Ground proposed names in existing project vocabulary (grep the neighbouring
-  names first, then name).
+- Ground proposed names in existing project vocabulary (search the neighbouring
+  names first — with the code-search tool the project rules name, grep when
+  they name none — then name).
 
 ### 7. Documentation
 
