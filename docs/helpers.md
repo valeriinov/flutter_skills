@@ -11,8 +11,8 @@ git clone https://github.com/valeriinov/flutter_skills.git && cd flutter_skills
 
 Snapshots referenced below live in `docs/examples/`:
 
-- `docs/examples/settings.json` — only the `hooks`, `enabledPlugins`,
-  `extraKnownMarketplaces` and `skillOverrides` keys. It is not a complete
+- `docs/examples/settings.json` — only the `hooks`, `enabledPlugins` and
+  `extraKnownMarketplaces` keys. It is not a complete
   settings file: **merge** these keys into your own `~/.claude/settings.json`.
   It also registers the `anthropics/skills` marketplace, unrelated to the
   plugins below — keep or drop it.
@@ -39,19 +39,6 @@ Statusline HUD.
 
 Run `/claude-hud:setup` after install. Do not copy a `statusLine` block from
 someone else's settings — it carries machine-specific paths.
-
-### caveman — `JuliusBrussee/caveman`
-
-Compressed output modes plus the `cavecrew-*` subagents (investigator, builder,
-reviewer) whose output is caveman-compressed.
-
-```
-/plugin marketplace add JuliusBrussee/caveman
-/plugin install caveman@caveman
-```
-
-The settings example sets `"skillOverrides": {"caveman-commit": "off"}` because
-the `commit-changes` skill owns the commit format.
 
 ### i-have-adhd — `ayghri/i-have-adhd`
 
@@ -130,8 +117,6 @@ cp templates/AGENTS.global.md ~/.claude/AGENTS.global.md   # next to CLAUDE.md
 `docs/examples/CLAUDE.md` is the author's file as-is. Before reusing it:
 
 - "Review Routing" and "Skills and agents" name personal skills — `review-pr`,
-  `weekly-retro`, `add-openrouter-picker-model`, `export-flutter-skills` — and the
-  caveman commands
-  (`caveman-review`, `cavecrew-reviewer`). Drop those lines unless you have the
-  same skills and plugins.
-- "Output Shape" presumes the `i-have-adhd` plugin and `cavecrew-*` subagents.
+  `weekly-retro`, `add-openrouter-picker-model`, `export-flutter-skills`. Drop
+  those lines unless you have the same skills.
+- "Output Shape" presumes the `i-have-adhd` plugin.

@@ -44,7 +44,6 @@
   },
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
-    "caveman@caveman": true,
     "i-have-adhd@i-have-adhd": true,
     "skill-creator@claude-plugins-official": true
   },
@@ -59,12 +58,6 @@
       "source": {
         "source": "github",
         "repo": "jarrodwatts/claude-hud"
-      }
-    },
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
       }
     },
     "i-have-adhd": {
