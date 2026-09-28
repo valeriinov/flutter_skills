@@ -44,8 +44,7 @@
   },
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
-    "i-have-adhd@i-have-adhd": true,
-    "skill-creator@claude-plugins-official": true
+    "i-have-adhd@i-have-adhd": false
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -60,11 +59,24 @@
         "repo": "jarrodwatts/claude-hud"
       }
     },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
     "i-have-adhd": {
       "source": {
         "source": "github",
         "repo": "ayghri/i-have-adhd"
       }
     }
+  },
+  "skillOverrides": {
+    "find-skills": "off",
+    "naming-conventions": "off",
+    "add-openrouter-picker-model": "off",
+    "anthropic-skills:morning": "off",
+    "anthropic-skills:import-memory": "off"
   }
 }
