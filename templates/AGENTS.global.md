@@ -24,6 +24,15 @@ Before implementing:
   A document handed to people — a contract, a decision or design doc — carries
   no "unverified" marker: the point is researched before writing, and what
   cannot be obtained is stated as a fact about its availability.
+- Project first. A backend contract, a ticket, a business analyst's note or a
+  design knows nothing of the client's architecture, patterns or glossary. It
+  decides what happens (the business) and the wire shape (the backend); how the
+  client does it — naming, state and error handling, layering — always follows
+  the project's own precedent. Its assumptions about client internals are
+  ignored. A proposal that breaks the architecture is answered with a
+  correction, a clarifying question or a counter-proposal, never absorbed; a
+  mechanism the project does not already use is a question to the user with two
+  options (the project's way / the new one) before any plan or code adopts it.
 
 ### 2. Simplicity First
 

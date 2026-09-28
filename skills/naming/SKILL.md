@@ -12,6 +12,8 @@ For the symbol the user names — `file:line` or a bare symbol name; ask which o
    name none — and collect the actual vocabulary in use.
 4. Judge: consistency with that vocabulary; honesty (does the name promise
    more than the code does?); length/clarity per project norms.
+   A name taken from the design, a backend field or the ticket wording is
+   not precedent; a wire key the backend keeps is mapped to the project's name.
 5. Answer in Russian: verdict, precedents found (file:line), and — only if
    the current name is worse — 1-2 grounded alternatives. Don't rename
    anything until confirmed.

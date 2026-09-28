@@ -1,6 +1,6 @@
 ---
 name: backend-contract
-description: Write or extend a backend contract — endpoints, fields, statuses, events and rollout steps the client needs. Use for "контракт для бэкенда", "сверь контракт с реализацией", "backend contract".
+description: Write, extend or review a backend contract — endpoints, fields, statuses, events. Use for "контракт для бэкенда", "сверь контракт с реализацией", "разбери сырой контракт бэка", "backend contract".
 argument-hint: "[ tasks, or the contract to extend or audit ]"
 ---
 
@@ -16,8 +16,13 @@ never advises how to implement it inside the backend.
 - **Extension** — a parent contract exists and stays in force; describe only the delta.
 - **Audit** — the document exists; check it against the acceptance criteria and the client code,
   then append what is missing.
+- **Review** — the backend sent its own draft or a revision of ours; judge whether it fits
+  (step 8a).
 
 Take the mode from the user's request. Ask only when the target is genuinely ambiguous.
+
+The client's architecture outranks every input: the backend, the tickets and the design decide
+what happens and the wire shape, never how the client handles it.
 
 ## 2. Inputs
 
@@ -25,7 +30,7 @@ Collect what exists, then ask once, in a single question, for whatever is still 
 
 - task ids and their acceptance criteria — pasted, a file, or the repository's planning folder;
 - designs — a link is enough; the contract quotes what a screen needs, never its layout;
-- the parent contract, in extension and audit modes;
+- the parent contract, in extension and audit modes; the backend's draft, in review mode;
 - the client implementation (step 3).
 
 ## 3. Mine the client — it is the source of truth for the wire shape
@@ -75,7 +80,10 @@ One line per check, each answered against the draft:
 - every optional field says what absence means and what the client draws instead;
 - ordering of operations, the race of two actors, and backfilling already existing entities are
   each answered once;
-- nothing in the document tells the backend how to build it internally.
+- nothing in the document tells the backend how to build it internally;
+- no assumption of the backend's about client internals — errors, retries, states — entered
+  the document or the client plan;
+- the document goes to the backend as is: no thread of earlier correspondence is left open.
 
 ## 7. Extension mode
 
@@ -91,6 +99,21 @@ is true now: missing rules go into their own section and everything unresolved i
 questions; negotiation rounds, answered questions and whatever the backend no longer has to
 decide are removed.
 
+## 8a. Review mode
+
+Read the backend's draft as a wire interface only — paths, fields, enums, statuses, events. Its
+notes on how the client should process data, handle errors or retry are not requirements and are
+not argued back.
+
+- A verdict per point: fits or does not, checked against the acceptance criteria and the client
+  facts of step 3.
+- A point that breaks the client's architecture or naming gets a counter-proposal worded as the
+  field, endpoint or rule the client needs — never a bare question. A wire name the backend keeps
+  may differ from the client's key; the client maps it.
+- Counter-proposals are appended as a section of the backend's document unless the user names
+  another place.
+- Once a revision fits, switch to audit mode (step 8).
+
 ## 9. Writing rules
 
 - Language: the language the existing contracts of the repository are written in; ask if there
@@ -98,6 +121,8 @@ decide are removed.
 - Every non-obvious requirement carries its reference to the acceptance criterion.
 - Tables for anything enumerable; a minimal, realistic JSON example per payload, no ellipsis.
 - One fact per row, one rule per bullet. No retelling of the client's screens.
+- An open question carries the concrete proposal the client would ship, so the answer is yes
+  or no.
 - Only what the backend has to change or decide: what already matches, what was agreed and what
   a call closed are left out, not listed as done.
 - The document stands alone: no path into the client repository, no image or file on the

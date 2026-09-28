@@ -33,7 +33,7 @@ Review only what is uncommitted. Already-committed code is context, not the subj
 
 3. **Comments** — Flag every added comment the code could say instead: restated name, body or guard; a fact stated twice; a doc comment on a private member or test without an SDK, contract or silent-ordering ground. Read untracked files; name the replacing rename or predicate. One finding per file, 🟡 Significant.
 
-4. **Consistency** — Examine the existing codebase (and any project guideline files such as CLAUDE.md, AGENTS.md, style guides, or contributing docs). Determine the project's actual conventions for naming, file/folder structure, and recurring approaches (error handling, data flow, dependency wiring, state management, async). For every deviation, name the specific file or pattern it conflicts with.
+4. **Consistency** — Examine the existing codebase (and any project guideline files such as CLAUDE.md, AGENTS.md, style guides, or contributing docs). Determine the project's actual conventions for naming, file/folder structure, and recurring approaches (error handling, data flow, dependency wiring, state management, async). For every deviation, name the specific file or pattern it conflicts with. An approach, name or error handling whose only source is an external document (a backend contract, a ticket, a design) and that departs from project precedent is 🔴 Blocking unless the user confirmed it.
 
 5. **Architectural fit** — Determine the project's existing layer/module boundaries from the actual structure. Flag logic placed in the wrong layer, leaked implementation details, or placement inconsistent with where similar logic already lives.
 

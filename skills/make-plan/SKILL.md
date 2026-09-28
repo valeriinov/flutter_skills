@@ -34,6 +34,11 @@ section rather than pad it:
   `path | what changes` table, not per-line enumeration.
 - `## Verification` — end-to-end check: lint/analyze, tests, manual run.
 
+A backend contract, ticket or design in the input decides what happens and the
+wire shape, never how the client does it: steps follow the scout's precedent,
+names and error handling are the project's. Each point where the input departs from that precedent is an open question with
+two options — the project's way / the input's — never a silent step.
+
 Ceiling ~40 lines. Over it, cut detail, never steps. No retelling of the
 codebase, no walkthrough of rejected alternatives.
 
