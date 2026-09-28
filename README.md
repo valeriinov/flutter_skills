@@ -114,6 +114,7 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 
 | Skill | Purpose | Scope | Needs subagent |
 |---|---|---|---|
+| `backlog` | Park deferred work and tech debt in `docs/BACKLOG.md`, harvest TODOs, groom the list | any | — |
 | `backend-contract` | Write or extend a backend contract from the client implementation and acceptance criteria | any | — |
 | `commit-changes` | Split the working tree into logical local commits in a fixed message format; never pushes | any | — |
 | `dart-documentation` | Dartdoc for public interfaces and extensions | Dart | — |
