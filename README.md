@@ -127,6 +127,12 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 | `review-plan` | Review a plan file before any code is written | any | `plan-reviewer` |
 | `review-pr` | Review a GitHub PR against its base branch into a document pasted back as comments | any | `code-reviewer` |
 
+`implement-plan` carries `flutter_worktree_setup.sh`, which prepares a fresh
+git worktree of a Flutter project: it copies the ignored files the project's
+`.worktreeinclude` lists, then runs `fvm install`, `pub get` and `pod install`.
+`review-pr` runs the same script from the `implement-plan` folder, so the two
+skills are installed together.
+
 ## Subagents
 
 Two Claude Code subagents live in `agents/`:

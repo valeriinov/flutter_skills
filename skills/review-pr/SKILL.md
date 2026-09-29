@@ -212,7 +212,9 @@ Rules for the round, in order of importance:
 - Never change the reviewed code — that is a separate request, after the user confirms.
 - The branch lint gate (`analyze` / metrics / bloc lint / format check, via the project's
   own lint skill, run inside the worktree) is for a later round or an explicit ask, and its
-  result is one line in the header. A fresh worktree may need the project's dependency
-  fetch and analyzer-plugin bootstrap first, otherwise it answers a false green.
+  result is one line in the header. Before it, run
+  `bash <this skill's base directory>/../implement-plan/flutter_worktree_setup.sh <worktree>`
+  from the repository root, then the project's analyzer-plugin bootstrap; a worktree without them
+  answers a false green.
 - Chat stays Russian and short: the verdict, what was dropped in step 4, and the path to
   the document.

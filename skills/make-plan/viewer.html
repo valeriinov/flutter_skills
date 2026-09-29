@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>План</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e2e2e2;
+  --card-bg: #f7f7f8;
+  --code-bg: #f2f2f3;
+  --accent: #2563eb;
+  --lane-contained: #16a34a;
+  --lane-wide: #d97706;
+  --lane-closed: #dc2626;
+  --highlight: rgba(250, 204, 21, 0.35);
+  --highlight-border: #d97706;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --fg: #e7e7ea;
+    --muted: #9aa0aa;
+    --border: #2a2d33;
+    --card-bg: #1c1f24;
+    --code-bg: #20242b;
+    --accent: #6ea8fe;
+    --lane-contained: #4ade80;
+    --lane-wide: #fbbf24;
+    --lane-closed: #f87171;
+    --highlight: rgba(250, 204, 21, 0.22);
+    --highlight-border: #fbbf24;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+  line-height: 1.55;
+}
+h1, h2, h3 { line-height: 1.3; }
+h1 { font-size: 1.6rem; margin: 0 0 8px; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-top: 28px; }
+h3 { font-size: 1.05rem; margin-top: 24px; }
+a { color: var(--accent); }
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.92em; }
+pre { background: var(--code-bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
+th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+th { background: var(--card-bg); }
+details { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
+summary { cursor: pointer; color: var(--muted); }
+.mermaid { overflow-x: auto; text-align: center; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+#front-matter-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.lane-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: #fff; }
+.lane-badge.lane-contained { background: var(--lane-contained); }
+.lane-badge.lane-wide { background: var(--lane-wide); }
+.lane-badge.lane-closed { background: var(--lane-closed); }
+.fm-item { font-size: 0.85rem; color: var(--muted); padding: 3px 0; }
+
+#tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 16px; flex-wrap: wrap; }
+#tabs button {
+  background: none; border: none; padding: 8px 12px; font-size: 0.95rem;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+}
+#tabs button.active { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+
+.comment-form { display: flex; flex-direction: column; gap: 6px; }
+.comment-form input, .comment-form textarea {
+  background: var(--bg); color: var(--fg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 8px; font: inherit; font-size: 0.9rem;
+}
+.comment-form textarea { min-height: 60px; resize: vertical; }
+.copy-hint { font-size: 0.82rem; color: var(--muted); }
+
+.thread-list { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+.thread { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+.thread.resolved { opacity: 0.55; }
+.thread-head { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
+.thread-reply { margin-top: 4px; padding-left: 10px; border-left: 2px solid var(--border); color: var(--muted); }
+.thread-quote { font-size: 0.82rem; color: var(--muted); border-left: 3px solid var(--highlight-border); padding-left: 8px; margin-bottom: 4px; }
+.thread.flash { outline: 2px solid var(--accent); }
+::highlight(plan-comment) { background-color: var(--highlight); }
+#select-trigger {
+  position: absolute; z-index: 10; background: var(--accent); color: #fff; border: none;
+  border-radius: 6px; padding: 4px 10px; font-size: 0.82rem; cursor: pointer;
+}
+#comment-popup {
+  position: absolute; z-index: 11; width: min(420px, calc(100vw - 32px)); background: var(--card-bg);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.25);
+}
+.popup-quote { font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; max-height: 4.5em; overflow: hidden; }
+.popup-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.stage-anchor-label { font-weight: 600; color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+
+@media (max-width: 480px) {
+  body { padding: 16px; }
+  table, pre { font-size: 0.85em; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="plan-title"></h1>
+  <div id="front-matter-strip"></div>
+</header>
+<nav id="tabs">
+  <button type="button" data-tab="requirements">Требования</button>
+  <button type="button" data-tab="contract">Контракт</button>
+  <button type="button" data-tab="implementation">Реализация</button>
+</nav>
+<main>
+  <section id="panel-requirements"></section>
+  <section id="panel-contract"></section>
+  <section id="panel-implementation"></section>
+</main>
+
+<button id="select-trigger" type="button" hidden>Комментировать</button>
+<div id="comment-popup" hidden>
+  <div class="popup-quote"></div>
+  <div class="comment-form">
+    <input type="text" placeholder="Имя (необязательно)">
+    <textarea placeholder="Комментарий"></textarea>
+    <div class="popup-actions">
+      <button type="button" class="popup-send">Отправить</button>
+      <button type="button" class="popup-cancel">Отмена</button>
+      <span class="copy-hint" hidden></span>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script type="application/json" id="plan-data">__PLAN_DATA__</script>
+<script>
+const STEP_HEADING_RE = /^S(\d+)\s*·/;
+const TAB_KEYS = ['requirements', 'contract', 'implementation'];
+const TAB_LABELS = { requirements: 'Требования', contract: 'Контракт', implementation: 'Реализация' };
+
+function loadStoredName() {
+  try { return localStorage.getItem('plan-viewer-name') || ''; } catch (e) { return ''; }
+}
+
+function storeName(name) {
+  try { localStorage.setItem('plan-viewer-name', name); } catch (e) {}
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    return;
+  }
+  fallbackCopy(text);
+}
+
+function parseComments(text) {
+  const topRe = /^- \[( |x)\] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+):\s?)?(.*)$/;
+  const replyRe = /^  - (?:@([^:]+):\s?)?(.*)$/;
+  const threads = [];
+  let current = null;
+  text.split(/\r?\n/).forEach(line => {
+    const top = topRe.exec(line);
+    if (top) {
+      current = {
+        resolved: top[1] === 'x', anchor: top[2], quote: top[3] || '',
+        author: (top[4] || '').trim(), text: top[5].trim(), replies: [],
+      };
+      threads.push(current);
+      return;
+    }
+    const reply = current && replyRe.exec(line);
+    if (reply) current.replies.push({ author: (reply[1] || '').trim(), text: reply[2].trim() });
+  });
+  return threads;
+}
+
+function splitH2Blocks(markdown) {
+  const blocks = [];
+  let current = null;
+  let inFence = false;
+  markdown.split('\n').forEach(line => {
+    if (line.trim().startsWith('```')) {
+      inFence = !inFence;
+      if (current) current.lines.push(line);
+      return;
+    }
+    if (!inFence) {
+      const m = /^## (.+)$/.exec(line);
+      if (m) {
+        current = { name: m[1].trim(), lines: [line] };
+        blocks.push(current);
+        return;
+      }
+    }
+    if (current) current.lines.push(line);
+  });
+  return blocks.map(b => ({ name: b.name, text: b.lines.join('\n') }));
+}
+
+function classifyTab(name) {
+  if (name === 'Requirements') return 'requirements';
+  if (name === 'Contract') return 'contract';
+  return 'implementation';
+}
+
+function processMermaid(container) {
+  container.querySelectorAll('pre > code.language-mermaid').forEach(code => {
+    const pre = document.createElement('pre');
+    pre.className = 'mermaid';
+    pre.textContent = code.textContent;
+    code.parentElement.replaceWith(pre);
+  });
+}
+
+function renderBlock(text) {
+  const el = document.createElement('div');
+  el.className = 'h2-block';
+  el.innerHTML = marked.parse(text);
+  processMermaid(el);
+  return el;
+}
+
+const QUOTE_LIMIT = 120;
+const highlightRanges = [];
+const threadRanges = new Map();
+
+function buildThreadItem(thread) {
+  const item = document.createElement('div');
+  item.className = 'thread' + (thread.resolved ? ' resolved' : '');
+  const head = document.createElement('div');
+  head.className = 'thread-head';
+  const stale = thread.quote && !threadRanges.has(thread);
+  head.textContent = [thread.author, thread.resolved ? 'решено' : '', stale ? 'цитата устарела' : '']
+    .filter(Boolean).join(' · ');
+  if (head.textContent) item.appendChild(head);
+  if (thread.quote) {
+    const quote = document.createElement('div');
+    quote.className = 'thread-quote';
+    quote.textContent = thread.quote;
+    item.appendChild(quote);
+  }
+  const body = document.createElement('div');
+  body.textContent = thread.text;
+  item.appendChild(body);
+  thread.replies.forEach(r => {
+    const reply = document.createElement('div');
+    reply.className = 'thread-reply';
+    reply.textContent = r.author ? `${r.author}: ${r.text}` : r.text;
+    item.appendChild(reply);
+  });
+  thread.element = item;
+  return item;
+}
+
+function anchorRegions(block) {
+  const regions = [];
+  const name = block.dataset.section;
+  regions.push({ anchor: name, head: block.querySelector('h2'), nodes: [block] });
+  if (name === 'Steps') regions.push(...stepRegions(block));
+  if (name === 'Stages') regions.push(...stageRegions(block));
+  return regions;
+}
+
+function stepRegions(block) {
+  const regions = [];
+  let current = null;
+  Array.from(block.children).forEach(child => {
+    const m = child.tagName === 'H3' && STEP_HEADING_RE.exec(child.textContent.trim());
+    if (m) {
+      current = { anchor: `S${m[1]}`, head: child, nodes: [child] };
+      regions.push(current);
+      return;
+    }
+    if (child.tagName === 'H3') current = null;
+    if (current) current.nodes.push(child);
+  });
+  return regions;
+}
+
+function stageRegions(block) {
+  const table = block.querySelector('table');
+  if (!table) return [];
+  return Array.from(table.querySelectorAll('tbody tr')).map(row => ({
+    anchor: `T${row.cells[0].textContent.trim()}`, head: table, nodes: [row],
+  }));
+}
+
+function textIndex(nodes) {
+  const entries = [];
+  let text = '';
+  nodes.forEach(root => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.parentElement.closest('.thread-list, .mermaid')) continue;
+      for (let i = 0; i < node.data.length; i += 1) {
+        const ch = /\s/.test(node.data[i]) ? ' ' : node.data[i];
+        if (ch === ' ' && text.endsWith(' ')) continue;
+        entries.push({ node, offset: i });
+        text += ch;
+      }
+    }
+  });
+  return { text, entries };
+}
+
+function normalizeQuote(quote) {
+  return quote.replace(/…$/, '').replace(/\s+/g, ' ').trim();
+}
+
+function findQuoteRange(region, quote) {
+  const needle = normalizeQuote(quote);
+  if (!needle) return null;
+  const { text, entries } = textIndex(region.nodes);
+  const start = text.indexOf(needle);
+  if (start < 0) return null;
+  const first = entries[start];
+  const last = entries[start + needle.length - 1];
+  const range = document.createRange();
+  range.setStart(first.node, first.offset);
+  range.setEnd(last.node, last.offset + 1);
+  return range;
+}
+
+function threadListFor(region) {
+  if (region.list) return region.list;
+  region.list = document.createElement('div');
+  region.list.className = 'thread-list';
+  if (region.anchor.startsWith('T')) {
+    const label = document.createElement('div');
+    label.className = 'stage-anchor-label';
+    label.textContent = region.anchor;
+    region.list.appendChild(label);
+  }
+  const after = region.head.tagName === 'TABLE' ? lastStageList(region.head) : region.head;
+  after.insertAdjacentElement('afterend', region.list);
+  return region.list;
+}
+
+function lastStageList(table) {
+  let el = table;
+  while (el.nextElementSibling && el.nextElementSibling.classList.contains('thread-list')) {
+    el = el.nextElementSibling;
+  }
+  return el;
+}
+
+function attachThread(region, thread) {
+  const range = thread.quote && findQuoteRange(region, thread.quote);
+  if (range) {
+    threadRanges.set(thread, range);
+    if (!thread.resolved) highlightRanges.push(range);
+  }
+  threadListFor(region).appendChild(buildThreadItem(thread));
+  refreshHighlights();
+}
+
+function refreshHighlights() {
+  if (!window.CSS || !CSS.highlights) return;
+  CSS.highlights.set('plan-comment', new Highlight(...highlightRanges));
+}
+
+function regionForNode(node, regionsByBlock) {
+  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  const block = el && el.closest('.h2-block');
+  if (!block) return null;
+  const regions = regionsByBlock.get(block) || [];
+  const specific = regions.slice(1).find(r => r.nodes.some(n => n.contains(el)));
+  return specific || regions[0];
+}
+
+function selectedQuote(range) {
+  const text = range.toString().replace(/\s+/g, ' ').replace(/[«»]/g, '"').trim();
+  return text.length > QUOTE_LIMIT ? text.slice(0, QUOTE_LIMIT) + '…' : text;
+}
+
+function commentLine(anchor, quote, author, text) {
+  const quotePart = quote ? `«${quote}» ` : '';
+  const authorPart = author ? `@${author}: ` : '';
+  return `- [ ] [${anchor}] ${quotePart}${authorPart}${text}`;
+}
+
+async function postComment(payload) {
+  try {
+    const response = await fetch('/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return response.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function setupSelectionComments(regionsByBlock) {
+  const trigger = document.getElementById('select-trigger');
+  const popup = document.getElementById('comment-popup');
+  const nameInput = popup.querySelector('input');
+  const textArea = popup.querySelector('textarea');
+  const quoteBox = popup.querySelector('.popup-quote');
+  const sendBtn = popup.querySelector('.popup-send');
+  const hint = popup.querySelector('.copy-hint');
+  let pending = null;
+
+  sendBtn.textContent = PLAN_SERVER ? 'Отправить' : 'Копировать';
+
+  document.addEventListener('mouseup', event => {
+    if (popup.contains(event.target) || trigger.contains(event.target)) return;
+    setTimeout(() => showTrigger(), 0);
+  });
+
+  function showTrigger() {
+    const selection = window.getSelection();
+    trigger.hidden = true;
+    if (!selection.rangeCount || selection.isCollapsed) return;
+    const range = selection.getRangeAt(0);
+    const region = regionForNode(range.startContainer, regionsByBlock);
+    const quote = selectedQuote(range);
+    if (!region || !quote) return;
+    pending = { region, quote };
+    const rect = range.getBoundingClientRect();
+    trigger.style.top = `${rect.bottom + window.scrollY + 6}px`;
+    trigger.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+    trigger.hidden = false;
+  }
+
+  trigger.addEventListener('click', () => {
+    trigger.hidden = true;
+    quoteBox.textContent = `${pending.region.anchor} · «${pending.quote}»`;
+    nameInput.value = loadStoredName();
+    textArea.value = '';
+    hint.hidden = true;
+    popup.style.top = trigger.style.top;
+    popup.style.left = trigger.style.left;
+    popup.hidden = false;
+    textArea.focus();
+  });
+
+  popup.querySelector('.popup-cancel').addEventListener('click', () => { popup.hidden = true; });
+
+  sendBtn.addEventListener('click', async () => {
+    const author = nameInput.value.trim();
+    const text = textArea.value.trim().replace(/\s*\n+\s*/g, ' ');
+    if (!text || !pending) return;
+    if (author) storeName(author);
+    const { region, quote } = pending;
+    hint.hidden = false;
+    if (!PLAN_SERVER) {
+      copyText(commentLine(region.anchor, quote, author, text));
+      hint.textContent = 'строка скопирована — вставь её в comments.md';
+      return;
+    }
+    const sent = await postComment({ anchor: region.anchor, quote, author, text });
+    if (!sent) {
+      hint.textContent = 'не удалось записать — сервер остановлен?';
+      return;
+    }
+    popup.hidden = true;
+    attachThread(region, { resolved: false, anchor: region.anchor, quote, author, text, replies: [] });
+    window.getSelection().removeAllRanges();
+  });
+}
+
+function setupHighlightClicks() {
+  document.addEventListener('click', event => {
+    if (window.getSelection().toString()) return;
+    const caret = caretRangeAt(event.clientX, event.clientY);
+    if (!caret) return;
+    for (const [thread, range] of threadRanges) {
+      if (!range.isPointInRange(caret.startContainer, caret.startOffset)) continue;
+      thread.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      thread.element.classList.add('flash');
+      setTimeout(() => thread.element.classList.remove('flash'), 1200);
+      return;
+    }
+  });
+}
+
+function caretRangeAt(x, y) {
+  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+  const pos = document.caretPositionFromPoint && document.caretPositionFromPoint(x, y);
+  if (!pos) return null;
+  const range = document.createRange();
+  range.setStart(pos.offsetNode, pos.offset);
+  return range;
+}
+
+function renderFrontMatter(fm) {
+  const strip = document.getElementById('front-matter-strip');
+  if (fm.lane) {
+    const badge = document.createElement('span');
+    badge.className = `lane-badge lane-${fm.lane}`;
+    badge.textContent = fm.lane;
+    strip.appendChild(badge);
+  }
+  ['base', 'branch', 'worktree'].forEach(key => {
+    if (!fm[key]) return;
+    const item = document.createElement('span');
+    item.className = 'fm-item';
+    item.textContent = `${key}: ${fm[key]}`;
+    strip.appendChild(item);
+  });
+}
+
+function activateTab(key) {
+  TAB_KEYS.forEach(k => {
+    const panel = document.getElementById(`panel-${k}`);
+    const btn = document.querySelector(`button[data-tab="${k}"]`);
+    panel.hidden = k !== key;
+    if (btn) btn.classList.toggle('active', k === key);
+  });
+  renderDiagrams(document.getElementById(`panel-${key}`));
+}
+
+let diagramCount = 0;
+let PLAN_SERVER = false;
+
+async function renderDiagrams(panel) {
+  for (const node of panel.querySelectorAll('.mermaid:not([data-processed])')) {
+    diagramCount += 1;
+    const { svg } = await mermaid.render(`plan-diagram-${diagramCount}`, node.textContent);
+    node.innerHTML = svg;
+    node.dataset.processed = 'true';
+  }
+}
+
+function setupTabs(counts) {
+  let firstVisible = null;
+  TAB_KEYS.forEach(key => {
+    const btn = document.querySelector(`button[data-tab="${key}"]`);
+    const panel = document.getElementById(`panel-${key}`);
+    const hasContent = panel.children.length > 0;
+    btn.hidden = !hasContent;
+    panel.hidden = true;
+    if (!hasContent) return;
+    btn.textContent = counts[key] ? `${TAB_LABELS[key]} (${counts[key]})` : TAB_LABELS[key];
+    btn.addEventListener('click', () => activateTab(key));
+    if (!firstVisible) firstVisible = key;
+  });
+  if (firstVisible) activateTab(firstVisible);
+}
+
+function main() {
+  const data = JSON.parse(document.getElementById('plan-data').textContent);
+  PLAN_SERVER = data.server === true;
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+  });
+
+  document.title = data.title || document.title;
+  document.getElementById('plan-title').textContent = data.title || '';
+  renderFrontMatter(data.frontMatter || {});
+
+  const panels = {
+    requirements: document.getElementById('panel-requirements'),
+    contract: document.getElementById('panel-contract'),
+    implementation: document.getElementById('panel-implementation'),
+  };
+  const counts = { requirements: 0, contract: 0, implementation: 0 };
+  const regionsByBlock = new Map();
+  const regionsByAnchor = new Map();
+
+  splitH2Blocks(data.markdown || '').forEach(block => {
+    const tab = classifyTab(block.name);
+    const el = renderBlock(block.text);
+    el.dataset.section = block.name;
+    el.dataset.tab = tab;
+    panels[tab].appendChild(el);
+    const regions = anchorRegions(el);
+    regionsByBlock.set(el, regions);
+    regions.forEach(r => regionsByAnchor.set(r.anchor, { region: r, tab }));
+  });
+
+  parseComments(data.comments || '').forEach(thread => {
+    const target = regionsByAnchor.get(thread.anchor);
+    if (!target) return;
+    attachThread(target.region, thread);
+    if (!thread.resolved) counts[target.tab] += 1;
+  });
+
+  setupTabs(counts);
+  setupSelectionComments(regionsByBlock);
+  setupHighlightClicks();
+}
+
+main();
+</script>
+</body>
+</html>

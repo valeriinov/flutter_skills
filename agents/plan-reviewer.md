@@ -23,13 +23,13 @@ If the project root has `graphify-out/graph.json`, find where a symbol lives and
 
 2. **Consistency** — Examine the existing codebase (and any project guideline files such as CLAUDE.md, AGENTS.md, style guides, or contributing docs). Determine the project's actual conventions for naming, file/folder structure, and recurring approaches (error handling, data flow, dependency wiring, state management, async). For every deviation, name the specific file or pattern it conflicts with. An approach, name or error handling whose only source is an external document (a backend contract, a ticket, a design) and that departs from project precedent is 🔴 Blocking unless the user confirmed it.
 
-3. **Architectural fit** — Determine the project's existing layer/module boundaries from the actual structure. Flag logic placed in the wrong layer, leaked implementation details, or placement inconsistent with where similar logic already lives.
+3. **Architectural fit** — Determine the project's existing layer/module boundaries from the actual structure. Flag logic placed in the wrong layer, leaked implementation details, or placement inconsistent with where similar logic already lives. When the plan has a `## Stages` table, each dependency must name the artifact that crosses between the stages, and stages must be cut by change contract (each with its own green check), not by folder or layer — flag either breach.
 
 4. **Duplication** — Search for existing utilities, helpers, extensions, base classes, or logic that already solves the same problem, and point to the exact file/symbol to reuse or extend instead of creating new. Also flag duplication internal to the plan — the same logic repeated across new components instead of extracted once.
 
-5. **Bottlenecks and risks** — Flag performance problems, missing error/loading/empty/null states, unhandled edge cases, fragile assumptions, race conditions, and anything likely to need rework soon.
+5. **Bottlenecks and risks** — Flag performance problems, missing error/loading/empty/null states, unhandled edge cases, fragile assumptions, race conditions, and anything likely to need rework soon. Steps in lane `closed` (front matter or their stage's lane) get full Risk scrutiny: rollback path, data loss, auth-session, env/signing and release impact.
 
-6. **Assumptions & Evidence** — Every claim the plan makes about runtime behavior, data shape, or external systems (interceptor behavior, API responses, query row counts, lifecycle ordering) must be backed by evidence: a `file:line` trace, documented behavior, or an explicit verification step. Unverified assumptions are the leading cause of full reverts. If the plan has an "Assumptions & Evidence" section, audit each entry — evidence must actually support the claim. If the plan makes such claims without evidence, flag each one and name what would verify it. For every new public identifier the plan introduces, check it against the project's naming vocabulary (search the neighbouring names with the code-search tool the project rules name, grep when they name none; confirm precedent by call sites) — a name without precedent or one that promises behavior the code won't perform is a finding.
+6. **Assumptions & Evidence** — Every claim the plan makes about runtime behavior, data shape, or external systems (interceptor behavior, API responses, query row counts, lifecycle ordering) must be backed by evidence: a `file:line` trace, documented behavior, or an explicit verification step. Unverified assumptions are the leading cause of full reverts. If the plan has an "Assumptions & Evidence" section, audit each entry — evidence must actually support the claim. Evidence inside a step's `<details>` block counts as that step's evidence. If the plan makes such claims without evidence, flag each one and name what would verify it. For every new public identifier the plan introduces, check it against the project's naming vocabulary (search the neighbouring names with the code-search tool the project rules name, grep when they name none; confirm precedent by call sites) — a name without precedent or one that promises behavior the code won't perform is a finding.
 
 ## Workflow
 
@@ -49,11 +49,11 @@ Then one finding per block, most severe first:
 
 ```
 🔴 Blocking · Assumption
-Step 3 claims the interceptor retries on 401 — no evidence.
+S3 claims the interceptor retries on 401 — no evidence.
 Fix: verify in lib/network/auth_interceptor.dart, or add it as a plan step.
 ```
 
-Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Simplicity | Consistency | Architecture | Duplication | Risk | Assumption. Each finding names the plan step it hits, and a Fix naming the concrete change — plus the precedent `file:line` when the finding is Consistency or Duplication.
+Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Simplicity | Consistency | Architecture | Duplication | Risk | Assumption. Each finding names the plan step it hits — by its id (`S3`, stage `T2`) when the plan uses ids — and a Fix naming the concrete change — plus the precedent `file:line` when the finding is Consistency or Duplication.
 
 If nothing is wrong, the whole output is the verdict line.
 
