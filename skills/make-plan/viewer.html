@@ -4,110 +4,215 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>План</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #6b7280;
-  --border: #e2e2e2;
-  --card-bg: #f7f7f8;
-  --code-bg: #f2f2f3;
-  --accent: #2563eb;
-  --lane-contained: #16a34a;
-  --lane-wide: #d97706;
-  --lane-closed: #dc2626;
-  --highlight: rgba(250, 204, 21, 0.35);
-  --highlight-border: #d97706;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14161a;
-    --fg: #e7e7ea;
-    --muted: #9aa0aa;
-    --border: #2a2d33;
-    --card-bg: #1c1f24;
-    --code-bg: #20242b;
-    --accent: #6ea8fe;
-    --lane-contained: #4ade80;
-    --lane-wide: #fbbf24;
-    --lane-closed: #f87171;
-    --highlight: rgba(250, 204, 21, 0.22);
-    --highlight-border: #fbbf24;
-  }
+  --ink: #151823;
+  --ink-2: #5B6173;
+  --ink-3: #3E4456;
+  --blue: #3F5FD8;
+  --blue-d: #2C47B3;
+  --blue-l: #5577EE;
+  --blue-bg: #E6ECFF;
+  --blue-bg2: #F7F9FF;
+  --blue-line: #C9D4FA;
+  --line: #E3E6EE;
+  --line-2: #D5D9E3;
+  --section: #F4F5F9;
+  --card: #FFFFFF;
+  --loop-line: #E08A4F;
+  --loop-ink: #9A4312;
+  --loop-ink-2: #C2571F;
+  --loop-bg: #FFF8F3;
+  --loop-bg2: #FCEBDD;
+  --badge: #E8EAF1;
+  --danger: #B42318;
+  --danger-bg: #FDE8E8;
+  --highlight: rgba(255, 214, 10, 0.35);
+  --highlight-border: #E0B400;
+  --node-new-bg: #DAFBE1;
+  --node-new-border: #1A7F37;
+  --node-new-fg: #116329;
+  --node-changed-bg: #DDF4FF;
+  --node-changed-border: #0969DA;
+  --node-changed-fg: #0550AE;
+  --node-same-bg: #F6F8FA;
+  --node-same-border: #D0D7DE;
+  --node-same-fg: #57606A;
+  --f-display: 'Unbounded', system-ui, sans-serif;
+  --f-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 16px;
+  background: var(--section);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
   line-height: 1.55;
+  max-width: 792px;
+  margin: 0 auto;
+  padding: 24px 16px 0;
+  overflow-wrap: anywhere;
 }
-h1, h2, h3 { line-height: 1.3; }
-h1 { font-size: 1.6rem; margin: 0 0 8px; }
-h2 { font-size: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-top: 28px; }
-h3 { font-size: 1.05rem; margin-top: 24px; }
-a { color: var(--accent); }
-code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.92em; }
-pre { background: var(--code-bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
-pre code { background: none; padding: 0; }
-table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92em; }
-th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
-th { background: var(--card-bg); }
-details { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
-summary { cursor: pointer; color: var(--muted); }
+h1, h2, h3 { line-height: 1.25; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 7.4vw, 40px); line-height: 1.15; margin: 0 0 14px; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(20px, 5.4vw, 24px); margin: 32px 0 14px; }
+h3 { font-family: var(--f-body); font-weight: 700; font-size: 18px; margin: 20px 0 8px; }
+a { color: var(--blue); }
+code { font-family: var(--f-mono); font-size: max(12px, .86em); background: var(--badge); color: var(--ink-3); padding: 1px 5px; border-radius: 6px; }
+pre { background: var(--section); border: 1px solid var(--line); padding: 12px 14px; border-radius: 12px; overflow-x: auto; }
+pre code { background: none; padding: 0; color: var(--ink); }
+table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+tbody tr:last-child td { border-bottom: none; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 0 16px; margin: 12px 0; }
+details[open] { border-color: var(--blue-line); padding-bottom: 12px; }
+summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 48px; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer; list-style: none;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-right: 4px;
+  border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2);
+  transform: rotate(45deg); transition: transform .15s;
+}
+details[open] > summary::after { transform: rotate(-135deg); }
 .mermaid { overflow-x: auto; text-align: center; }
 .mermaid svg { max-width: 100%; height: auto; }
 
-#front-matter-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.lane-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: #fff; }
-.lane-badge.lane-contained { background: var(--lane-contained); }
-.lane-badge.lane-wide { background: var(--lane-wide); }
-.lane-badge.lane-closed { background: var(--lane-closed); }
-.fm-item { font-size: 0.85rem; color: var(--muted); padding: 3px 0; }
+.eyebrow, .stage-anchor-label, .thread-head {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--blue);
+}
 
-#tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 16px; flex-wrap: wrap; }
+#front-matter-strip { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.lane-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.lane-badge.lane-contained { background: var(--blue-bg); color: var(--blue-d); }
+.lane-badge.lane-wide { background: var(--loop-bg2); color: var(--loop-ink-2); }
+.lane-badge.lane-closed { background: var(--danger-bg); color: var(--danger); }
+.fm-item { font-family: var(--f-mono); font-size: 12px; color: var(--ink-3); background: var(--badge); padding: 2px 8px; border-radius: 999px; }
+
+#tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 #tabs button {
-  background: none; border: none; padding: 8px 12px; font-size: 0.95rem;
-  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 999px;
+  min-height: 36px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--ink-3); cursor: pointer;
 }
-#tabs button.active { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+#tabs button:hover { background: var(--blue-bg2); }
+#tabs button.active { background: var(--blue-bg); border-color: var(--blue-l); color: var(--blue-d); }
 
-.comment-form { display: flex; flex-direction: column; gap: 6px; }
-.comment-form input, .comment-form textarea {
-  background: var(--bg); color: var(--fg); border: 1px solid var(--border);
-  border-radius: 6px; padding: 6px 8px; font: inherit; font-size: 0.9rem;
+.btn-primary, #review-bar button, #select-trigger {
+  min-height: 44px; padding: 10px 18px; border: none; border-radius: 14px;
+  background: var(--blue-l); color: #fff; font: inherit; font-weight: 700; cursor: pointer;
 }
-.comment-form textarea { min-height: 60px; resize: vertical; }
-.copy-hint { font-size: 0.82rem; color: var(--muted); }
+.btn-primary:hover, #review-bar button:hover, #select-trigger:hover { background: var(--blue); }
+.btn-primary:disabled, #review-bar button:disabled { opacity: .6; cursor: default; }
+.btn-ghost {
+  min-height: 44px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--card); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer;
+}
+.btn-ghost:hover { background: var(--blue-bg2); }
+.btn-sm { min-height: 36px; padding: 6px 16px; border-radius: 999px; font-size: 14px; }
+.btn-text {
+  min-height: 36px; padding: 6px 12px; border: none; border-radius: 999px; background: none;
+  color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-text:hover { background: var(--section); color: var(--ink); }
+.link-btn { border: none; background: none; padding: 0; color: var(--blue); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.link-btn:hover { color: var(--blue-d); text-decoration: underline; }
+.icon-btn {
+  width: 36px; height: 36px; padding: 0; flex-shrink: 0; display: inline-grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink-3); cursor: pointer;
+}
+.icon-btn:hover { background: var(--blue-bg2); border-color: var(--blue-line); color: var(--blue-d); }
+.icon-btn.recording { background: #FDE8E8; border-color: #F04438; color: #B42318; animation: rec-pulse 1.2s ease-in-out infinite; }
+.icon-btn.quiet { width: 30px; height: 30px; border-color: transparent; background: transparent; color: var(--ink-2); }
+.icon-btn.quiet:hover { background: var(--card); border-color: var(--line); color: var(--ink); }
+.icon-btn.quiet.danger:hover { color: #B42318; border-color: #F7C1C1; background: #FFF5F5; }
+@keyframes rec-pulse { 50% { box-shadow: 0 0 0 6px rgba(240, 68, 56, .15); } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.recording { animation: none; } }
+.form-footer { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.form-footer .spacer { flex: 1; }
 
-.thread-list { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
-.thread { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
-.thread.resolved { opacity: 0.55; }
-.thread-head { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
-.thread-reply { margin-top: 4px; padding-left: 10px; border-left: 2px solid var(--border); color: var(--muted); }
-.thread-quote { font-size: 0.82rem; color: var(--muted); border-left: 3px solid var(--highlight-border); padding-left: 8px; margin-bottom: 4px; }
-.thread.flash { outline: 2px solid var(--accent); }
+.comment-form { display: flex; flex-direction: column; gap: 8px; }
+.comment-form input, .comment-form textarea, .thread-edit textarea {
+  background: var(--card); color: var(--ink); border: 1px solid var(--line-2);
+  border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 15px; width: 100%;
+}
+.comment-form input:focus, .comment-form textarea:focus, .thread-edit textarea:focus { outline: 2px solid var(--blue-line); border-color: var(--blue-l); }
+.comment-form textarea, .thread-edit textarea { min-height: 72px; resize: vertical; }
+.copy-hint { font-size: 13px; color: var(--ink-2); }
+
+.thread-list { margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.thread { background: var(--blue-bg2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 15px; }
+.thread.resolved { opacity: 0.6; background: var(--section); }
+.thread-head { margin-bottom: 4px; }
+.thread-reply { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--line-2); color: var(--ink-2); }
+.thread-quote { font-size: 13px; color: var(--ink-2); border-left: 3px solid var(--highlight-border); padding-left: 8px; margin-bottom: 6px; }
+.thread.flash { outline: 2px solid var(--blue-l); }
+.thread { position: relative; }
+.thread.editable { padding-right: 76px; }
+.thread.editing { padding-right: 12px; }
+.thread-actions { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+.thread:hover .thread-actions, .thread:focus-within .thread-actions { opacity: 1; }
+@media (hover: none) { .thread-actions { opacity: 1; } }
+.thread-edit { display: flex; flex-direction: column; gap: 6px; }
+.thread-error { font-size: 13px; color: var(--danger); margin-top: 6px; }
+.thread-error:empty { display: none; }
 ::highlight(plan-comment) { background-color: var(--highlight); }
-#select-trigger {
-  position: absolute; z-index: 10; background: var(--accent); color: #fff; border: none;
-  border-radius: 6px; padding: 4px 10px; font-size: 0.82rem; cursor: pointer;
-}
+#select-trigger { position: absolute; z-index: 10; min-height: 36px; padding: 6px 14px; border-radius: 999px; font-size: 13px; box-shadow: 0 4px 14px rgba(21, 24, 35, .18); }
 #comment-popup {
-  position: absolute; z-index: 11; width: min(420px, calc(100vw - 32px)); background: var(--card-bg);
-  border: 1px solid var(--border); border-radius: 10px; padding: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.25);
+  position: absolute; z-index: 11; width: min(420px, calc(100vw - 32px)); background: var(--card);
+  border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: 0 12px 32px rgba(21, 24, 35, .16);
 }
-.popup-quote { font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; max-height: 4.5em; overflow: hidden; }
-.popup-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.stage-anchor-label { font-weight: 600; color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+.popup-quote { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; max-height: 4.5em; overflow: hidden; }
+.popup-signature input { margin-top: 6px; }
+.stage-anchor-label { margin-top: 6px; }
+.popup-interim { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
+.popup-interim.error { color: var(--danger); }
 
-@media (max-width: 480px) {
-  body { padding: 16px; }
-  table, pre { font-size: 0.85em; }
+.overview-diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; }
+.overview-diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; }
+.overview-diagram .node rect { rx: 10px; ry: 10px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-top: 10px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
+.legend .new::before { background: var(--node-new-bg); border-color: var(--node-new-border); }
+.legend .changed::before { background: var(--node-changed-bg); border-color: var(--node-changed-border); }
+.legend .same::before { background: var(--node-same-bg); border-color: var(--node-same-border); }
+main .h2-block { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px 16px; margin: 0 0 16px; }
+main .h2-block > h2:first-child { margin-top: 16px; }
+.point-card h3, .decision-card h3 { margin-top: 16px; }
+.point-check { color: var(--ink-2); }
+.decision-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.decision-options button {
+  text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line-2);
+  border-radius: 14px; min-height: 48px; padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer;
 }
+.decision-options button:hover { background: var(--blue-bg2); }
+.decision-options button.recommended { border-color: var(--blue-line); }
+.decision-options button.chosen { background: var(--blue-bg); border-color: var(--blue-l); color: var(--blue-d); box-shadow: inset 0 0 0 1px var(--blue-l); }
+.decision-recommendation { font-size: 14px; color: var(--ink-2); }
+#review-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 32px)); z-index: 5;
+  display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--line); border-bottom: none; border-radius: 16px 16px 0 0;
+  padding: 12px 16px; box-shadow: 0 -6px 20px rgba(21, 24, 35, .06);
+}
+body:has(#review-bar:not([hidden])) { padding-bottom: 96px; }
+.review-status { font-size: 14px; color: var(--ink-2); }
+#review-bar button.busy { display: inline-flex; align-items: center; gap: 10px; }
+#review-bar button.busy::before {
+  content: ''; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .45); border-top-color: #fff;
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -117,25 +222,37 @@ summary { cursor: pointer; color: var(--muted); }
 </header>
 <nav id="tabs">
   <button type="button" data-tab="requirements">Требования</button>
+  <button type="button" data-tab="overview">План</button>
   <button type="button" data-tab="contract">Контракт</button>
-  <button type="button" data-tab="implementation">Реализация</button>
+  <button type="button" data-tab="implementation">Для агента</button>
 </nav>
 <main>
   <section id="panel-requirements"></section>
+  <section id="panel-overview"></section>
   <section id="panel-contract"></section>
   <section id="panel-implementation"></section>
 </main>
+<div id="review-bar" hidden>
+  <span class="review-status"></span>
+  <button type="button">Отправить ревью</button>
+</div>
 
 <button id="select-trigger" type="button" hidden>Комментировать</button>
 <div id="comment-popup" hidden>
   <div class="popup-quote"></div>
   <div class="comment-form">
-    <input type="text" placeholder="Имя (необязательно)">
+    <div class="popup-signature">
+      <button type="button" class="link-btn popup-name-toggle">+ Подпись</button>
+      <input type="text" placeholder="Имя для подписи" hidden>
+    </div>
     <textarea placeholder="Комментарий"></textarea>
-    <div class="popup-actions">
-      <button type="button" class="popup-send">Отправить</button>
-      <button type="button" class="popup-cancel">Отмена</button>
+    <div class="popup-interim"></div>
+    <div class="form-footer">
+      <button type="button" class="icon-btn popup-mic" hidden></button>
       <span class="copy-hint" hidden></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn-text popup-cancel">Отмена</button>
+      <button type="button" class="btn-primary btn-sm popup-send">Отправить</button>
     </div>
   </div>
 </div>
@@ -144,8 +261,39 @@ summary { cursor: pointer; color: var(--muted); }
 <script type="application/json" id="plan-data">__PLAN_DATA__</script>
 <script>
 const STEP_HEADING_RE = /^S(\d+)\s*·/;
-const TAB_KEYS = ['requirements', 'contract', 'implementation'];
-const TAB_LABELS = { requirements: 'Требования', contract: 'Контракт', implementation: 'Реализация' };
+const TAB_KEYS = ['requirements', 'overview', 'contract', 'implementation'];
+const TAB_LABELS = { requirements: 'Требования', overview: 'План', contract: 'Контракт', implementation: 'Для агента' };
+const DEFAULT_TAB = 'overview';
+const WATCH_INTERVAL_MS = 1000;
+const AGENT_HINT_DELAY_MS = 60000;
+const AGENT_HINT = 'Агент пока не взялся за правки — напиши ему: доработай план по комментариям';
+const VIEW_KEY = 'plan-view:';
+const ICON_PATHS = {
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+};
+const MIC_HINT = 'Диктовать — речь распознаёт macOS на этом компьютере';
+const LANES = {
+  contained: { label: 'Небольшая правка', hint: 'Правка в одном месте; агент сам перечитал план по критериям ревьюера.' },
+  wide: { label: 'Несколько частей', hint: 'Затрагивает несколько частей; план проверил отдельный ревьюер.' },
+  closed: { label: 'Рискованная зона', hint: 'Авторизация, данные, подпись или релиз; ревьюер отдельно проверил откат и риски.' },
+};
+const CHOICE_RE = /^Выбран вариант (\S+)/;
+const SILENCE_LEVEL = 0.01;
+const STREAM_RATE = 16000;
+const STREAM_CHUNK_MS = 100;
+const PCM_TAP_WORKLET = `class PcmTap extends AudioWorkletProcessor {
+  process(inputs) {
+    const channel = inputs[0][0];
+    if (channel) this.port.postMessage(channel.slice(0));
+    return true;
+  }
+}
+registerProcessor('pcm-tap', PcmTap);`;
+const MIC_DENIED = 'Нет доступа к микрофону: разреши его для этой страницы (значок слева от адреса) и для браузера в Системных настройках → Конфиденциальность и безопасность → Микрофон.';
+const MIC_SILENT = 'Запись пустая — микрофон не передаёт звук. Проверь, что браузеру разрешён микрофон в Системных настройках → Конфиденциальность и безопасность → Микрофон и что в Системных настройках → Звук → Вход выбран нужный микрофон.';
 
 function loadStoredName() {
   try { return localStorage.getItem('plan-viewer-name') || ''; } catch (e) { return ''; }
@@ -184,7 +332,7 @@ function parseComments(text) {
     const top = topRe.exec(line);
     if (top) {
       current = {
-        resolved: top[1] === 'x', anchor: top[2], quote: top[3] || '',
+        line, resolved: top[1] === 'x', anchor: top[2], quote: top[3] || '',
         author: (top[4] || '').trim(), text: top[5].trim(), replies: [],
       };
       threads.push(current);
@@ -262,6 +410,7 @@ function buildThreadItem(thread) {
     item.appendChild(quote);
   }
   const body = document.createElement('div');
+  body.className = 'thread-body';
   body.textContent = thread.text;
   item.appendChild(body);
   thread.replies.forEach(r => {
@@ -271,7 +420,134 @@ function buildThreadItem(thread) {
     item.appendChild(reply);
   });
   thread.element = item;
+  if (PLAN_SERVER && !thread.resolved && thread.line) item.appendChild(threadActions(thread, body));
   return item;
+}
+
+function threadActions(thread, body) {
+  const wrap = document.createElement('div');
+  const actions = document.createElement('div');
+  actions.className = 'thread-actions';
+  const error = document.createElement('div');
+  error.className = 'thread-error';
+  const editBtn = iconButton('edit', 'Изменить', 'quiet');
+  const deleteBtn = iconButton('trash', 'Удалить', 'quiet danger');
+  thread.element.classList.add('editable');
+  editBtn.addEventListener('click', () => startEdit(thread, body, actions, error));
+  deleteBtn.addEventListener('click', () => deleteThread(thread, error));
+  if (!CHOICE_RE.test(thread.text)) actions.append(editBtn);
+  actions.append(deleteBtn);
+  wrap.append(actions, error);
+  return wrap;
+}
+
+function textButton(text, className) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.textContent = text;
+  return button;
+}
+
+function iconButton(icon, label, className) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `icon-btn ${className}`;
+  setIcon(button, icon, label);
+  return button;
+}
+
+function setIcon(button, icon, label) {
+  button.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[icon]}</svg>`;
+  button.setAttribute('aria-label', label);
+  button.title = label;
+}
+
+function onSubmitShortcut(textArea, submit) {
+  textArea.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) submit();
+  });
+}
+
+function startEdit(thread, body, actions, error) {
+  const editor = document.createElement('div');
+  editor.className = 'thread-edit';
+  const textArea = document.createElement('textarea');
+  textArea.value = thread.text;
+  const status = document.createElement('div');
+  status.className = 'popup-interim';
+  const footer = document.createElement('div');
+  footer.className = 'form-footer';
+  const micBtn = iconButton('mic', MIC_HINT, 'popup-mic');
+  micBtn.hidden = true;
+  const spacer = document.createElement('span');
+  spacer.className = 'spacer';
+  const cancelBtn = textButton('Отмена', 'btn-text');
+  const saveBtn = textButton('Сохранить', 'btn-primary btn-sm');
+  footer.append(micBtn, spacer, cancelBtn, saveBtn);
+  editor.append(textArea, status, footer);
+  const dictation = attachDictation(micBtn, textArea, status);
+  const finish = () => {
+    dictation.cancel();
+    editor.replaceWith(body);
+    actions.hidden = false;
+    thread.element.classList.remove('editing');
+  };
+  cancelBtn.addEventListener('click', finish);
+  const save = async () => {
+    await dictation.stop();
+    const text = textArea.value.trim().replace(/\s*\n+\s*/g, ' ');
+    if (!text) return;
+    const result = await postJson('/comments/edit', { line: thread.line, text });
+    if (!result || !result.line) {
+      error.textContent = 'не удалось сохранить — сервер остановлен?';
+      return;
+    }
+    error.textContent = '';
+    thread.text = text;
+    thread.line = result.line;
+    body.textContent = text;
+    finish();
+  };
+  saveBtn.addEventListener('click', save);
+  onSubmitShortcut(textArea, save);
+  error.textContent = '';
+  actions.hidden = true;
+  thread.element.classList.add('editing');
+  body.replaceWith(editor);
+  textArea.focus();
+}
+
+async function deleteThread(thread, error) {
+  const result = await postJson('/comments/delete', { line: thread.line });
+  if (!result) {
+    error.textContent = 'не удалось удалить — сервер остановлен?';
+    return;
+  }
+  thread.element.remove();
+  const range = threadRanges.get(thread);
+  if (range) {
+    highlightRanges.splice(highlightRanges.indexOf(range), 1);
+    threadRanges.delete(thread);
+    refreshHighlights();
+  }
+  const choice = CHOICE_RE.exec(thread.text);
+  if (choice && thread.region.chosen === choice[1]) markChosen(thread.region, null);
+  updateReviewCount(-1);
+}
+
+async function postJson(url, payload) {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (e) {
+    return null;
+  }
 }
 
 function anchorRegions(block) {
@@ -367,6 +643,7 @@ function lastStageList(table) {
 }
 
 function attachThread(region, thread) {
+  thread.region = region;
   const range = thread.quote && findQuoteRange(region, thread.quote);
   if (range) {
     threadRanges.set(thread, range);
@@ -379,6 +656,11 @@ function attachThread(region, thread) {
 function refreshHighlights() {
   if (!window.CSS || !CSS.highlights) return;
   CSS.highlights.set('plan-comment', new Highlight(...highlightRanges));
+}
+
+function isInThreadList(node) {
+  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  return Boolean(el && el.closest('.thread-list'));
 }
 
 function regionForNode(node, regionsByBlock) {
@@ -401,28 +683,26 @@ function commentLine(anchor, quote, author, text) {
   return `- [ ] [${anchor}] ${quotePart}${authorPart}${text}`;
 }
 
-async function postComment(payload) {
-  try {
-    const response = await fetch('/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    return response.ok;
-  } catch (e) {
-    return false;
-  }
-}
-
 function setupSelectionComments(regionsByBlock) {
   const trigger = document.getElementById('select-trigger');
   const popup = document.getElementById('comment-popup');
   const nameInput = popup.querySelector('input');
+  const nameToggle = popup.querySelector('.popup-name-toggle');
   const textArea = popup.querySelector('textarea');
   const quoteBox = popup.querySelector('.popup-quote');
   const sendBtn = popup.querySelector('.popup-send');
   const hint = popup.querySelector('.copy-hint');
   let pending = null;
+  const dictation = attachDictation(popup.querySelector('.popup-mic'), textArea, popup.querySelector('.popup-interim'));
+  const showNameToggle = () => {
+    const name = nameInput.value.trim();
+    nameToggle.textContent = nameInput.hidden ? (name ? `Подпись: ${name}` : '+ Подпись') : 'Свернуть подпись';
+  };
+  nameToggle.addEventListener('click', () => {
+    nameInput.hidden = !nameInput.hidden;
+    showNameToggle();
+    (nameInput.hidden ? textArea : nameInput).focus();
+  });
 
   sendBtn.textContent = PLAN_SERVER ? 'Отправить' : 'Копировать';
 
@@ -438,7 +718,7 @@ function setupSelectionComments(regionsByBlock) {
     const range = selection.getRangeAt(0);
     const region = regionForNode(range.startContainer, regionsByBlock);
     const quote = selectedQuote(range);
-    if (!region || !quote) return;
+    if (!region || !quote || isInThreadList(range.startContainer)) return;
     pending = { region, quote };
     const rect = range.getBoundingClientRect();
     trigger.style.top = `${rect.bottom + window.scrollY + 6}px`;
@@ -449,18 +729,26 @@ function setupSelectionComments(regionsByBlock) {
   trigger.addEventListener('click', () => {
     trigger.hidden = true;
     quoteBox.textContent = `${pending.region.anchor} · «${pending.quote}»`;
-    nameInput.value = loadStoredName();
+    const storedName = loadStoredName();
+    nameInput.value = storedName;
+    nameInput.hidden = true;
+    showNameToggle();
     textArea.value = '';
     hint.hidden = true;
     popup.style.top = trigger.style.top;
-    popup.style.left = trigger.style.left;
     popup.hidden = false;
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - popup.offsetWidth - 16;
+    popup.style.left = `${Math.max(window.scrollX + 16, Math.min(parseFloat(trigger.style.left), maxLeft))}px`;
     textArea.focus();
   });
 
-  popup.querySelector('.popup-cancel').addEventListener('click', () => { popup.hidden = true; });
+  popup.querySelector('.popup-cancel').addEventListener('click', () => {
+    dictation.cancel();
+    popup.hidden = true;
+  });
 
-  sendBtn.addEventListener('click', async () => {
+  const send = async () => {
+    await dictation.stop();
     const author = nameInput.value.trim();
     const text = textArea.value.trim().replace(/\s*\n+\s*/g, ' ');
     if (!text || !pending) return;
@@ -472,15 +760,333 @@ function setupSelectionComments(regionsByBlock) {
       hint.textContent = 'строка скопирована — вставь её в comments.md';
       return;
     }
-    const sent = await postComment({ anchor: region.anchor, quote, author, text });
+    const sent = await postJson('/comments', { anchor: region.anchor, quote, author, text });
     if (!sent) {
       hint.textContent = 'не удалось записать — сервер остановлен?';
       return;
     }
     popup.hidden = true;
-    attachThread(region, { resolved: false, anchor: region.anchor, quote, author, text, replies: [] });
+    attachThread(region, { line: sent.line, resolved: false, anchor: region.anchor, quote, author, text, replies: [] });
+    updateReviewCount(1);
     window.getSelection().removeAllRanges();
+  };
+  sendBtn.addEventListener('click', send);
+  onSubmitShortcut(textArea, send);
+}
+
+function attachDictation(micBtn, textArea, status) {
+  let capture = null;
+  const idle = { stop: async () => {}, cancel: () => {} };
+  if (!PLAN_SERVER || !navigator.mediaDevices || !window.AudioWorkletNode) return idle;
+  micBtn.hidden = false;
+  setIcon(micBtn, 'mic', MIC_HINT);
+  const showStatus = (text, isError) => {
+    status.textContent = text;
+    status.classList.toggle('error', isError);
+  };
+  const finish = async keepText => {
+    if (!capture) return;
+    const current = capture;
+    capture = null;
+    micBtn.classList.remove('recording');
+    setIcon(micBtn, 'mic', MIC_HINT);
+    textArea.readOnly = false;
+    if (!keepText) {
+      current.abort();
+      textArea.value = current.base;
+      showStatus('', false);
+      return;
+    }
+    showStatus('Дописываю…', false);
+    const result = await current.stop();
+    if (result.error) {
+      showStatus(result.error, true);
+      return;
+    }
+    textArea.value = joinDictated(current.base, result.text);
+    showStatus('', false);
+  };
+  micBtn.addEventListener('click', async () => {
+    if (capture) {
+      await finish(true);
+      return;
+    }
+    const base = textArea.value;
+    showStatus('Подключаю микрофон…', false);
+    try {
+      capture = await startCapture(text => { textArea.value = joinDictated(base, text); });
+    } catch (e) {
+      showStatus(e.message, true);
+      return;
+    }
+    capture.base = base;
+    textArea.readOnly = true;
+    micBtn.classList.add('recording');
+    setIcon(micBtn, 'stop', 'Остановить запись');
+    showStatus('Слушаю — текст печатается по ходу речи', false);
   });
+  return { stop: () => finish(true), cancel: () => finish(false) };
+}
+
+function joinDictated(base, text) {
+  return `${base} ${text}`.trim();
+}
+
+async function startCapture(onText) {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  } catch (e) {
+    throw new Error(MIC_DENIED);
+  }
+  const context = new AudioContext({ sampleRate: STREAM_RATE });
+  const moduleUrl = URL.createObjectURL(new Blob([PCM_TAP_WORKLET], { type: 'application/javascript' }));
+  await context.audioWorklet.addModule(moduleUrl);
+  URL.revokeObjectURL(moduleUrl);
+  const tap = new AudioWorkletNode(context, 'pcm-tap');
+  const mute = context.createGain();
+  mute.gain.value = 0;
+  context.createMediaStreamSource(stream).connect(tap);
+  tap.connect(mute).connect(context.destination);
+  const recorded = [];
+  let pending = [];
+  let sending = null;
+  tap.port.onmessage = event => {
+    recorded.push(event.data);
+    pending.push(event.data);
+  };
+  const started = await postJson('/dictation/start', {});
+  const sessionId = started && started.id;
+  let streamFailed = !sessionId;
+  const flush = async () => {
+    if (sending || streamFailed || !pending.length) return;
+    const body = toInt16(pending);
+    pending = [];
+    sending = fetch(`/dictation/${sessionId}/audio`, { method: 'POST', body })
+      .then(response => response.json())
+      .then(result => (result.error ? (streamFailed = true) : onText(result.text)))
+      .catch(() => { streamFailed = true; })
+      .finally(() => { sending = null; });
+    await sending;
+  };
+  const timer = setInterval(flush, STREAM_CHUNK_MS);
+  const release = () => {
+    clearInterval(timer);
+    stream.getTracks().forEach(track => track.stop());
+    context.close();
+  };
+  return {
+    async stop() {
+      clearInterval(timer);
+      await sending;
+      await flush();
+      release();
+      const samples = joinSamples(recorded);
+      const streamed = streamFailed ? null : await postJson(`/dictation/${sessionId}/stop`, {});
+      if (peakLevel(samples) < SILENCE_LEVEL) return { error: MIC_SILENT };
+      if (streamed && typeof streamed.text === 'string') return streamed;
+      return transcribeSamples(samples);
+    },
+    abort() {
+      release();
+      if (sessionId) postJson(`/dictation/${sessionId}/stop`, {});
+    },
+  };
+}
+
+function toInt16(chunks) {
+  const samples = joinSamples(chunks);
+  const pcm = new Int16Array(samples.length);
+  samples.forEach((sample, i) => { pcm[i] = Math.max(-1, Math.min(1, sample)) * 0x7fff; });
+  return pcm.buffer;
+}
+
+function joinSamples(chunks) {
+  const samples = new Float32Array(chunks.reduce((total, chunk) => total + chunk.length, 0));
+  let offset = 0;
+  chunks.forEach(chunk => {
+    samples.set(chunk, offset);
+    offset += chunk.length;
+  });
+  return samples;
+}
+
+async function transcribeSamples(samples) {
+  try {
+    const response = await fetch('/transcribe', { method: 'POST', body: encodeWav(samples, STREAM_RATE) });
+    return await response.json();
+  } catch (e) {
+    return { error: 'Не удалось распознать запись — сервер остановлен?' };
+  }
+}
+
+function peakLevel(samples) {
+  return samples.reduce((peak, sample) => Math.max(peak, Math.abs(sample)), 0);
+}
+
+function encodeWav(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const writeText = (offset, text) => [...text].forEach((ch, i) => view.setUint8(offset + i, ch.charCodeAt(0)));
+  writeText(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeText(8, 'WAVEfmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  samples.forEach((sample, i) => view.setInt16(44 + i * 2, Math.max(-1, Math.min(1, sample)) * 0x7fff, true));
+  return buffer;
+}
+
+let openComments = 0;
+let revising = false;
+let awaitingAgent = false;
+let submittedAt = 0;
+
+function updateReviewCount(delta) {
+  openComments += delta;
+  const button = document.querySelector('#review-bar button');
+  if (revising) return;
+  button.textContent = openComments > 0 ? `Отправить ревью (${openComments})` : 'Имплементировать план';
+}
+
+function setRevising(on) {
+  const bar = document.getElementById('review-bar');
+  const button = bar.querySelector('button');
+  const status = bar.querySelector('.review-status');
+  revising = on;
+  button.disabled = on;
+  button.classList.toggle('busy', on);
+  status.textContent = on ? 'Правки появляются на странице по мере работы агента' : '';
+  if (on) {
+    button.textContent = 'Агент правит план…';
+    return;
+  }
+  updateReviewCount(0);
+}
+
+function setupReviewBar(planId, version, initialRevising) {
+  if (!PLAN_SERVER) return;
+  const bar = document.getElementById('review-bar');
+  const button = bar.querySelector('button');
+  const status = bar.querySelector('.review-status');
+  bar.hidden = false;
+  setRevising(initialRevising);
+  setInterval(() => watchServer(planId, version, status), WATCH_INTERVAL_MS);
+  button.addEventListener('click', () => {
+    if (openComments > 0) {
+      submitReview(planId, button, status);
+      return;
+    }
+    startImplementation(button, status);
+  });
+}
+
+async function submitReview(planId, button, status) {
+  let submitted = null;
+  button.disabled = true;
+  try {
+    const response = await fetch('/submit', { method: 'POST' });
+    if (!response.ok) throw new Error(String(response.status));
+    submitted = await response.json();
+  } catch (e) {
+    status.textContent = 'не удалось отправить — сервер остановлен?';
+    return;
+  } finally {
+    button.disabled = false;
+  }
+  if (!submitted.open) {
+    button.hidden = true;
+    status.textContent = 'Ревью без комментариев — план принят';
+    return;
+  }
+  awaitingAgent = true;
+  submittedAt = Date.now();
+  setRevising(true);
+}
+
+async function startImplementation(button, status) {
+  let response;
+  let body = {};
+  button.disabled = true;
+  try {
+    response = await fetch('/implement', { method: 'POST' });
+    body = await response.json().catch(() => ({}));
+  } catch (e) {
+    status.textContent = 'не удалось запустить — сервер остановлен?';
+    return;
+  } finally {
+    button.disabled = false;
+  }
+  if (response.ok) {
+    button.hidden = true;
+    status.textContent = 'Имплементация запущена в новом окне Ghostty';
+    return;
+  }
+  if (response.status === 409) {
+    status.textContent = `Есть открытые комментарии (${body.open})`;
+    openComments = body.open;
+    updateReviewCount(0);
+    return;
+  }
+  status.textContent = body.error || 'не удалось запустить имплементацию';
+}
+
+async function watchServer(planId, version, status) {
+  let alive;
+  try {
+    const response = await fetch('/alive', { cache: 'no-store' });
+    alive = await response.json();
+  } catch (e) {
+    if (awaitingAgent && Date.now() - submittedAt > AGENT_HINT_DELAY_MS) status.textContent = AGENT_HINT;
+    return;
+  }
+  if (alive.plan !== planId) return;
+  if (alive.version !== version) {
+    await reloadWhenRenderable(planId);
+    return;
+  }
+  if (awaitingAgent && !alive.revising) return;
+  awaitingAgent = false;
+  if (alive.revising !== revising) setRevising(alive.revising);
+}
+
+async function reloadWhenRenderable(planId) {
+  if (isUserTyping()) return;
+  try {
+    const response = await fetch('/', { cache: 'no-store' });
+    if (!response.ok) return;
+  } catch (e) {
+    return;
+  }
+  saveView(planId);
+  location.reload();
+}
+
+function isUserTyping() {
+  return !document.getElementById('comment-popup').hidden || document.querySelector('.thread-edit') !== null;
+}
+
+function saveView(planId) {
+  try {
+    sessionStorage.setItem(VIEW_KEY + planId, JSON.stringify({ tab: currentTab, scrollY: window.scrollY }));
+  } catch (e) {}
+}
+
+function takeSavedView(planId) {
+  try {
+    const view = JSON.parse(sessionStorage.getItem(VIEW_KEY + planId) || 'null');
+    sessionStorage.removeItem(VIEW_KEY + planId);
+    return view;
+  } catch (e) {
+    return null;
+  }
 }
 
 function setupHighlightClicks() {
@@ -490,6 +1096,8 @@ function setupHighlightClicks() {
     if (!caret) return;
     for (const [thread, range] of threadRanges) {
       if (!range.isPointInRange(caret.startContainer, caret.startOffset)) continue;
+      const details = thread.element.closest('details');
+      if (details) details.open = true;
       thread.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       thread.element.classList.add('flash');
       setTimeout(() => thread.element.classList.remove('flash'), 1200);
@@ -511,8 +1119,10 @@ function renderFrontMatter(fm) {
   const strip = document.getElementById('front-matter-strip');
   if (fm.lane) {
     const badge = document.createElement('span');
+    const lane = LANES[fm.lane] || { label: fm.lane, hint: '' };
     badge.className = `lane-badge lane-${fm.lane}`;
-    badge.textContent = fm.lane;
+    badge.textContent = lane.label;
+    badge.title = lane.hint;
     strip.appendChild(badge);
   }
   ['base', 'branch', 'worktree'].forEach(key => {
@@ -525,19 +1135,22 @@ function renderFrontMatter(fm) {
 }
 
 function activateTab(key) {
+  currentTab = key;
   TAB_KEYS.forEach(k => {
     const panel = document.getElementById(`panel-${k}`);
     const btn = document.querySelector(`button[data-tab="${k}"]`);
     panel.hidden = k !== key;
     if (btn) btn.classList.toggle('active', k === key);
   });
-  renderDiagrams(document.getElementById(`panel-${key}`));
+  return renderDiagrams(document.getElementById(`panel-${key}`));
 }
 
 let diagramCount = 0;
 let PLAN_SERVER = false;
+let currentTab = DEFAULT_TAB;
 
 async function renderDiagrams(panel) {
+  await document.fonts.ready;
   for (const node of panel.querySelectorAll('.mermaid:not([data-processed])')) {
     diagramCount += 1;
     const { svg } = await mermaid.render(`plan-diagram-${diagramCount}`, node.textContent);
@@ -546,7 +1159,147 @@ async function renderDiagrams(panel) {
   }
 }
 
-function setupTabs(counts) {
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function mermaidConfig() {
+  return {
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      background: cssVar('--card'),
+      primaryColor: cssVar('--section'),
+      primaryTextColor: cssVar('--ink'),
+      primaryBorderColor: cssVar('--line-2'),
+      lineColor: cssVar('--ink-2'),
+      textColor: cssVar('--ink'),
+      edgeLabelBackground: cssVar('--card'),
+      fontFamily: cssVar('--f-body'),
+      fontSize: '15px',
+    },
+    flowchart: { curve: 'basis', nodeSpacing: 40, rankSpacing: 55, padding: 14, htmlLabels: true, useMaxWidth: true },
+  };
+}
+
+function diagramSource(source) {
+  const classDefs = ['new', 'changed', 'same'].map(name =>
+    `  classDef ${name} fill:${cssVar(`--node-${name}-bg`)},stroke:${cssVar(`--node-${name}-border`)},` +
+    `color:${cssVar(`--node-${name}-fg`)},stroke-width:1.5px`);
+  return [source, ...classDefs].join('\n');
+}
+
+function renderOverview(brief, stepNodes, panel) {
+  const blocks = [];
+  if (brief.diagram) panel.appendChild(diagramBlock(brief.diagram));
+  if (brief.points.length) panel.appendChild(sectionHeading('Что сделаем'));
+  brief.points.forEach(point => {
+    const card = pointCard(point, stepNodes);
+    panel.appendChild(card.el);
+    blocks.push(card);
+  });
+  if (brief.decisions.length) panel.appendChild(sectionHeading('Решения'));
+  brief.decisions.forEach(decision => {
+    const card = decisionCard(decision);
+    panel.appendChild(card.el);
+    blocks.push(card);
+  });
+  return blocks;
+}
+
+function sectionHeading(text) {
+  const h2 = document.createElement('h2');
+  h2.textContent = text;
+  return h2;
+}
+
+function diagramBlock(source) {
+  const wrap = document.createElement('div');
+  const box = document.createElement('div');
+  box.className = 'overview-diagram';
+  const pre = document.createElement('pre');
+  pre.className = 'mermaid';
+  pre.textContent = diagramSource(source);
+  box.appendChild(pre);
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.innerHTML = '<span class="new">новое</span><span class="changed">меняется</span><span class="same">без изменений</span>';
+  wrap.append(sectionHeading('Схема'), box, legend);
+  return wrap;
+}
+
+function pointCard(point, stepNodes) {
+  const el = document.createElement('div');
+  el.className = 'h2-block point-card';
+  const title = document.createElement('h3');
+  title.textContent = `${point.n}. ${point.title}`;
+  const text = document.createElement('p');
+  text.innerHTML = marked.parseInline(point.text);
+  const check = document.createElement('p');
+  check.className = 'point-check';
+  check.innerHTML = `Проверим: ${marked.parseInline(point.check)}`;
+  el.append(title, text, check);
+  const stepRegionsInCard = point.steps.map(id => stepNodes.get(`S${id}`)).filter(Boolean);
+  if (stepRegionsInCard.length) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = 'Технические детали';
+    details.appendChild(summary);
+    stepRegionsInCard.forEach(region => details.append(...region.nodes));
+    el.appendChild(details);
+  }
+  const anchor = `Пункт ${point.n}`;
+  return { el, regions: [{ anchor, head: title, nodes: [el] }, ...stepRegionsInCard] };
+}
+
+function decisionCard(decision) {
+  const el = document.createElement('div');
+  el.className = 'h2-block decision-card';
+  const title = document.createElement('h3');
+  title.textContent = `Вопрос ${decision.n} · ${decision.question}`;
+  const options = document.createElement('div');
+  options.className = 'decision-options';
+  const recommended = decision.recommendation.split(/\s/)[0];
+  const anchor = `Вопрос ${decision.n}`;
+  const region = { anchor, head: title, nodes: [el], buttons: new Map() };
+  decision.options.forEach(option => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = `${option.key} · ${option.text}`;
+    if (option.key === recommended) button.classList.add('recommended');
+    button.addEventListener('click', () => chooseOption(region, option.key));
+    region.buttons.set(option.key, button);
+    options.appendChild(button);
+  });
+  const recommendation = document.createElement('div');
+  recommendation.className = 'decision-recommendation';
+  recommendation.textContent = `Рекомендую: ${decision.recommendation}`;
+  el.append(title, options, recommendation);
+  return { el, regions: [region] };
+}
+
+function markChosen(region, key) {
+  region.chosen = key;
+  region.buttons.forEach((button, optionKey) => button.classList.toggle('chosen', optionKey === key));
+}
+
+async function chooseOption(region, key) {
+  if (region.chosen === key) return;
+  const author = loadStoredName();
+  const text = `Выбран вариант ${key}`;
+  if (!PLAN_SERVER) {
+    copyText(commentLine(region.anchor, '', author, text));
+    markChosen(region, key);
+    return;
+  }
+  const sent = await postJson('/comments', { anchor: region.anchor, quote: '', author, text });
+  if (!sent) return;
+  markChosen(region, key);
+  attachThread(region, { line: sent.line, resolved: false, anchor: region.anchor, quote: '', author, text, replies: [] });
+  updateReviewCount(1);
+}
+
+function setupTabs(counts, view) {
   let firstVisible = null;
   TAB_KEYS.forEach(key => {
     const btn = document.querySelector(`button[data-tab="${key}"]`);
@@ -559,51 +1312,71 @@ function setupTabs(counts) {
     btn.addEventListener('click', () => activateTab(key));
     if (!firstVisible) firstVisible = key;
   });
-  if (firstVisible) activateTab(firstVisible);
+  const hasPanel = key => TAB_KEYS.includes(key) && document.getElementById(`panel-${key}`).children.length > 0;
+  const preferred = view && hasPanel(view.tab) ? view.tab : DEFAULT_TAB;
+  const startTab = hasPanel(preferred) ? preferred : firstVisible;
+  if (!startTab) return;
+  activateTab(startTab).then(() => {
+    if (view) window.scrollTo(0, view.scrollY);
+  });
 }
 
 function main() {
   const data = JSON.parse(document.getElementById('plan-data').textContent);
   PLAN_SERVER = data.server === true;
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
-  });
+  mermaid.initialize(mermaidConfig());
 
   document.title = data.title || document.title;
   document.getElementById('plan-title').textContent = data.title || '';
   renderFrontMatter(data.frontMatter || {});
 
   const panels = {
+    overview: document.getElementById('panel-overview'),
     requirements: document.getElementById('panel-requirements'),
     contract: document.getElementById('panel-contract'),
     implementation: document.getElementById('panel-implementation'),
   };
-  const counts = { requirements: 0, contract: 0, implementation: 0 };
+  const counts = { overview: 0, requirements: 0, contract: 0, implementation: 0 };
   const regionsByBlock = new Map();
   const regionsByAnchor = new Map();
+  const register = (el, regions, tab) => {
+    regionsByBlock.set(el, regions);
+    regions.forEach(r => regionsByAnchor.set(r.anchor, { region: r, tab }));
+  };
 
-  splitH2Blocks(data.markdown || '').forEach(block => {
+  const planBlocks = splitH2Blocks(data.markdown || '').map(block => {
     const tab = classifyTab(block.name);
     const el = renderBlock(block.text);
     el.dataset.section = block.name;
     el.dataset.tab = tab;
     panels[tab].appendChild(el);
-    const regions = anchorRegions(el);
-    regionsByBlock.set(el, regions);
-    regions.forEach(r => regionsByAnchor.set(r.anchor, { region: r, tab }));
+    return el;
   });
 
+  if (data.brief) {
+    const stepsBlock = planBlocks.find(el => el.dataset.section === 'Steps');
+    const stepNodes = new Map((stepsBlock ? stepRegions(stepsBlock) : []).map(r => [r.anchor, r]));
+    renderOverview(data.brief, stepNodes, panels.overview).forEach(card => register(card.el, card.regions, 'overview'));
+    if (stepsBlock && !stepsBlock.querySelector('h3')) stepsBlock.remove();
+  }
+
+  planBlocks.filter(el => el.isConnected).forEach(el => register(el, anchorRegions(el), el.dataset.tab));
+
   parseComments(data.comments || '').forEach(thread => {
+    if (!thread.resolved) openComments += 1;
     const target = regionsByAnchor.get(thread.anchor);
     if (!target) return;
     attachThread(target.region, thread);
-    if (!thread.resolved) counts[target.tab] += 1;
+    const choice = target.region.buttons && CHOICE_RE.exec(thread.text);
+    if (choice) markChosen(target.region, choice[1]);
+    if (thread.resolved) return;
+    counts[target.tab] += 1;
   });
 
-  setupTabs(counts);
+  setupTabs(counts, PLAN_SERVER ? takeSavedView(data.planId) : null);
   setupSelectionComments(regionsByBlock);
   setupHighlightClicks();
+  setupReviewBar(data.planId, data.version, data.revising === true);
 }
 
 main();

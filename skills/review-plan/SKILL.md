@@ -8,7 +8,7 @@ The path you were given is a plan file or a plan folder `plan/<name>/` — then
 review its `plan.md`; ask if none is given. First run
 `python3 ~/.claude/skills/make-plan/plan_tool.py check <plan.md>`; relay each
 failure it prints as a 🔴 Blocking finding. Run the `plan-reviewer` agent on the
-plan file; pass both the file path and its content. The agent is listed
+plan file and, when it exists, the `brief.md` beside it; pass each path and its content. The agent is listed
 as `<plugin>:plan-reviewer` when installed as a plugin; if no such agent is
 available, do the review inline by the same criteria and say so. Append to its
 task: audit the plan's assumptions —
