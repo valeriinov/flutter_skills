@@ -45,11 +45,12 @@ Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap); nev
    browser on port 8790, every comment and option pick is appended to the comments file at once,
    and "Отправить ревью" stops the server with `review submitted: <n> open comments`. Open
    comments can be edited or deleted on the page before submitting.
-   - No open comments → the button becomes "Имплементировать план": it opens a new Ghostty window
-     with a separate Claude Code session running `implement-plan` with subagents, and `serve`
-     exits with `implementation started` → stop and report that implementation runs in that
-     window; no Revise. macOS with Ghostty only — elsewhere the page shows the error and the
-     user starts `implement-plan` themselves.
+   - No open comments → the button becomes "Имплементировать план": it opens one new terminal
+     window — Ghostty (1.3+, via its AppleScript) when installed, Terminal.app otherwise — with a
+     separate Claude Code session running `implement-plan` with subagents, and `serve` exits with
+     `implementation started` → stop and report that implementation runs in that window; no
+     Revise. macOS only — elsewhere the page shows the error and the user starts
+     `implement-plan` themselves.
    - n > 0 → Revise mode. The page shows "Агент правит план…" and reloads on every change to
      the plan, brief or comments file while `serve` runs.
    - n = 0, or the process ends any other way → stop and report.

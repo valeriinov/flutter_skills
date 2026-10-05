@@ -1026,7 +1026,7 @@ async function startImplementation(button, status) {
   }
   if (response.ok) {
     button.hidden = true;
-    status.textContent = 'Имплементация запущена в новом окне Ghostty';
+    status.textContent = 'Имплементация запущена в новом окне терминала';
     return;
   }
   if (response.status === 409) {

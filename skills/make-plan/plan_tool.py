@@ -31,6 +31,26 @@ ANCHOR_RE = re.compile(r'^[\w &-]{1,60}$')
 COMMENT_RE = re.compile(r'^- \[ \] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+): )?(.*)$')
 OPEN_PREFIX = '- [ ] '
 IMPLEMENT_PROMPT = 'имплементируй план {} используй субагентов'
+GHOSTTY_SCRIPT = '''on run argv
+    tell application "Ghostty"
+        set config to new surface configuration
+        set initial working directory of config to item 1 of argv
+        set command of config to item 2 of argv
+        new window with configuration config
+        activate
+    end tell
+end run'''
+TERMINAL_SCRIPT = '''on run argv
+    set wasRunning to application "Terminal" is running
+    tell application "Terminal"
+        if wasRunning then
+            do script item 1 of argv
+        else
+            do script item 1 of argv in window 1
+        end if
+        activate
+    end tell
+end run'''
 DEFAULT_PORT = 8790
 COMMENTS_LOCK = threading.Lock()
 IMPLEMENT_LOCK = threading.Lock()
@@ -546,20 +566,29 @@ def find_open_comment(plan_path, payload):
         return comments_path, lines, None
     return comments_path, lines, lines.index(target)
 
-def implement_command(plan_path):
+def implement_session(plan_path):
     plan_dir = plan_path.resolve().parent
     in_plan_folder = plan_dir.parent.name == 'plan'
     root = plan_dir.parent.parent if in_plan_folder else plan_dir
     target = plan_dir.relative_to(root) if in_plan_folder else plan_path.name
-    session = f'claude {shlex.quote(IMPLEMENT_PROMPT.format(target))}; exec /bin/zsh -il'
-    return ['open', '-na', 'Ghostty', '--args', f'--working-directory={root}', '-e', '/bin/zsh', '-ilc', session]
+    return root, f'claude {shlex.quote(IMPLEMENT_PROMPT.format(target))}'
 
 def launch_implement(plan_path):
+    root, session = implement_session(plan_path)
+    if launch_ghostty(root, session):
+        return None
+    if run_osascript(TERMINAL_SCRIPT, f'cd {shlex.quote(str(root))} && {session}'):
+        return None
+    return 'не удалось открыть терминал — запусти implement-plan сам'
+
+def launch_ghostty(root, session):
     if subprocess.run(['open', '-Ra', 'Ghostty'], capture_output=True).returncode != 0:
-        return 'Ghostty не найден — запусти implement-plan сам'
-    if subprocess.run(implement_command(plan_path), capture_output=True).returncode != 0:
-        return 'не удалось открыть Ghostty'
-    return None
+        return False
+    command = shlex.join(['/bin/zsh', '-ilc', f'{session}; exec /bin/zsh -il'])
+    return run_osascript(GHOSTTY_SCRIPT, str(root), command)
+
+def run_osascript(script, *args):
+    return subprocess.run(['osascript', '-e', script, *args], capture_output=True).returncode == 0
 
 def make_handler(plan_path):
     class PlanHandler(BaseHTTPRequestHandler):
