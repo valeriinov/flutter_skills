@@ -76,6 +76,7 @@ EDGE_RE = re.compile(r'^(\w+)\s*-->\s*(?:\|([^|]*)\|\s*)?(\w+)$')
 NODE_CLASSES = {'new', 'changed', 'same'}
 NAME_SPAN_RE = re.compile(r'^[\w.-]+$')
 LOCATION_RE = re.compile(r'\w:\d+')
+CITATION_RE = re.compile(r'(?<![\w./:~-])([\w.-][\w./-]*):(\d+)(?:-(\d+))?')
 VISIBLE_STEP_RE = re.compile(r'\bS\d+\b')
 MAX_NODES = 8
 MAX_EDGES = 10
@@ -210,6 +211,30 @@ def path_problems(uf, root):
                     problems.append((ln, f"path does not exist under root: {path_str}"))
     return problems
 
+def citation_roots(root, front_matter):
+    if not (root / '.git').exists():
+        return []
+    worktree = root / front_matter.get('worktree', '')
+    if front_matter.get('worktree') and worktree.is_dir():
+        return [worktree, root]
+    return [root]
+
+def citation_problems(uf, roots):
+    problems = []
+    for ln, line in uf:
+        for m in CITATION_RE.finditer(line):
+            path_str, last = m.group(1), int(m.group(3) or m.group(2))
+            if not any((r / path_str.split('/')[0]).exists() for r in roots):
+                continue
+            target = next((r / path_str for r in roots if (r / path_str).is_file()), None)
+            if target is None:
+                problems.append((ln, f"cited file does not exist under root: {path_str} (a new file has no lines to cite)"))
+                continue
+            count = len(target.read_text(encoding='utf-8', errors='replace').splitlines())
+            if last > count:
+                problems.append((ln, f"citation {m.group(0)} past end of {path_str} ({count} lines)"))
+    return problems
+
 def assumption_problems(section_lines):
     problems = []
     bullets = []
@@ -262,6 +287,7 @@ def check_plan(plan_path, root):
     problems += step_verify_problems(steps, uf)
     problems += sequence_problems(steps)
     problems += path_problems(uf, root)
+    problems += citation_problems(uf, citation_roots(root, front_matter))
     if 'Assumptions & Evidence' in sections:
         problems += assumption_problems(sections['Assumptions & Evidence'])
     problems += stage_problems(uf, step_ids)

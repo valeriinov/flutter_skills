@@ -24,7 +24,8 @@ description: Implement a plan file step by step, verify, then review the diff. U
    `base` sha with the worktree/branch HEAD; flag drift and divergence.
 4. Implement exactly what the plan says — no scope creep.
 5. Verify: if the project has a lint skill use it, otherwise run
-   format + analyze + tests for the stack. Fix until clean.
+   format + analyze + tests for the stack. Fix until clean. Then reread every
+   comment line the diff adds and delete each one the comment rule does not allow.
 6. Run the `code-reviewer` agent on the diff (listed as `<plugin>:code-reviewer`
    when installed as a plugin; if no such agent is available, do the review
    inline by the same criteria and say so), passing the plan file path and

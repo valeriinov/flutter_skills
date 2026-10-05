@@ -36,8 +36,9 @@ Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap); nev
 5. **Gate** — `python3 plan_tool.py check <plan.md>` must exit 0; it checks `brief.md` too. Fix each reported line, rerun;
    after 3 failed runs stop and report the remaining violations.
 6. **Review**, depth by lane (missing → wide): contained → inline, one pass by the plan-reviewer criteria;
-   wide/closed → the review agent in a fresh context (pass both paths + contents). Verify each finding
-   against the plan and the code; drop the ones that do not hold.
+   wide/closed → the review agent in a fresh context (pass both paths + contents, plus the task text
+   and `## Requirements` when extracted). Verify each finding against the plan and the code; drop
+   the ones that do not hold.
 7. **Correct** — apply Blocking/Significant fixes to the flagged steps only, one round, then rerun
    the gate. Minor findings go to the report for the user to decide.
 8. **Render** — `python3 plan_tool.py render <plan.md>`, then start
@@ -72,7 +73,9 @@ Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap); nev
   client does it: steps follow the scout's precedent; names and error handling are the project's.
   Each departure is an open question with two options — the project's way / the input's.
 - An assumption without evidence (`file:line` or `verify:`) is a blocker: verify it now or mark
-  the plan blocked on it. `## Naming` only for new public identifiers, 1–2 precedents each.
+  the plan blocked on it. A claim about a package or SDK API's behaviour cites the line in
+  that package's own source (pub cache, package sources), never the project's call site or memory
+  of the API. `## Naming` only for new public identifiers, 1–2 precedents each.
 - Step: `### S<n> · <what changes and why, plain words>`, then one agent line
   `` `path/or/Symbol` — <exact change> → verify: <check> ``, then
   `<details><summary>Evidence</summary>` with the `file:line` trail. Ceiling ~12 step headings;
