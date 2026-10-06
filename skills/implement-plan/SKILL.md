@@ -23,15 +23,24 @@ description: Implement a plan file step by step, verify, then review the diff. U
 3. Before editing, verify the plan's file references still exist and compare the
    `base` sha with the worktree/branch HEAD; flag drift and divergence.
 4. Implement exactly what the plan says — no scope creep.
-5. Verify: if the project has a lint skill use it, otherwise run
+5. With subagents (the request says «используй субагентов»; `make-plan` sends
+   it too): the main session splits the steps into at most 4 chunks by change
+   contract — steps editing the same files go together, a stage is one chunk —
+   and spawns a fresh worker per chunk with the plan path, the chunk's step ids
+   and their `verify`, demanding a reply of at most 15 lines: what changed, the
+   verify result, deviations. A step with a device run longer than a few
+   minutes is launched by the main session in the background with its report
+   written to a file; reading the report and the fixes go to the next fresh
+   worker.
+6. Verify: if the project has a lint skill use it, otherwise run
    format + analyze + tests for the stack. Fix until clean. Then reread every
    comment line the diff adds and delete each one the comment rule does not allow.
-6. Run the `code-reviewer` agent on the diff (listed as `<plugin>:code-reviewer`
+7. Run the `code-reviewer` agent on the diff (listed as `<plugin>:code-reviewer`
    when installed as a plugin; if no such agent is available, do the review
    inline by the same criteria and say so), passing the plan file path and
    content — ask it to check plan compliance (every planned step implemented,
    nothing beyond plan scope) alongside its normal criteria. Fix Blocking
    findings; list the rest. When running a stage, set its status cell to `done`.
-7. Report in Russian, one line each: что теперь работает, результат проверки,
+8. Report in Russian, one line each: что теперь работает, результат проверки,
    вердикт ревьюера, отклонения от плана (только если есть). End with a single
    offer to commit — never commit without confirmation.
