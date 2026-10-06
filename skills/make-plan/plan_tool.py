@@ -614,7 +614,10 @@ def launch_ghostty(root, session):
     return run_osascript(GHOSTTY_SCRIPT, str(root), command)
 
 def run_osascript(script, *args):
-    return subprocess.run(['osascript', '-e', script, *args], capture_output=True).returncode == 0
+    # A cold-started terminal app inherits this env; Claude's CLAUDE_CODE_CHILD_SESSION marker
+    # would then disable transcript saving for every claude launched in it.
+    env = {key: value for key, value in os.environ.items() if not key.startswith('CLAUDE')}
+    return subprocess.run(['osascript', '-e', script, *args], capture_output=True, env=env).returncode == 0
 
 def make_handler(plan_path):
     class PlanHandler(BaseHTTPRequestHandler):

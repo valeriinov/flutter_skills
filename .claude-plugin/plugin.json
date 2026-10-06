@@ -1,7 +1,7 @@
 {
   "name": "flutter-skills",
   "description": "Workflow skills and review subagents for Flutter/Dart teams: planning, implementation, reviews, naming, tests, Dartdoc, commits, backend contracts.",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "author": {
     "name": "valeriinov",
     "url": "https://github.com/valeriinov"
