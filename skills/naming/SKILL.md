@@ -1,6 +1,6 @@
 ---
 name: naming
-description: Check whether a name (field, method, class, key) fits project vocabulary and states what the code does. Use for "удачное ли имя", "консистентность нейминга", "is this a good name".
+description: Check whether a name (field, method, class, key) fits project vocabulary and states what the code does. Use for "удачное ли имя", "консистентность нейминга", "is it a good name".
 ---
 
 For the symbol the user names — `file:line` or a bare symbol name; ask which one if none is given:

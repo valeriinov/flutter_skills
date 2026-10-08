@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: 'Review a GitHub PR against its base branch into a document the user pastes back as comments; later rounds append verdicts. Use for "сделай ревью PR #N", "сверь правки по PR", "review PR #N".'
+description: 'Review a GitHub PR against its base into a document the user pastes back as comments; later rounds add verdicts. Use for "сделай ревью PR #N", "сверь правки по PR", "review PR #N".'
 argument-hint: "[ PR number, optionally: focus or concern ]"
 ---
 

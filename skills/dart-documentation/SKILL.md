@@ -1,6 +1,6 @@
 ---
 name: dart-documentation
-description: Write or update Dartdoc for public interfaces and extensions, honoring the project AGENTS.md Documentation section. Use for "задокументируй", "напиши Dartdoc", "document the public API".
+description: Write or update Dartdoc for public APIs per the project AGENTS.md Documentation section. Use for "задокументируй", "напиши Dartdoc", "document the public API".
 ---
 
 Add or update Dartdoc comments in the user-specified file. If none is given, ask the user which file to

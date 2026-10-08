@@ -1,6 +1,6 @@
 ---
 name: backlog
-description: Park deferred work and tech debt in docs/BACKLOG.md, harvest TODOs, groom the list. Use for "запиши в техдолг", "в бэклог", "что в бэклоге", "разбери техдолг", "tech debt".
+description: Park deferred work and tech debt in docs/BACKLOG.md, harvest TODOs, groom it. Use for "запиши в техдолг", "в бэклог", "разбери техдолг", "tech debt".
 argument-hint: "[ what to park, or: groom | harvest TODO ]"
 ---
 

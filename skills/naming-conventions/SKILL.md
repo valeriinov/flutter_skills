@@ -1,6 +1,6 @@
 ---
 name: naming-conventions
-description: Analyze naming conventions across data/domain/presentation layers and record them as a Naming Conventions section in AGENTS.md. Use for "проанализируй нейминг проекта", "record naming conventions".
+description: Analyze naming across data/domain/presentation layers into a Naming Conventions section in AGENTS.md. Use for "проанализируй нейминг проекта", "record naming conventions".
 ---
 
 1. Map the project layout: locate the data / domain / presentation layers

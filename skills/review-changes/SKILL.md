@@ -1,6 +1,6 @@
 ---
 name: review-changes
-description: Review uncommitted changes via the code-reviewer agent — naming/approach consistency, simplicity, theme extensions. Use for "сделай ревью", "проанализируй изменения", "review my changes".
+description: Review uncommitted changes via the code-reviewer agent — naming, approach, simplicity, theme extensions. Use for "сделай ревью", "проанализируй изменения", "review my changes".
 argument-hint: "[ optional focus, e.g. file or concern ]"
 ---
 
