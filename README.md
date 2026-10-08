@@ -117,6 +117,7 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 |---|---|---|---|
 | `backlog` | Park deferred work and tech debt in `docs/BACKLOG.md`, harvest TODOs, groom the list | any | — |
 | `backend-contract` | Write or extend a backend contract from the client implementation and acceptance criteria | any | — |
+| `clarifier` | Turn a document into a short text read in 3–5 minutes (RU, UK, EN) without losing facts; checks text for `make-plan` and `visualize` | any | — |
 | `commit-changes` | Split the working tree into logical local commits in a fixed message format; never pushes | any | — |
 | `dart-documentation` | Dartdoc for public interfaces and extensions | Dart | — |
 | `dart-flutter-tests` | Create, update, or refactor Dart/Flutter tests | Dart/Flutter | — |
@@ -134,6 +135,8 @@ git worktree of a Flutter project: it copies the ignored files the project's
 `.worktreeinclude` lists, then runs `fvm install`, `pub get` and `pod install`.
 `review-pr` runs the same script from the `implement-plan` folder, so the two
 skills are installed together.
+`make-plan` and `visualize` run `clarify.py` from the `clarifier` folder to check
+the text they write for the reader, so `clarifier` is installed with them.
 
 ## Subagents
 

@@ -38,8 +38,10 @@ merges into the point it serves.
    (overall node, note, section diagram, `lines`, view) or why it is left out (only a parent
    document's context). A fact with no place gets one; a fact in two places loses one. Every
    condition, reason and precondition the source gives is a fact.
-5. **Check** — `python3 visualize.py check <json>` must print `ok`. Fix each reported line,
-   rerun; after 3 failed runs stop and report the remaining problems.
+5. **Check** — `python3 visualize.py check <json>` must print `ok`. Then
+   `python3 ../clarifier/clarify.py check <json>`: fix its errors as check errors; `hint:` lines
+   are optional. Fix each reported line, rerun; after 3 failed runs stop and report the remaining
+   problems.
 6. **Review** — one reviewer in a fresh context: `visual-reviewer` in Claude Code
    (`<plugin>:visual-reviewer` as a plugin); in Codex, `explorer` with the visual-reviewer
    criteria, told to read only the two files. Pass both paths and both contents. Verify each

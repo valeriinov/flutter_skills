@@ -38,7 +38,9 @@ parallel, so all sit on its last node); never add a node to it.
 4. **Draft** `plan/<name>/plan.md` for the agent and `plan/<name>/brief.json` for the reader; front
    matter always carries `lane:` (contained | wide | closed).
 5. **Gate** — `python3 plan_tool.py check <plan.md>` must exit 0; it checks `brief.json` and the
-   contract JSON too. Fix each reported line, rerun;
+   contract JSON too. Then `python3 ../clarifier/clarify.py check <brief.json> --source <plan.md>`:
+   fix its errors as gate errors; `hint:` lines are optional, `hint: lost:` is ignored — the brief
+   leaves out the plan's paths and code on purpose. Fix each reported line, rerun;
    after 3 failed runs stop and report the remaining violations.
 6. **Review**, depth by lane (missing → wide): contained → inline, one pass by the plan-reviewer and
    visual-reviewer criteria; wide/closed → `plan-reviewer` and `visual-reviewer` in parallel, each
@@ -106,7 +108,7 @@ parallel, so all sit on its last node); never add a node to it.
     the change it makes; `lines` hold only how it is today and what the diagram cannot carry.
   - A question's `gist` is understandable without the code: what is being decided, why it needs
     deciding and what it affects, with a concrete example.
-  - A term the reader may not know is replaced or explained on first use (`clarity` law 12).
+  - A term the reader may not know is replaced or explained on first use (clarifier: term on first use).
 - **Stages** only if at least one holds: more than one change contract (things the project rules
   require to change together in one commit); a part leaves the build green with its own gate; a
   part needs separate device verification or sits in the closed lane; more than ~8 files across
