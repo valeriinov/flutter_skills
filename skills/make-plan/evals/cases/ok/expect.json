@@ -1,0 +1,7 @@
+{
+  "steps": [2, 2],
+  "sections": [2, 2],
+  "files": ["lib/notes_screen.dart", "lib/notes_csv.dart"],
+  "lane": "contained",
+  "text": ["notesToCsv", "«Поделиться»"]
+}
