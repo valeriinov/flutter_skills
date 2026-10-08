@@ -181,6 +181,14 @@ details[open] > summary::after { transform: rotate(-135deg); }
 .overview-diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; }
 .overview-diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; }
 .overview-diagram .node rect { rx: 10px; ry: 10px; }
+.overview-diagram .node-code { font-family: var(--f-mono); font-size: 12px; opacity: .7; }
+.overview-diagram .node-change { font-size: 13px; font-style: italic; }
+.overview-diagram g.node, .overview-diagram g.label[data-id] { cursor: pointer; }
+.overview-diagram g.node.commented > rect, .overview-diagram g.label.commented {
+  filter: drop-shadow(2px 0 0 var(--highlight-border)) drop-shadow(-2px 0 0 var(--highlight-border))
+    drop-shadow(0 2px 0 var(--highlight-border)) drop-shadow(0 -2px 0 var(--highlight-border));
+}
+main .h2-block.diagram-block { background: none; border: none; padding: 0; }
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-top: 10px; }
 .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
 .legend .new::before { background: var(--node-new-bg); border-color: var(--node-new-border); }
@@ -190,6 +198,7 @@ main .h2-block { background: var(--card); border: 1px solid var(--line); border-
 main .h2-block > h2:first-child { margin-top: 16px; }
 .point-card h3, .decision-card h3 { margin-top: 16px; }
 .point-check { color: var(--ink-2); }
+.point-label { font-weight: 600; margin-right: 6px; }
 .decision-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .decision-options button {
   text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line-2);
@@ -280,7 +289,9 @@ const LANES = {
   wide: { label: 'Несколько частей', hint: 'Затрагивает несколько частей; план проверил отдельный ревьюер.' },
   closed: { label: 'Рискованная зона', hint: 'Авторизация, данные, подпись или релиз; ревьюер отдельно проверил откат и риски.' },
 };
-const CHOICE_RE = /^Выбран вариант (\S+)/;
+const CHOICE_RE = /^(?:Выбран вариант (\S+)|(Свой вариант):)/;
+const FREE_ANSWER = 'Свой вариант';
+const NODE_LINE_RE = /^(\s*\w+\[")([^"]*)("\].*)$/;
 const SILENCE_LEVEL = 0.01;
 const STREAM_RATE = 16000;
 const STREAM_CHUNK_MS = 100;
@@ -399,7 +410,7 @@ function buildThreadItem(thread) {
   item.className = 'thread' + (thread.resolved ? ' resolved' : '');
   const head = document.createElement('div');
   head.className = 'thread-head';
-  const stale = thread.quote && !threadRanges.has(thread);
+  const stale = thread.quote && !thread.region.diagram && !threadRanges.has(thread);
   head.textContent = [thread.author, thread.resolved ? 'решено' : '', stale ? 'цитата устарела' : '']
     .filter(Boolean).join(' · ');
   if (head.textContent) item.appendChild(head);
@@ -531,8 +542,9 @@ async function deleteThread(thread, error) {
     threadRanges.delete(thread);
     refreshHighlights();
   }
-  const choice = CHOICE_RE.exec(thread.text);
-  if (choice && thread.region.chosen === choice[1]) markChosen(thread.region, null);
+  const choice = choiceKey(thread.text);
+  if (choice && thread.region.chosen === choice) markChosen(thread.region, null);
+  if (thread.region.diagram) markDiagram(thread.region);
   updateReviewCount(-1);
 }
 
@@ -644,13 +656,16 @@ function lastStageList(table) {
 
 function attachThread(region, thread) {
   thread.region = region;
-  const range = thread.quote && findQuoteRange(region, thread.quote);
+  const range = thread.quote && !region.diagram && findQuoteRange(region, thread.quote);
   if (range) {
     threadRanges.set(thread, range);
     if (!thread.resolved) highlightRanges.push(range);
   }
   threadListFor(region).appendChild(buildThreadItem(thread));
   refreshHighlights();
+  if (!region.diagram) return;
+  region.threads.push(thread);
+  markDiagram(region);
 }
 
 function refreshHighlights() {
@@ -683,8 +698,9 @@ function commentLine(anchor, quote, author, text) {
   return `- [ ] [${anchor}] ${quotePart}${authorPart}${text}`;
 }
 
-function setupSelectionComments(regionsByBlock) {
-  const trigger = document.getElementById('select-trigger');
+let openCommentPopup = () => {};
+
+function setupCommentPopup() {
   const popup = document.getElementById('comment-popup');
   const nameInput = popup.querySelector('input');
   const nameToggle = popup.querySelector('.popup-name-toggle');
@@ -705,6 +721,61 @@ function setupSelectionComments(regionsByBlock) {
   });
 
   sendBtn.textContent = PLAN_SERVER ? 'Отправить' : 'Копировать';
+
+  openCommentPopup = (target, top, left) => {
+    pending = target;
+    quoteBox.textContent = target.quote ? `${target.region.anchor} · «${target.quote}»` : `${target.region.anchor} · ${target.prefix}`;
+    const storedName = loadStoredName();
+    nameInput.value = storedName;
+    nameInput.hidden = true;
+    showNameToggle();
+    textArea.value = '';
+    hint.hidden = true;
+    popup.style.top = `${top}px`;
+    popup.hidden = false;
+    const maxLeft = window.scrollX + document.documentElement.clientWidth - popup.offsetWidth - 16;
+    popup.style.left = `${Math.max(window.scrollX + 16, Math.min(left, maxLeft))}px`;
+    textArea.focus();
+  };
+
+  popup.querySelector('.popup-cancel').addEventListener('click', () => {
+    dictation.cancel();
+    popup.hidden = true;
+  });
+
+  const send = async () => {
+    await dictation.stop();
+    const author = nameInput.value.trim();
+    const typed = textArea.value.trim().replace(/\s*\n+\s*/g, ' ');
+    if (!typed || !pending) return;
+    if (author) storeName(author);
+    const { region, quote, prefix } = pending;
+    const text = prefix ? `${prefix}: ${typed}` : typed;
+    hint.hidden = false;
+    if (!PLAN_SERVER) {
+      copyText(commentLine(region.anchor, quote, author, text));
+      hint.textContent = 'строка скопирована — вставь её в comments.md';
+      return;
+    }
+    const sent = await postJson('/comments', { anchor: region.anchor, quote, author, text });
+    if (!sent) {
+      hint.textContent = 'не удалось записать — сервер остановлен?';
+      return;
+    }
+    popup.hidden = true;
+    attachThread(region, { line: sent.line, resolved: false, anchor: region.anchor, quote, author, text, replies: [] });
+    if (prefix === FREE_ANSWER) markChosen(region, FREE_ANSWER);
+    updateReviewCount(1);
+    window.getSelection().removeAllRanges();
+  };
+  sendBtn.addEventListener('click', send);
+  onSubmitShortcut(textArea, send);
+}
+
+function setupSelectionComments(regionsByBlock) {
+  const trigger = document.getElementById('select-trigger');
+  const popup = document.getElementById('comment-popup');
+  let pending = null;
 
   document.addEventListener('mouseup', event => {
     if (popup.contains(event.target) || trigger.contains(event.target)) return;
@@ -728,50 +799,13 @@ function setupSelectionComments(regionsByBlock) {
 
   trigger.addEventListener('click', () => {
     trigger.hidden = true;
-    quoteBox.textContent = `${pending.region.anchor} · «${pending.quote}»`;
-    const storedName = loadStoredName();
-    nameInput.value = storedName;
-    nameInput.hidden = true;
-    showNameToggle();
-    textArea.value = '';
-    hint.hidden = true;
-    popup.style.top = trigger.style.top;
-    popup.hidden = false;
-    const maxLeft = window.scrollX + document.documentElement.clientWidth - popup.offsetWidth - 16;
-    popup.style.left = `${Math.max(window.scrollX + 16, Math.min(parseFloat(trigger.style.left), maxLeft))}px`;
-    textArea.focus();
+    openCommentPopup(pending, parseFloat(trigger.style.top), parseFloat(trigger.style.left));
   });
+}
 
-  popup.querySelector('.popup-cancel').addEventListener('click', () => {
-    dictation.cancel();
-    popup.hidden = true;
-  });
-
-  const send = async () => {
-    await dictation.stop();
-    const author = nameInput.value.trim();
-    const text = textArea.value.trim().replace(/\s*\n+\s*/g, ' ');
-    if (!text || !pending) return;
-    if (author) storeName(author);
-    const { region, quote } = pending;
-    hint.hidden = false;
-    if (!PLAN_SERVER) {
-      copyText(commentLine(region.anchor, quote, author, text));
-      hint.textContent = 'строка скопирована — вставь её в comments.md';
-      return;
-    }
-    const sent = await postJson('/comments', { anchor: region.anchor, quote, author, text });
-    if (!sent) {
-      hint.textContent = 'не удалось записать — сервер остановлен?';
-      return;
-    }
-    popup.hidden = true;
-    attachThread(region, { line: sent.line, resolved: false, anchor: region.anchor, quote, author, text, replies: [] });
-    updateReviewCount(1);
-    window.getSelection().removeAllRanges();
-  };
-  sendBtn.addEventListener('click', send);
-  onSubmitShortcut(textArea, send);
+function openPopupBelow(element, target) {
+  const rect = element.getBoundingClientRect();
+  openCommentPopup(target, rect.bottom + window.scrollY + 6, rect.left + window.scrollX);
 }
 
 function attachDictation(micBtn, textArea, status) {
@@ -1156,6 +1190,7 @@ async function renderDiagrams(panel) {
     const { svg } = await mermaid.render(`plan-diagram-${diagramCount}`, node.textContent);
     node.innerHTML = svg;
     node.dataset.processed = 'true';
+    if (node.diagramRegion) bindDiagram(node, node.diagramRegion);
   }
 }
 
@@ -1183,15 +1218,31 @@ function mermaidConfig() {
 }
 
 function diagramSource(source) {
+  const lines = source.split('\n').map(line => {
+    const m = NODE_LINE_RE.exec(line);
+    return m ? `${m[1]}${styledNodeLabel(m[2])}${m[3]}` : line;
+  });
   const classDefs = ['new', 'changed', 'same'].map(name =>
     `  classDef ${name} fill:${cssVar(`--node-${name}-bg`)},stroke:${cssVar(`--node-${name}-border`)},` +
     `color:${cssVar(`--node-${name}-fg`)},stroke-width:1.5px`);
-  return [source, ...classDefs].join('\n');
+  return [...lines, ...classDefs].join('\n');
+}
+
+function styledNodeLabel(label) {
+  const [plain, code, change] = label.split('<br/>');
+  if (code === undefined) return label;
+  const parts = [plain, `<span class='node-code'>${code}</span>`];
+  if (change !== undefined) parts.push(`<span class='node-change'>${change}</span>`);
+  return parts.join('<br/>');
 }
 
 function renderOverview(brief, stepNodes, panel) {
   const blocks = [];
-  if (brief.diagram) panel.appendChild(diagramBlock(brief.diagram));
+  if (brief.diagram) {
+    const diagram = diagramBlock(brief);
+    panel.appendChild(diagram.el);
+    blocks.push(diagram);
+  }
   if (brief.points.length) panel.appendChild(sectionHeading('Что сделаем'));
   brief.points.forEach(point => {
     const card = pointCard(point, stepNodes);
@@ -1213,19 +1264,48 @@ function sectionHeading(text) {
   return h2;
 }
 
-function diagramBlock(source) {
+function diagramBlock(brief) {
   const wrap = document.createElement('div');
+  wrap.className = 'h2-block diagram-block';
   const box = document.createElement('div');
   box.className = 'overview-diagram';
   const pre = document.createElement('pre');
   pre.className = 'mermaid';
-  pre.textContent = diagramSource(source);
+  pre.textContent = diagramSource(brief.diagram);
   box.appendChild(pre);
   const legend = document.createElement('div');
   legend.className = 'legend';
   legend.innerHTML = '<span class="new">новое</span><span class="changed">меняется</span><span class="same">без изменений</span>';
   wrap.append(sectionHeading('Схема'), box, legend);
-  return wrap;
+  const region = {
+    anchor: 'Схема', head: legend, nodes: [wrap], threads: [], targets: new Map(),
+    diagram: { names: brief.diagramNodes || {}, edges: brief.diagramEdges || [] },
+  };
+  pre.diagramRegion = region;
+  return { el: wrap, regions: [region] };
+}
+
+function bindDiagram(pre, region) {
+  const { names, edges } = region.diagram;
+  pre.querySelectorAll('g.node').forEach(node => {
+    const m = /-flowchart-(\w+)-\d+$/.exec(node.id);
+    if (m && names[m[1]]) bindDiagramTarget(node, region, names[m[1]]);
+  });
+  pre.querySelectorAll('g.label[data-id]').forEach(label => {
+    const edge = edges.find(([from, to]) => new RegExp(`^L_${from}_${to}_\\d+$`).test(label.dataset.id));
+    if (edge) bindDiagramTarget(label, region, `${names[edge[0]] || edge[0]} → ${names[edge[1]] || edge[1]}`);
+  });
+  markDiagram(region);
+}
+
+function bindDiagramTarget(element, region, quote) {
+  region.targets.set(quote, element);
+  element.addEventListener('click', () => openPopupBelow(element, { region, quote }));
+}
+
+function markDiagram(region) {
+  const open = new Set(region.threads.filter(t => !t.resolved && t.element.isConnected).map(t => t.quote));
+  region.targets.forEach((element, quote) => element.classList.toggle('commented', open.has(quote)));
 }
 
 function pointCard(point, stepNodes) {
@@ -1233,12 +1313,11 @@ function pointCard(point, stepNodes) {
   el.className = 'h2-block point-card';
   const title = document.createElement('h3');
   title.textContent = `${point.n}. ${point.title}`;
-  const text = document.createElement('p');
-  text.innerHTML = marked.parseInline(point.text);
-  const check = document.createElement('p');
-  check.className = 'point-check';
-  check.innerHTML = `Проверим: ${marked.parseInline(point.check)}`;
-  el.append(title, text, check);
+  const text = labelledParagraph('Сделаем:', point.text, '');
+  const check = labelledParagraph('Проверим:', point.check, 'point-check');
+  el.append(title);
+  if (point.now) el.append(labelledParagraph('Сейчас:', point.now, ''));
+  el.append(text, check);
   const stepRegionsInCard = point.steps.map(id => stepNodes.get(`S${id}`)).filter(Boolean);
   if (stepRegionsInCard.length) {
     const details = document.createElement('details');
@@ -1261,7 +1340,7 @@ function decisionCard(decision) {
   options.className = 'decision-options';
   const recommended = decision.recommendation.split(/\s/)[0];
   const anchor = `Вопрос ${decision.n}`;
-  const region = { anchor, head: title, nodes: [el], buttons: new Map() };
+  const region = { anchor, head: options, nodes: [el], buttons: new Map() };
   decision.options.forEach(option => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -1271,11 +1350,32 @@ function decisionCard(decision) {
     region.buttons.set(option.key, button);
     options.appendChild(button);
   });
+  const freeButton = textButton('Свой вариант…', '');
+  freeButton.addEventListener('click', () => openPopupBelow(freeButton, { region, quote: '', prefix: FREE_ANSWER }));
+  region.buttons.set(FREE_ANSWER, freeButton);
+  options.appendChild(freeButton);
+  const gist = labelledParagraph('Суть:', decision.gist, '');
   const recommendation = document.createElement('div');
   recommendation.className = 'decision-recommendation';
   recommendation.textContent = `Рекомендую: ${decision.recommendation}`;
-  el.append(title, options, recommendation);
+  el.append(title, gist, options, recommendation);
   return { el, regions: [region] };
+}
+
+function labelledParagraph(label, markdown, className) {
+  const paragraph = document.createElement('p');
+  paragraph.className = className;
+  const labelEl = document.createElement('span');
+  labelEl.className = 'point-label';
+  labelEl.textContent = label;
+  paragraph.append(labelEl);
+  paragraph.insertAdjacentHTML('beforeend', marked.parseInline(markdown));
+  return paragraph;
+}
+
+function choiceKey(text) {
+  const m = CHOICE_RE.exec(text);
+  return m && (m[1] || m[2]);
 }
 
 function markChosen(region, key) {
@@ -1367,13 +1467,14 @@ function main() {
     const target = regionsByAnchor.get(thread.anchor);
     if (!target) return;
     attachThread(target.region, thread);
-    const choice = target.region.buttons && CHOICE_RE.exec(thread.text);
-    if (choice) markChosen(target.region, choice[1]);
     if (thread.resolved) return;
+    const choice = target.region.buttons && choiceKey(thread.text);
+    if (choice) markChosen(target.region, choice);
     counts[target.tab] += 1;
   });
 
   setupTabs(counts, PLAN_SERVER ? takeSavedView(data.planId) : null);
+  setupCommentPopup();
   setupSelectionComments(regionsByBlock);
   setupHighlightClicks();
   setupReviewBar(data.planId, data.version, data.revising === true);

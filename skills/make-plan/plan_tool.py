@@ -51,7 +51,6 @@ TERMINAL_SCRIPT = '''on run argv
         activate
     end tell
 end run'''
-DEFAULT_PORT = 8790
 COMMENTS_LOCK = threading.Lock()
 IMPLEMENT_LOCK = threading.Lock()
 DICTATION_APP = Path.home() / 'Library' / 'Caches' / 'make-plan' / 'PlanDictation.app'
@@ -68,6 +67,9 @@ DICTATION_ERRORS = {
 POINT_RE = re.compile(r'^### (\d+)\.\s*(.+)$')
 POINT_STEPS_RE = re.compile(r'^<!--\s*((?:S\d+\s*)+)-->$')
 CHECK_PREFIX = 'Проверим:'
+NOW_PREFIX = 'Сейчас:'
+CHANGE_PREFIX = 'Сделаем:'
+GIST_PREFIX = 'Суть:'
 DECISION_RE = re.compile(r'^### Вопрос (\d+)\s*·\s*(.+)$')
 OPTION_RE = re.compile(r'^- (\w)\s*·\s*(.+)$')
 RECOMMEND_PREFIX = 'Рекомендую:'
@@ -80,10 +82,16 @@ CITATION_RE = re.compile(r'(?<![\w./:~-])([\w.-][\w./-]*):(\d+)(?:-(\d+))?')
 VISIBLE_STEP_RE = re.compile(r'\bS\d+\b')
 MAX_NODES = 8
 MAX_EDGES = 10
-MAX_NODE_LABEL = 40
+MAX_NODE_PART = 40
+MAX_NODE_CHANGE_WORDS = 5
 MAX_EDGE_LABEL_WORDS = 3
 MAX_POINTS = 5
 MAX_POINT_TEXT = 600
+MAX_SENTENCE_WORDS = 25
+LATIN_RE = re.compile(r'[A-Za-z]')
+SENTENCE_END_RE = re.compile(r'(?<=[.!?…])\s+')
+WORD_RE = re.compile(r'\w')
+SERVE_PORTS = range(8790, 8800)
 
 def unfenced(lines):
     out = []
@@ -315,18 +323,30 @@ def parse_points(section_lines):
         m = POINT_RE.match(line)
         if m:
             current = {'n': int(m.group(1)), 'title': m.group(2).strip(), 'line': ln,
-                       'steps': [], 'text': '', 'check': ''}
+                       'steps': [], 'now': '', 'text': '', 'check': '', 'misplaced': []}
             points.append(current)
+            part = None
             continue
         if current is None or not line.strip():
             continue
         steps = POINT_STEPS_RE.match(line.strip())
         if steps:
             current['steps'] = [int(s[1:]) for s in steps.group(1).split()]
+        elif line.startswith(NOW_PREFIX):
+            if part is not None:
+                current['misplaced'].append(ln)
+            current['now'] = line[len(NOW_PREFIX):].strip()
+            part = 'now'
+        elif line.startswith(CHANGE_PREFIX):
+            current['text'] = line[len(CHANGE_PREFIX):].strip()
+            part = 'change'
         elif line.startswith(CHECK_PREFIX):
             current['check'] = line[len(CHECK_PREFIX):].strip()
-        else:
+            part = 'check'
+        elif part == 'change':
             current['text'] = f"{current['text']} {line.strip()}".strip()
+        else:
+            current['misplaced'].append(ln)
     return points
 
 def parse_decisions(section_lines):
@@ -336,28 +356,47 @@ def parse_decisions(section_lines):
         m = DECISION_RE.match(line)
         if m:
             current = {'n': int(m.group(1)), 'question': m.group(2).strip(), 'line': ln,
-                       'options': [], 'recommendation': ''}
+                       'gist': '', 'options': [], 'recommendation': ''}
             decisions.append(current)
+            in_gist = False
             continue
         if current is None:
             continue
         option = OPTION_RE.match(line)
         if option:
             current['options'].append({'key': option.group(1), 'text': option.group(2).strip()})
+            in_gist = False
         elif line.startswith(RECOMMEND_PREFIX):
             current['recommendation'] = line[len(RECOMMEND_PREFIX):].strip()
+            in_gist = False
+        elif line.startswith(GIST_PREFIX):
+            current['gist'] = line[len(GIST_PREFIX):].strip()
+            in_gist = True
+        elif in_gist and line.strip():
+            current['gist'] = f"{current['gist']} {line.strip()}".strip()
     return decisions
 
 def parse_brief(lines):
     sections = h2_sections(list(enumerate(lines, start=1)))
     diagram = parse_diagram(sections['Схема']) if 'Схема' in sections else None
+    diagram_lines = diagram['lines'] if diagram else []
     return {
         'diagram': diagram['source'] if diagram else '',
         'diagramLine': diagram['line'] if diagram else 0,
-        'diagramLines': diagram['lines'] if diagram else [],
+        'diagramLines': diagram_lines,
+        'diagramNodes': diagram_nodes(diagram_lines),
+        'diagramEdges': diagram_edges(diagram_lines),
         'points': parse_points(sections.get('Что сделаем', [])),
         'decisions': parse_decisions(sections.get('Решения', [])),
     }
+
+def diagram_nodes(diagram_lines):
+    matches = (NODE_RE.match(line) for _, line in diagram_lines)
+    return {m.group(1): m.group(2).split('<br/>')[0].strip() for m in matches if m}
+
+def diagram_edges(diagram_lines):
+    matches = (EDGE_RE.match(line) for _, line in diagram_lines)
+    return [[m.group(1), m.group(3)] for m in matches if m]
 
 def brief_problems(lines, brief, plan_step_ids):
     problems = []
@@ -379,7 +418,7 @@ def diagram_problems(brief, nodes):
         node = NODE_RE.match(line)
         edge = EDGE_RE.match(line)
         if node:
-            nodes[node.group(1)] = node.group(2)
+            nodes[node.group(1)] = (ln, node.group(2), node.group(3))
             problems += node_problems(ln, node.group(2), node.group(3))
         elif edge:
             edges.append((ln, edge.group(1), edge.group(3)))
@@ -400,15 +439,24 @@ def node_problems(ln, label, node_class):
     problems = []
     if node_class not in NODE_CLASSES:
         problems.append((ln, 'node without :::new, :::changed or :::same'))
-    parts = label.split('<br/>')
-    if len(parts) > 2 or len(''.join(parts)) > MAX_NODE_LABEL:
-        problems.append((ln, f'node label over 2 lines or {MAX_NODE_LABEL} chars'))
+    parts = [part.strip() for part in label.split('<br/>')]
+    expected = 2 if node_class == 'same' else 3
+    if len(parts) != expected:
+        problems.append((ln, f'{node_class or "unclassed"} node label needs {expected} parts: '
+                             f'plain name<br/>code name{"" if expected == 2 else "<br/>what changes"}'))
+    if any(len(part) > MAX_NODE_PART for part in parts):
+        problems.append((ln, f'node label part over {MAX_NODE_PART} chars'))
+    if len(parts) == 3 and len(parts[2].split()) > MAX_NODE_CHANGE_WORDS:
+        problems.append((ln, f'node change line over {MAX_NODE_CHANGE_WORDS} words'))
     return problems
 
 def edge_label_problems(ln, label):
+    problems = []
     if label and len(label.split()) > MAX_EDGE_LABEL_WORDS:
-        return [(ln, f'arrow label over {MAX_EDGE_LABEL_WORDS} words')]
-    return []
+        problems.append((ln, f'arrow label over {MAX_EDGE_LABEL_WORDS} words'))
+    if label and LATIN_RE.search(label):
+        problems.append((ln, 'arrow label has Latin letters'))
+    return problems
 
 def point_problems(points, plan_step_ids, nodes):
     problems = []
@@ -416,10 +464,12 @@ def point_problems(points, plan_step_ids, nodes):
         problems.append((1, "missing '## Что сделаем' with '### <n>. <title>' points"))
     if len(points) > MAX_POINTS:
         problems.append((points[MAX_POINTS]['line'], f'more than {MAX_POINTS} points'))
-    code_names = {label.split('<br/>')[-1].strip() for label in nodes.values()}
+    code_names = {code_name(label) for _, label, _ in nodes.values()}
     covered = {}
+    named = set()
     for point in points:
         problems += single_point_problems(point, code_names)
+        named.update(BACKTICK_RE.findall(point['text']))
         for sid in point['steps']:
             covered.setdefault(sid, []).append(point['line'])
     for sid in sorted(plan_step_ids):
@@ -427,7 +477,14 @@ def point_problems(points, plan_step_ids, nodes):
             problems.append((1, f'plan step S{sid} must belong to exactly one point'))
     for sid in sorted(set(covered) - plan_step_ids):
         problems.append((covered[sid][0], f'point refers to unknown step S{sid}'))
+    for ln, label, node_class in nodes.values():
+        if node_class in ('new', 'changed') and code_name(label) not in named:
+            problems.append((ln, f"{node_class} node `{code_name(label)}` is named in no point"))
     return problems
+
+def code_name(label):
+    parts = label.split('<br/>')
+    return parts[1].strip() if len(parts) > 1 else parts[0].strip()
 
 def single_point_problems(point, code_names):
     ln = point['line']
@@ -436,6 +493,16 @@ def single_point_problems(point, code_names):
         problems.append((ln, f"point {point['n']}: missing '<!-- S1 S2 -->' step comment"))
     if not point['check']:
         problems.append((ln, f"point {point['n']}: missing '{CHECK_PREFIX}' line"))
+    if len(sentences(point['now'])) > 1:
+        problems.append((ln, f"point {point['n']}: '{NOW_PREFIX}' holds more than one sentence"))
+    for misplaced in point['misplaced']:
+        problems.append((misplaced, f"point {point['n']}: line outside '{NOW_PREFIX}' before "
+                                    f"'{CHANGE_PREFIX}', '{CHANGE_PREFIX}' paragraph or '{CHECK_PREFIX}'"))
+    problems += long_sentence_problems(ln, f"point {point['n']}", point['now'])
+    problems += long_sentence_problems(ln, f"point {point['n']}", point['text'])
+    if not point['text']:
+        problems.append((ln, f"point {point['n']}: missing '{CHANGE_PREFIX}' paragraph"))
+        return problems
     if len(point['text']) > MAX_POINT_TEXT:
         problems.append((ln, f"point {point['n']}: text over {MAX_POINT_TEXT} chars"))
     names = BACKTICK_RE.findall(point['text'])
@@ -443,9 +510,23 @@ def single_point_problems(point, code_names):
         problems.append((ln, f"point {point['n']}: names no `entity` shown on the diagram"))
     return problems
 
+def sentences(text):
+    return [sentence for sentence in SENTENCE_END_RE.split(text.strip()) if sentence]
+
+def long_sentence_problems(ln, spot, text):
+    problems = []
+    for sentence in sentences(text):
+        words = sum(1 for token in sentence.split() if WORD_RE.search(token))
+        if words > MAX_SENTENCE_WORDS:
+            problems.append((ln, f"{spot}: sentence of {words} words, limit {MAX_SENTENCE_WORDS}"))
+    return problems
+
 def decision_problems(decisions):
     problems = []
     for decision in decisions:
+        if not decision['gist']:
+            problems.append((decision['line'], f"question {decision['n']}: missing '{GIST_PREFIX}'"))
+        problems += long_sentence_problems(decision['line'], f"question {decision['n']}", decision['gist'])
         if len(decision['options']) < 2:
             problems.append((decision['line'], f"question {decision['n']}: fewer than two options"))
         if not decision['recommendation']:
@@ -929,18 +1010,62 @@ def port_answers(port):
     except OSError:
         return False
 
-def cli_serve(argv):
-    plan_path = Path(argv[0]).resolve()
-    if plan_path.is_dir():
-        plan_path = plan_path / 'plan.md'
-    port = int(argv[argv.index('--port') + 1]) if '--port' in argv else DEFAULT_PORT
+def plan_argument(arg):
+    plan_path = Path(arg).resolve()
+    return plan_path / 'plan.md' if plan_path.is_dir() else plan_path
+
+def port_record_path(plan_path):
+    comments_path, _, _ = output_paths(plan_path)
+    return comments_path.with_name(comments_path.name.replace('comments.md', 'serve-port'))
+
+def recorded_port(plan_path):
     try:
-        if port_answers(port):
-            raise OSError(port)
-        server = ThreadingHTTPServer(('127.0.0.1', port), make_handler(plan_path))
+        return int(port_record_path(plan_path).read_text(encoding='utf-8').strip())
+    except (OSError, ValueError):
+        return None
+
+def served_plan(port):
+    try:
+        with urllib.request.urlopen(f'http://127.0.0.1:{port}/alive', timeout=1) as response:
+            return json.loads(response.read()).get('plan')
+    except (OSError, ValueError):
+        return None
+
+def bind_server(plan_path, port):
+    if port_answers(port):
+        return None
+    try:
+        return ThreadingHTTPServer(('127.0.0.1', port), make_handler(plan_path))
     except OSError:
-        print(f'port {port} busy — stop the other serve or pass --port', file=sys.stderr)
-        return 2
+        return None
+
+def scan_ports(plan_path):
+    recorded = recorded_port(plan_path)
+    ports = [recorded] if recorded in SERVE_PORTS else []
+    for port in ports + [p for p in SERVE_PORTS if p != recorded]:
+        if served_plan(port) == str(plan_path):
+            return None, port
+        server = bind_server(plan_path, port)
+        if server is not None:
+            port_record_path(plan_path).write_text(f'{port}\n', encoding='utf-8')
+            return server, port
+    return None, None
+
+def cli_serve(argv):
+    plan_path = plan_argument(argv[0])
+    if '--port' in argv:
+        port = int(argv[argv.index('--port') + 1])
+        server = bind_server(plan_path, port)
+        if server is None:
+            print(f'port {port} busy — stop the other serve or pass --port', file=sys.stderr)
+            return 2
+    else:
+        server, port = scan_ports(plan_path)
+        if server is None and port is not None:
+            return report_served(port, argv)
+        if server is None:
+            print(f'ports {SERVE_PORTS[0]}–{SERVE_PORTS[-1]} busy — stop another serve or pass --port', file=sys.stderr)
+            return 2
     server.submitted = None
     server.implementing = False
     server.revising = '--revising' in argv
@@ -960,8 +1085,18 @@ def cli_serve(argv):
         print('Если агент не подхватил ревью сам, напиши ему: доработай план по комментариям', flush=True)
     return 0
 
+def report_served(port, argv):
+    url = f'http://127.0.0.1:{port}/'
+    print(f'already served: {url}', flush=True)
+    if '--no-open' not in argv:
+        webbrowser.open(url)
+    return 3
+
 def cli_revised(argv):
-    port = int(argv[argv.index('--port') + 1]) if '--port' in argv else DEFAULT_PORT
+    port = int(argv[argv.index('--port') + 1]) if '--port' in argv else recorded_port(plan_argument(argv[0]))
+    if port is None:
+        print('no recorded serve port for this plan — pass --port', file=sys.stderr)
+        return 1
     request = urllib.request.Request(f'http://127.0.0.1:{port}/revised', method='POST')
     try:
         urllib.request.urlopen(request, timeout=2).close()

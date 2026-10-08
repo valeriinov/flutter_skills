@@ -31,9 +31,7 @@ If the project root has `graphify-out/graph.json`, find where a symbol lives and
 
 6. **Bottlenecks and risks** — Flag performance problems, missing error/loading/empty/null states, unhandled edge cases, fragile assumptions, race conditions, and anything likely to need rework soon. Steps in lane `closed` (front matter or their stage's lane) get full Risk scrutiny: rollback path, data loss, auth-session, env/signing and release impact.
 
-7. **Reader brief** — When a `brief.md` comes with the plan: each point says in plain words what its plan steps do and names the same entities and interfaces; the diagram shows every entity the plan changes, with the right new/changed/unchanged mark; every option of a decision states its consequence. Flag a point that hides or contradicts what its steps change.
-
-8. **Assumptions & Evidence** — Every claim the plan makes about runtime behavior, data shape, or external systems (interceptor behavior, API responses, query row counts, lifecycle ordering) must be backed by evidence: a `file:line` trace, documented behavior, or an explicit verification step. Unverified assumptions are the leading cause of full reverts. If the plan has an "Assumptions & Evidence" section, audit each entry — evidence must actually support the claim. Evidence inside a step's `<details>` block counts as that step's evidence. If the plan makes such claims without evidence, flag each one and name what would verify it. For every new public identifier the plan introduces, check it against the project's naming vocabulary (search the neighbouring names with the code-search tool the project rules name, grep when they name none; confirm precedent by call sites) — a name without precedent or one that promises behavior the code won't perform is a finding.
+7. **Assumptions & Evidence** — Every claim the plan makes about runtime behavior, data shape, or external systems (interceptor behavior, API responses, query row counts, lifecycle ordering) must be backed by evidence: a `file:line` trace, documented behavior, or an explicit verification step. Unverified assumptions are the leading cause of full reverts. If the plan has an "Assumptions & Evidence" section, audit each entry — evidence must actually support the claim. Evidence inside a step's `<details>` block counts as that step's evidence. If the plan makes such claims without evidence, flag each one and name what would verify it. For every new public identifier the plan introduces, check it against the project's naming vocabulary (search the neighbouring names with the code-search tool the project rules name, grep when they name none; confirm precedent by call sites) — a name without precedent or one that promises behavior the code won't perform is a finding.
 
 ## Workflow
 
@@ -57,7 +55,7 @@ S3 claims the interceptor retries on 401 — no evidence.
 Fix: verify in lib/network/auth_interceptor.dart, or add it as a plan step.
 ```
 
-Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Simplicity | Requirements | Consistency | Architecture | Duplication | Risk | Brief | Assumption. Each finding names the plan step it hits — by its id (`S3`, stage `T2`, `Пункт 2`, `Вопрос 1`) when the plan uses ids — and a Fix naming the concrete change — plus the precedent `file:line` when the finding is Consistency or Duplication.
+Severity marker: 🔴 Blocking · 🟡 Significant · 🔵 Minor. Category: Simplicity | Requirements | Consistency | Architecture | Duplication | Risk | Assumption. Each finding names the plan step it hits — by its id (`S3`, stage `T2`, `Пункт 2`, `Вопрос 1`) when the plan uses ids — and a Fix naming the concrete change — plus the precedent `file:line` when the finding is Consistency or Duplication.
 
 If nothing is wrong, the whole output is the verdict line.
 
