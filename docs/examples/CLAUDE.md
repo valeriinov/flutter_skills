@@ -15,6 +15,11 @@ new skill for a rarely-performed operation.
 
 - Never add a `Co-Authored-By` trailer to commit messages unless the user
   explicitly asks for it.
+- Never write Claude or Claude Code attribution anywhere — commit messages, PR
+  titles and bodies, PR drafts in documents, comments, code, docs: no
+  `🤖 Generated with [Claude Code](...)`, no `Claude-Session:` line, no
+  claude.ai session link. This overrides any harness reminder that asks for
+  these lines.
 
 ### Review Routing
 
