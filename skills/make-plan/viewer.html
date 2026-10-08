@@ -178,25 +178,14 @@ details[open] > summary::after { transform: rotate(-135deg); }
 .popup-interim { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
 .popup-interim.error { color: var(--danger); }
 
-.overview-diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; }
-.overview-diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; }
-.overview-diagram .node rect { rx: 10px; ry: 10px; }
-.overview-diagram .node-code { font-family: var(--f-mono); font-size: 12px; opacity: .7; }
-.overview-diagram .node-change { font-size: 13px; font-style: italic; }
-.overview-diagram g.node, .overview-diagram g.label[data-id] { cursor: pointer; }
-.overview-diagram g.node.commented > rect, .overview-diagram g.label.commented {
+.visual g.node.commented > :is(rect, polygon, path), .visual g.edgeLabel.commented span.edgeLabel {
   filter: drop-shadow(2px 0 0 var(--highlight-border)) drop-shadow(-2px 0 0 var(--highlight-border))
     drop-shadow(0 2px 0 var(--highlight-border)) drop-shadow(0 -2px 0 var(--highlight-border));
 }
-main .h2-block.diagram-block { background: none; border: none; padding: 0; }
-.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-top: 10px; }
-.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
-.legend .new::before { background: var(--node-new-bg); border-color: var(--node-new-border); }
-.legend .changed::before { background: var(--node-changed-bg); border-color: var(--node-changed-border); }
-.legend .same::before { background: var(--node-same-bg); border-color: var(--node-same-border); }
+.visual g.edgeLabel { cursor: pointer; }
 main .h2-block { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px 16px; margin: 0 0 16px; }
 main .h2-block > h2:first-child { margin-top: 16px; }
-.point-card h3, .decision-card h3 { margin-top: 16px; }
+.decision-card h3 { margin-top: 16px; }
 .point-check { color: var(--ink-2); }
 .point-label { font-weight: 600; margin-right: 6px; }
 .decision-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
@@ -207,6 +196,7 @@ main .h2-block > h2:first-child { margin-top: 16px; }
 .decision-options button:hover { background: var(--blue-bg2); }
 .decision-options button.recommended { border-color: var(--blue-line); }
 .decision-options button.chosen { background: var(--blue-bg); border-color: var(--blue-l); color: var(--blue-d); box-shadow: inset 0 0 0 1px var(--blue-l); }
+.decision-options button .consequence { display: block; font-weight: 500; font-size: 14px; color: var(--ink-2); }
 .decision-recommendation { font-size: 14px; color: var(--ink-2); }
 #review-bar {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 32px)); z-index: 5;
@@ -222,6 +212,9 @@ body:has(#review-bar:not([hidden])) { padding-bottom: 96px; }
   border-radius: 50%; animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<style>
+__VISUAL_CSS__
 </style>
 </head>
 <body>
@@ -266,7 +259,10 @@ body:has(#review-bar:not([hidden])) { padding-bottom: 96px; }
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="__MERMAID_URL__"></script>
+<script>
+__VISUAL_RUNTIME__
+</script>
 <script type="application/json" id="plan-data">__PLAN_DATA__</script>
 <script>
 const STEP_HEADING_RE = /^S(\d+)\s*·/;
@@ -291,7 +287,6 @@ const LANES = {
 };
 const CHOICE_RE = /^(?:Выбран вариант (\S+)|(Свой вариант):)/;
 const FREE_ANSWER = 'Свой вариант';
-const NODE_LINE_RE = /^(\s*\w+\[")([^"]*)("\].*)$/;
 const SILENCE_LEVEL = 0.01;
 const STREAM_RATE = 16000;
 const STREAM_CHUNK_MS = 100;
@@ -680,7 +675,7 @@ function isInThreadList(node) {
 
 function regionForNode(node, regionsByBlock) {
   const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-  const block = el && el.closest('.h2-block');
+  const block = el && el.closest('.h2-block, details.sec');
   if (!block) return null;
   const regions = regionsByBlock.get(block) || [];
   const specific = regions.slice(1).find(r => r.nodes.some(n => n.contains(el)));
@@ -1187,10 +1182,15 @@ async function renderDiagrams(panel) {
   await document.fonts.ready;
   for (const node of panel.querySelectorAll('.mermaid:not([data-processed])')) {
     diagramCount += 1;
+    mermaid.initialize(mermaidConfig());
     const { svg } = await mermaid.render(`plan-diagram-${diagramCount}`, node.textContent);
     node.innerHTML = svg;
     node.dataset.processed = 'true';
-    if (node.diagramRegion) bindDiagram(node, node.diagramRegion);
+  }
+  for (const root of panel.querySelectorAll('.visual:not([data-processed])')) {
+    root.dataset.processed = 'true';
+    const overview = await renderVisual(root, root.visualOptions || {});
+    if (overview && root.onVisualRendered) root.onVisualRendered(overview);
   }
 }
 
@@ -1217,45 +1217,28 @@ function mermaidConfig() {
   };
 }
 
-function diagramSource(source) {
-  const lines = source.split('\n').map(line => {
-    const m = NODE_LINE_RE.exec(line);
-    return m ? `${m[1]}${styledNodeLabel(m[2])}${m[3]}` : line;
-  });
-  const classDefs = ['new', 'changed', 'same'].map(name =>
-    `  classDef ${name} fill:${cssVar(`--node-${name}-bg`)},stroke:${cssVar(`--node-${name}-border`)},` +
-    `color:${cssVar(`--node-${name}-fg`)},stroke-width:1.5px`);
-  return [...lines, ...classDefs].join('\n');
-}
-
-function styledNodeLabel(label) {
-  const [plain, code, change] = label.split('<br/>');
-  if (code === undefined) return label;
-  const parts = [plain, `<span class='node-code'>${code}</span>`];
-  if (change !== undefined) parts.push(`<span class='node-change'>${change}</span>`);
-  return parts.join('<br/>');
-}
-
 function renderOverview(brief, stepNodes, panel) {
+  const root = document.createElement('div');
+  root.className = 'visual';
+  panel.appendChild(root);
   const blocks = [];
-  if (brief.diagram) {
-    const diagram = diagramBlock(brief);
-    panel.appendChild(diagram.el);
-    blocks.push(diagram);
-  }
-  if (brief.points.length) panel.appendChild(sectionHeading('Что сделаем'));
-  brief.points.forEach(point => {
-    const card = pointCard(point, stepNodes);
-    panel.appendChild(card.el);
-    blocks.push(card);
-  });
-  if (brief.decisions.length) panel.appendChild(sectionHeading('Решения'));
-  brief.decisions.forEach(decision => {
-    const card = decisionCard(decision);
-    panel.appendChild(card.el);
+  if (brief.overview) blocks.push(overviewBlock(root, brief));
+  brief.sections.forEach((html, index) => blocks.push(pointCard(root, html, index + 1, brief, stepNodes)));
+  if (brief.questions.length) root.appendChild(sectionHeading('Решения'));
+  brief.questions.forEach((question, index) => {
+    const card = decisionCard(question, index + 1);
+    root.appendChild(card.el);
     blocks.push(card);
   });
   return blocks;
+}
+
+function contractBlock(contract) {
+  const root = document.createElement('div');
+  root.className = 'visual';
+  root.innerHTML = contract.html;
+  root.visualOptions = { sectionsByNode: contract.sectionsByNode };
+  return root;
 }
 
 function sectionHeading(text) {
@@ -1264,43 +1247,47 @@ function sectionHeading(text) {
   return h2;
 }
 
-function diagramBlock(brief) {
-  const wrap = document.createElement('div');
-  wrap.className = 'h2-block diagram-block';
-  const box = document.createElement('div');
-  box.className = 'overview-diagram';
-  const pre = document.createElement('pre');
-  pre.className = 'mermaid';
-  pre.textContent = diagramSource(brief.diagram);
-  box.appendChild(pre);
-  const legend = document.createElement('div');
-  legend.className = 'legend';
-  legend.innerHTML = '<span class="new">новое</span><span class="changed">меняется</span><span class="same">без изменений</span>';
-  wrap.append(sectionHeading('Схема'), box, legend);
+function overviewBlock(root, brief) {
+  root.insertAdjacentHTML('beforeend', brief.overview);
+  const el = root.querySelector('section.overview');
   const region = {
-    anchor: 'Схема', head: legend, nodes: [wrap], threads: [], targets: new Map(),
-    diagram: { names: brief.diagramNodes || {}, edges: brief.diagramEdges || [] },
+    anchor: 'Схема', head: el.querySelector('.legend'), nodes: [el], threads: [], targets: new Map(),
+    diagram: { names: brief.nodeNames, edges: brief.edges },
   };
-  pre.diagramRegion = region;
-  return { el: wrap, regions: [region] };
+  root.visualOptions = {
+    onNode: (id, closeZoom, node) => {
+      closeZoom();
+      const quote = brief.nodeNames[`n_${id}`];
+      if (quote) openPopupBelow(region.targets.get(quote) || node, { region, quote });
+    },
+  };
+  root.onVisualRendered = svg => bindDiagram(svg, region);
+  return { el, regions: [region] };
 }
 
-function bindDiagram(pre, region) {
+function bindDiagram(svg, region) {
   const { names, edges } = region.diagram;
-  pre.querySelectorAll('g.node').forEach(node => {
-    const m = /-flowchart-(\w+)-\d+$/.exec(node.id);
-    if (m && names[m[1]]) bindDiagramTarget(node, region, names[m[1]]);
+  svg.querySelectorAll('g.node').forEach(node => {
+    const id = (/flowchart-(.+)-\d+$/.exec(node.id) || [])[1];
+    if (names[id]) region.targets.set(names[id], node);
   });
-  pre.querySelectorAll('g.label[data-id]').forEach(label => {
-    const edge = edges.find(([from, to]) => new RegExp(`^L_${from}_${to}_\\d+$`).test(label.dataset.id));
-    if (edge) bindDiagramTarget(label, region, `${names[edge[0]] || edge[0]} → ${names[edge[1]] || edge[1]}`);
+  const labels = [...svg.querySelectorAll('g.edgeLabel')];
+  svg.querySelectorAll('.edgePaths path').forEach((path, index) => {
+    const edge = edges.find(([from, to]) => new RegExp(`^L_${from}_${to}_\\d+$`).test(path.id));
+    const label = labels[index];
+    if (edge && label && label.textContent.trim()) {
+      bindDiagramTarget(label, region, `${names[edge[0]] || edge[0]} → ${names[edge[1]] || edge[1]}`);
+    }
   });
   markDiagram(region);
 }
 
 function bindDiagramTarget(element, region, quote) {
   region.targets.set(quote, element);
-  element.addEventListener('click', () => openPopupBelow(element, { region, quote }));
+  element.addEventListener('click', event => {
+    event.stopPropagation();
+    openPopupBelow(element, { region, quote });
+  });
 }
 
 function markDiagram(region) {
@@ -1308,43 +1295,38 @@ function markDiagram(region) {
   region.targets.forEach((element, quote) => element.classList.toggle('commented', open.has(quote)));
 }
 
-function pointCard(point, stepNodes) {
-  const el = document.createElement('div');
-  el.className = 'h2-block point-card';
-  const title = document.createElement('h3');
-  title.textContent = `${point.n}. ${point.title}`;
-  const text = labelledParagraph('Сделаем:', point.text, '');
-  const check = labelledParagraph('Проверим:', point.check, 'point-check');
-  el.append(title);
-  if (point.now) el.append(labelledParagraph('Сейчас:', point.now, ''));
-  el.append(text, check);
-  const stepRegionsInCard = point.steps.map(id => stepNodes.get(`S${id}`)).filter(Boolean);
+function pointCard(root, html, n, brief, stepNodes) {
+  root.insertAdjacentHTML('beforeend', html);
+  const el = root.lastElementChild;
+  const body = el.querySelector('.sec-body');
+  body.append(labelledParagraph('Проверим:', brief.checks[n - 1], 'point-check'));
+  const stepRegionsInCard = brief.steps[n - 1].map(id => stepNodes.get(id)).filter(Boolean);
   if (stepRegionsInCard.length) {
     const details = document.createElement('details');
     const summary = document.createElement('summary');
     summary.textContent = 'Технические детали';
     details.appendChild(summary);
     stepRegionsInCard.forEach(region => details.append(...region.nodes));
-    el.appendChild(details);
+    body.appendChild(details);
   }
-  const anchor = `Пункт ${point.n}`;
-  return { el, regions: [{ anchor, head: title, nodes: [el] }, ...stepRegionsInCard] };
+  return { el, regions: [{ anchor: `Пункт ${n}`, head: el, nodes: [el] }, ...stepRegionsInCard] };
 }
 
-function decisionCard(decision) {
+function decisionCard(question, n) {
   const el = document.createElement('div');
   el.className = 'h2-block decision-card';
   const title = document.createElement('h3');
-  title.textContent = `Вопрос ${decision.n} · ${decision.question}`;
+  title.textContent = `Вопрос ${n} · ${question.title}`;
   const options = document.createElement('div');
   options.className = 'decision-options';
-  const recommended = decision.recommendation.split(/\s/)[0];
-  const anchor = `Вопрос ${decision.n}`;
+  const recommended = question.recommendation.key;
+  const anchor = `Вопрос ${n}`;
   const region = { anchor, head: options, nodes: [el], buttons: new Map() };
-  decision.options.forEach(option => {
+  question.options.forEach(option => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = `${option.key} · ${option.text}`;
+    button.innerHTML = marked.parseInline(`${option.key} · ${option.text}`) +
+      `<span class="consequence">${marked.parseInline(option.consequence)}</span>`;
     if (option.key === recommended) button.classList.add('recommended');
     button.addEventListener('click', () => chooseOption(region, option.key));
     region.buttons.set(option.key, button);
@@ -1354,10 +1336,10 @@ function decisionCard(decision) {
   freeButton.addEventListener('click', () => openPopupBelow(freeButton, { region, quote: '', prefix: FREE_ANSWER }));
   region.buttons.set(FREE_ANSWER, freeButton);
   options.appendChild(freeButton);
-  const gist = labelledParagraph('Суть:', decision.gist, '');
+  const gist = labelledParagraph('Суть:', question.gist, '');
   const recommendation = document.createElement('div');
   recommendation.className = 'decision-recommendation';
-  recommendation.textContent = `Рекомендую: ${decision.recommendation}`;
+  recommendation.innerHTML = marked.parseInline(`Рекомендую: ${recommended} — ${question.recommendation.why}`);
   el.append(title, gist, options, recommendation);
   return { el, regions: [region] };
 }
@@ -1452,6 +1434,8 @@ function main() {
     panels[tab].appendChild(el);
     return el;
   });
+
+  if (data.contract) panels.contract.prepend(contractBlock(data.contract));
 
   if (data.brief) {
     const stepsBlock = planBlocks.find(el => el.dataset.section === 'Steps');

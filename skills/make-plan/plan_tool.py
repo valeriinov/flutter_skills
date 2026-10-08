@@ -17,6 +17,9 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'visualize'))
+import visualize  # noqa: E402
+
 H2_RE = re.compile(r'^## (.+)$')
 STEP_RE = re.compile(r'^### S(\d+)\s*·\s*(.+)$')
 VERIFY_RE = re.compile(r'→\s*verify:')
@@ -64,33 +67,10 @@ DICTATION_ERRORS = {
     3: 'Системное распознавание русской речи недоступно — включи Диктовку в Системных настройках → Клавиатура.',
     4: 'Разреши распознавание речи для PlanDictation: Системные настройки → Конфиденциальность и безопасность → Распознавание речи.',
 }
-POINT_RE = re.compile(r'^### (\d+)\.\s*(.+)$')
-POINT_STEPS_RE = re.compile(r'^<!--\s*((?:S\d+\s*)+)-->$')
-CHECK_PREFIX = 'Проверим:'
-NOW_PREFIX = 'Сейчас:'
-CHANGE_PREFIX = 'Сделаем:'
-GIST_PREFIX = 'Суть:'
-DECISION_RE = re.compile(r'^### Вопрос (\d+)\s*·\s*(.+)$')
-OPTION_RE = re.compile(r'^- (\w)\s*·\s*(.+)$')
-RECOMMEND_PREFIX = 'Рекомендую:'
-NODE_RE = re.compile(r'^(\w+)\["([^"]*)"\](?::::(\w+))?$')
-EDGE_RE = re.compile(r'^(\w+)\s*-->\s*(?:\|([^|]*)\|\s*)?(\w+)$')
-NODE_CLASSES = {'new', 'changed', 'same'}
-NAME_SPAN_RE = re.compile(r'^[\w.-]+$')
-LOCATION_RE = re.compile(r'\w:\d+')
 CITATION_RE = re.compile(r'(?<![\w./:~-])([\w.-][\w./-]*):(\d+)(?:-(\d+))?')
 VISIBLE_STEP_RE = re.compile(r'\bS\d+\b')
-MAX_NODES = 8
-MAX_EDGES = 10
-MAX_NODE_PART = 40
-MAX_NODE_CHANGE_WORDS = 5
-MAX_EDGE_LABEL_WORDS = 3
-MAX_POINTS = 5
-MAX_POINT_TEXT = 600
-MAX_SENTENCE_WORDS = 25
-LATIN_RE = re.compile(r'[A-Za-z]')
-SENTENCE_END_RE = re.compile(r'(?<=[.!?…])\s+')
-WORD_RE = re.compile(r'\w')
+PLAN_STEP_RE = re.compile(r'^S(\d+)$')
+MD_LINK_RE = re.compile(r'\]\(([^)\s]+\.md)\)|`([^`\s]+\.md)`')
 SERVE_PORTS = range(8790, 8800)
 
 def unfenced(lines):
@@ -302,255 +282,93 @@ def check_plan(plan_path, root):
     problems += front_matter_problems(front_matter, fm_lines)
     tagged = [(plan_path, ln, msg) for ln, msg in sorted(problems, key=lambda p: p[0])]
     _, _, brief_path = output_paths(plan_path)
-    if not brief_path.exists():
-        return tagged
-    brief_lines = brief_path.read_text(encoding='utf-8').splitlines()
-    brief_issues = brief_problems(brief_lines, parse_brief(brief_lines), step_ids)
-    return tagged + [(brief_path, ln, msg) for ln, msg in sorted(brief_issues, key=lambda p: p[0])]
+    if brief_path.exists():
+        tagged += [(brief_path, 1, msg) for msg in visual_problems(brief_path, step_ids)]
+    elif brief_path.with_suffix('.md').exists():
+        tagged.append((brief_path.with_suffix('.md'), 1, f'brief.md is not read; write {brief_path.name}'))
+    contract_path = contract_visual_path(plan_path, sections, root)
+    if contract_path:
+        tagged += [(contract_path, 1, msg) for msg in visual_problems(contract_path, None)]
+    return tagged
 
-def parse_diagram(section_lines):
-    fence = [ln for ln, line in section_lines if line.strip().startswith('```')]
-    if len(fence) < 2:
-        return None
-    start, end = fence[0], fence[1]
-    body = [(ln, line.strip()) for ln, line in section_lines if start < ln < end and line.strip()]
-    return {'line': start, 'source': '\n'.join(line for _, line in body), 'lines': body}
+def load_visual(path):
+    try:
+        return json.loads(path.read_text(encoding='utf-8')), None
+    except json.JSONDecodeError as error:
+        return None, f'not valid JSON: {error}'
 
-def parse_points(section_lines):
-    points = []
-    current = None
-    for ln, line in section_lines:
-        m = POINT_RE.match(line)
-        if m:
-            current = {'n': int(m.group(1)), 'title': m.group(2).strip(), 'line': ln,
-                       'steps': [], 'now': '', 'text': '', 'check': '', 'misplaced': []}
-            points.append(current)
-            part = None
-            continue
-        if current is None or not line.strip():
-            continue
-        steps = POINT_STEPS_RE.match(line.strip())
-        if steps:
-            current['steps'] = [int(s[1:]) for s in steps.group(1).split()]
-        elif line.startswith(NOW_PREFIX):
-            if part is not None:
-                current['misplaced'].append(ln)
-            current['now'] = line[len(NOW_PREFIX):].strip()
-            part = 'now'
-        elif line.startswith(CHANGE_PREFIX):
-            current['text'] = line[len(CHANGE_PREFIX):].strip()
-            part = 'change'
-        elif line.startswith(CHECK_PREFIX):
-            current['check'] = line[len(CHECK_PREFIX):].strip()
-            part = 'check'
-        elif part == 'change':
-            current['text'] = f"{current['text']} {line.strip()}".strip()
+def visual_problems(path, plan_step_ids):
+    doc, error = load_visual(path)
+    if error:
+        return [error]
+    problems = visualize.problems(doc)
+    if plan_step_ids is not None:
+        problems += brief_problems(doc, plan_step_ids)
+    return problems
+
+def brief_problems(doc, plan_step_ids):
+    problems = [] if doc.get('lang') == 'ru' else ["lang must be 'ru'"]
+    owner = {}
+    for index, section in enumerate(doc.get('sections', []), start=1):
+        problems += section_step_problems(f'section {index}', section, plan_step_ids, owner)
+        problems += section_check_problems(f'section {index}', section.get('check', ''))
+    problems += [f'step S{step} is in no section' for step in sorted(plan_step_ids) if step not in owner]
+    problems += [f'{spot}: no file:line or step id where the reader sees it'
+                 for spot, text in visible_texts(doc) if CITATION_RE.search(text) or VISIBLE_STEP_RE.search(text)]
+    return problems
+
+def section_step_problems(where, section, plan_step_ids, owner):
+    steps = section.get('steps', [])
+    if not steps:
+        return [f'{where}: no "steps"; list the plan steps it covers, e.g. ["S1", "S2"]']
+    problems = []
+    for step in steps:
+        match = PLAN_STEP_RE.match(str(step))
+        number = int(match.group(1)) if match else None
+        if number not in plan_step_ids:
+            problems.append(f'{where}: unknown step {step}')
+        elif number in owner:
+            problems.append(f'{where}: step {step} is already in section {owner[number]}')
         else:
-            current['misplaced'].append(ln)
-    return points
+            owner[number] = where.split()[-1]
+    return problems
 
-def parse_decisions(section_lines):
-    decisions = []
-    current = None
-    for ln, line in section_lines:
-        m = DECISION_RE.match(line)
-        if m:
-            current = {'n': int(m.group(1)), 'question': m.group(2).strip(), 'line': ln,
-                       'gist': '', 'options': [], 'recommendation': ''}
-            decisions.append(current)
-            in_gist = False
+def section_check_problems(where, check):
+    if not check.strip():
+        return [f'{where}: no "check"; say how the result is observed']
+    words = len(check.split())
+    if words > visualize.MAX_SENTENCE_WORDS:
+        return [f'{where}: "check" has {words} words, limit {visualize.MAX_SENTENCE_WORDS}']
+    return []
+
+def visible_texts(doc):
+    skip = {'steps', 'path', 'files', 'id', 'entity', 'from', 'to', 'ui', 'lang', 'kind', 'status', 'type'}
+    found = []
+    def walk(spot, value):
+        if isinstance(value, str):
+            found.append((spot, value))
+        elif isinstance(value, list):
+            for index, item in enumerate(value, start=1):
+                walk(f'{spot}[{index}]', item)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                if key not in skip:
+                    walk(f'{spot}.{key}' if spot else key, item)
+    walk('', doc)
+    return found
+
+def contract_visual_path(plan_path, sections, root):
+    for _, line in sections.get('Contract', []):
+        match = MD_LINK_RE.search(line)
+        if not match:
             continue
-        if current is None:
-            continue
-        option = OPTION_RE.match(line)
-        if option:
-            current['options'].append({'key': option.group(1), 'text': option.group(2).strip()})
-            in_gist = False
-        elif line.startswith(RECOMMEND_PREFIX):
-            current['recommendation'] = line[len(RECOMMEND_PREFIX):].strip()
-            in_gist = False
-        elif line.startswith(GIST_PREFIX):
-            current['gist'] = line[len(GIST_PREFIX):].strip()
-            in_gist = True
-        elif in_gist and line.strip():
-            current['gist'] = f"{current['gist']} {line.strip()}".strip()
-    return decisions
-
-def parse_brief(lines):
-    sections = h2_sections(list(enumerate(lines, start=1)))
-    diagram = parse_diagram(sections['Схема']) if 'Схема' in sections else None
-    diagram_lines = diagram['lines'] if diagram else []
-    return {
-        'diagram': diagram['source'] if diagram else '',
-        'diagramLine': diagram['line'] if diagram else 0,
-        'diagramLines': diagram_lines,
-        'diagramNodes': diagram_nodes(diagram_lines),
-        'diagramEdges': diagram_edges(diagram_lines),
-        'points': parse_points(sections.get('Что сделаем', [])),
-        'decisions': parse_decisions(sections.get('Решения', [])),
-    }
-
-def diagram_nodes(diagram_lines):
-    matches = (NODE_RE.match(line) for _, line in diagram_lines)
-    return {m.group(1): m.group(2).split('<br/>')[0].strip() for m in matches if m}
-
-def diagram_edges(diagram_lines):
-    matches = (EDGE_RE.match(line) for _, line in diagram_lines)
-    return [[m.group(1), m.group(3)] for m in matches if m]
-
-def brief_problems(lines, brief, plan_step_ids):
-    problems = []
-    nodes = {}
-    problems += diagram_problems(brief, nodes)
-    problems += point_problems(brief['points'], plan_step_ids, nodes)
-    problems += decision_problems(brief['decisions'])
-    problems += plain_word_problems(lines, brief)
-    return problems
-
-def diagram_problems(brief, nodes):
-    body = brief['diagramLines']
-    if not body:
-        return [(1, "missing '## Схема' with a mermaid block")]
-    head_ln, head = body[0]
-    problems = [] if head == 'flowchart TD' else [(head_ln, "diagram must start with 'flowchart TD'")]
-    edges = []
-    for ln, line in body[1:]:
-        node = NODE_RE.match(line)
-        edge = EDGE_RE.match(line)
-        if node:
-            nodes[node.group(1)] = (ln, node.group(2), node.group(3))
-            problems += node_problems(ln, node.group(2), node.group(3))
-        elif edge:
-            edges.append((ln, edge.group(1), edge.group(3)))
-            problems += edge_label_problems(ln, edge.group(2))
-        else:
-            problems.append((ln, 'diagram line is neither a node \'id["label"]:::class\' nor an arrow \'a --> b\''))
-    if len(nodes) > MAX_NODES:
-        problems.append((head_ln, f'diagram has {len(nodes)} nodes, limit {MAX_NODES}'))
-    if len(edges) > MAX_EDGES:
-        problems.append((head_ln, f'diagram has {len(edges)} arrows, limit {MAX_EDGES}'))
-    for ln, source, target in edges:
-        for end in (source, target):
-            if end not in nodes:
-                problems.append((ln, f"arrow end '{end}' is not a declared node"))
-    return problems
-
-def node_problems(ln, label, node_class):
-    problems = []
-    if node_class not in NODE_CLASSES:
-        problems.append((ln, 'node without :::new, :::changed or :::same'))
-    parts = [part.strip() for part in label.split('<br/>')]
-    expected = 2 if node_class == 'same' else 3
-    if len(parts) != expected:
-        problems.append((ln, f'{node_class or "unclassed"} node label needs {expected} parts: '
-                             f'plain name<br/>code name{"" if expected == 2 else "<br/>what changes"}'))
-    if any(len(part) > MAX_NODE_PART for part in parts):
-        problems.append((ln, f'node label part over {MAX_NODE_PART} chars'))
-    if len(parts) == 3 and len(parts[2].split()) > MAX_NODE_CHANGE_WORDS:
-        problems.append((ln, f'node change line over {MAX_NODE_CHANGE_WORDS} words'))
-    return problems
-
-def edge_label_problems(ln, label):
-    problems = []
-    if label and len(label.split()) > MAX_EDGE_LABEL_WORDS:
-        problems.append((ln, f'arrow label over {MAX_EDGE_LABEL_WORDS} words'))
-    if label and LATIN_RE.search(label):
-        problems.append((ln, 'arrow label has Latin letters'))
-    return problems
-
-def point_problems(points, plan_step_ids, nodes):
-    problems = []
-    if not points:
-        problems.append((1, "missing '## Что сделаем' with '### <n>. <title>' points"))
-    if len(points) > MAX_POINTS:
-        problems.append((points[MAX_POINTS]['line'], f'more than {MAX_POINTS} points'))
-    code_names = {code_name(label) for _, label, _ in nodes.values()}
-    covered = {}
-    named = set()
-    for point in points:
-        problems += single_point_problems(point, code_names)
-        named.update(BACKTICK_RE.findall(point['text']))
-        for sid in point['steps']:
-            covered.setdefault(sid, []).append(point['line'])
-    for sid in sorted(plan_step_ids):
-        if len(covered.get(sid, [])) != 1:
-            problems.append((1, f'plan step S{sid} must belong to exactly one point'))
-    for sid in sorted(set(covered) - plan_step_ids):
-        problems.append((covered[sid][0], f'point refers to unknown step S{sid}'))
-    for ln, label, node_class in nodes.values():
-        if node_class in ('new', 'changed') and code_name(label) not in named:
-            problems.append((ln, f"{node_class} node `{code_name(label)}` is named in no point"))
-    return problems
-
-def code_name(label):
-    parts = label.split('<br/>')
-    return parts[1].strip() if len(parts) > 1 else parts[0].strip()
-
-def single_point_problems(point, code_names):
-    ln = point['line']
-    problems = []
-    if not point['steps']:
-        problems.append((ln, f"point {point['n']}: missing '<!-- S1 S2 -->' step comment"))
-    if not point['check']:
-        problems.append((ln, f"point {point['n']}: missing '{CHECK_PREFIX}' line"))
-    if len(sentences(point['now'])) > 1:
-        problems.append((ln, f"point {point['n']}: '{NOW_PREFIX}' holds more than one sentence"))
-    for misplaced in point['misplaced']:
-        problems.append((misplaced, f"point {point['n']}: line outside '{NOW_PREFIX}' before "
-                                    f"'{CHANGE_PREFIX}', '{CHANGE_PREFIX}' paragraph or '{CHECK_PREFIX}'"))
-    problems += long_sentence_problems(ln, f"point {point['n']}", point['now'])
-    problems += long_sentence_problems(ln, f"point {point['n']}", point['text'])
-    if not point['text']:
-        problems.append((ln, f"point {point['n']}: missing '{CHANGE_PREFIX}' paragraph"))
-        return problems
-    if len(point['text']) > MAX_POINT_TEXT:
-        problems.append((ln, f"point {point['n']}: text over {MAX_POINT_TEXT} chars"))
-    names = BACKTICK_RE.findall(point['text'])
-    if not code_names.intersection(names):
-        problems.append((ln, f"point {point['n']}: names no `entity` shown on the diagram"))
-    return problems
-
-def sentences(text):
-    return [sentence for sentence in SENTENCE_END_RE.split(text.strip()) if sentence]
-
-def long_sentence_problems(ln, spot, text):
-    problems = []
-    for sentence in sentences(text):
-        words = sum(1 for token in sentence.split() if WORD_RE.search(token))
-        if words > MAX_SENTENCE_WORDS:
-            problems.append((ln, f"{spot}: sentence of {words} words, limit {MAX_SENTENCE_WORDS}"))
-    return problems
-
-def decision_problems(decisions):
-    problems = []
-    for decision in decisions:
-        if not decision['gist']:
-            problems.append((decision['line'], f"question {decision['n']}: missing '{GIST_PREFIX}'"))
-        problems += long_sentence_problems(decision['line'], f"question {decision['n']}", decision['gist'])
-        if len(decision['options']) < 2:
-            problems.append((decision['line'], f"question {decision['n']}: fewer than two options"))
-        if not decision['recommendation']:
-            problems.append((decision['line'], f"question {decision['n']}: missing '{RECOMMEND_PREFIX}'"))
-    return problems
-
-def plain_word_problems(lines, brief):
-    diagram_lines = {ln for ln, _ in brief['diagramLines']}
-    problems = []
-    for ln, line in enumerate(lines, start=1):
-        if ln in diagram_lines or line.strip().startswith('```') or POINT_STEPS_RE.match(line.strip()):
-            continue
-        problems += plain_line_problems(ln, line)
-    return problems
-
-def plain_line_problems(ln, line):
-    problems = []
-    if any('/' in token for token in line.split()) or LOCATION_RE.search(line):
-        problems.append((ln, 'path or file:line in the brief'))
-    if any(not NAME_SPAN_RE.match(span) for span in BACKTICK_RE.findall(line)):
-        problems.append((ln, 'backticks hold more than one name'))
-    if VISIBLE_STEP_RE.search(line):
-        problems.append((ln, 'step id visible to the reader'))
-    return problems
+        target = match.group(1) or match.group(2)
+        for base in (plan_path.resolve().parent, root):
+            document = (base / target).resolve()
+            if document.exists():
+                visual = document.with_name(f'{document.stem}.visual.json')
+                return visual if visual.exists() else None
+    return None
 
 def extract_title(body_lines):
     for line in unfenced(body_lines):
@@ -561,10 +379,10 @@ def extract_title(body_lines):
 
 def output_paths(plan_path):
     if plan_path.name == 'plan.md':
-        return plan_path.parent / 'comments.md', plan_path.parent / 'plan.html', plan_path.parent / 'brief.md'
+        return plan_path.parent / 'comments.md', plan_path.parent / 'plan.html', plan_path.parent / 'brief.json'
     stem = plan_path.stem
     return (plan_path.parent / f'{stem}.comments.md', plan_path.parent / f'{stem}.html',
-            plan_path.parent / f'{stem}.brief.md')
+            plan_path.parent / f'{stem}.brief.json')
 
 def plan_version(plan_path):
     comments_path, _, brief_path = output_paths(plan_path)
@@ -577,12 +395,13 @@ def build_html(plan_path, server, revising=False):
     body_lines = lines[body_start:]
     comments_path, _, brief_path = output_paths(plan_path)
     comments = comments_path.read_text(encoding='utf-8') if comments_path.exists() else ''
-    brief = parse_brief(brief_path.read_text(encoding='utf-8').splitlines()) if brief_path.exists() else None
+    contract_path = contract_visual_path(plan_path, h2_sections(unfenced(lines)), resolve_root(plan_path, None))
     data = {
         'title': extract_title(body_lines) or plan_path.stem,
         'frontMatter': front_matter,
         'markdown': '\n'.join(body_lines),
-        'brief': brief,
+        'brief': brief_payload(brief_path) if brief_path.exists() else None,
+        'contract': contract_payload(contract_path) if contract_path else None,
         'comments': comments,
         'server': server,
         'planId': str(plan_path.resolve()) if server else '',
@@ -591,7 +410,47 @@ def build_html(plan_path, server, revising=False):
     }
     payload = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     template_path = Path(__file__).resolve().parent / 'viewer.html'
-    return template_path.read_text(encoding='utf-8').replace('__PLAN_DATA__', payload)
+    page = template_path.read_text(encoding='utf-8')
+    page = page.replace('__VISUAL_CSS__', f'.visual {{{visualize.TOKENS_CSS}}}\n{visualize.scoped_css(".visual")}')
+    page = page.replace('__VISUAL_RUNTIME__', visualize.RUNTIME_JS)
+    page = page.replace('__MERMAID_URL__', visualize.MERMAID_URL)
+    return page.replace('__PLAN_DATA__', payload)
+
+def brief_payload(brief_path):
+    doc, error = load_visual(brief_path)
+    if error:
+        return None
+    sections = doc.get('sections', [])
+    return {
+        'overview': visualize.overview(doc),
+        'sections': [visualize.section_html(doc, index, section) for index, section in enumerate(sections, start=1)],
+        'steps': [section.get('steps', []) for section in sections],
+        'checks': [section.get('check', '') for section in sections],
+        'questions': doc.get('questions', []),
+        'nodeNames': overview_node_names(doc),
+        'edges': overview_edges(doc),
+    }
+
+def overview_node_names(doc):
+    names = {entity['id']: entity['name'] for entity in doc.get('entities', [])}
+    flow = doc.get('flow')
+    if not flow:
+        return {visualize.node_id(key): name for key, name in names.items()}
+    return {visualize.node_id(node['id']): node.get('label') or names.get(node.get('entity'), node['id'])
+            for node in flow.get('nodes', [])}
+
+def overview_edges(doc):
+    flow = doc.get('flow')
+    edges = flow.get('edges', []) if flow else doc.get('links', [])
+    return [[visualize.node_id(edge['from']), visualize.node_id(edge['to'])] for edge in edges if not edge.get('hidden')]
+
+def contract_payload(contract_path):
+    doc, error = load_visual(contract_path)
+    if error:
+        return None
+    header = f'<header><h2>{visualize.inline(doc["title"])}</h2><p class="summary">{visualize.inline(doc["summary"])}</p></header>'
+    body = [header, visualize.overview(doc), visualize.sections_html(doc), visualize.questions_html(doc)]
+    return {'html': ''.join(body), 'sectionsByNode': visualize.sections_by_overview_node(doc)}
 
 def render_plan(plan_path, out_arg):
     _, default_out, _ = output_paths(plan_path)

@@ -17,12 +17,12 @@ Models are pinned by the role definitions; pick the role, never a model.
 |---|---|---|
 | extractor, scout | `Explore` | `explorer` |
 | review | `plan-reviewer` (`<plugin>:plan-reviewer` as a plugin) | `code-reviewer` with the plan-reviewer criteria |
-| brief review | `brief-reviewer` (`<plugin>:brief-reviewer` as a plugin) | `explorer` with the brief-reviewer criteria, told to read only `brief.md` and `plan.md` (no Codex role is code-blind, so the prompt carries the restriction) |
+| brief and contract review | `visual-reviewer` (`<plugin>:visual-reviewer` as a plugin) | `explorer` with the visual-reviewer criteria, told to read only the JSON and its source (no Codex role is code-blind, so the prompt carries the restriction) |
 
 ## Graph
 
-Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap; the two reviewers run in
-parallel, so both sit on its last node); never add a node to it.
+Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap; the reviewers run in
+parallel, so all sit on its last node); never add a node to it.
 
 1. **Intake** — list `plan/<name>/inputs/`. No folder → the task text is the only input.
 2. **Extract** — only if inputs hold non-code (screenshots, text, links): one extractor agent
@@ -31,17 +31,22 @@ parallel, so both sit on its last node); never add a node to it.
    - Scout: 1–2 read-only agents (2 only when the affected features span areas); input = the
      affected features. Each returns with `file:line`: the closest precedent to copy, utilities to
      reuse, the naming vocabulary of the affected layer.
-   - Contract: only if a backend input exists → run the `backend-contract` skill. `## Contract`
-     links its document plus at most one mermaid sequence diagram; never rewrite the document.
-4. **Draft** `plan/<name>/plan.md` for the agent and `plan/<name>/brief.md` for the reader; front
+   - Contract: only if a backend input exists → run the `backend-contract` skill, then the
+     `visualize` skill's Model, Write, Trace and Check steps on its document (no review of its
+     own: step 6 reviews it). `## Contract` links the document; the Контракт tab draws
+     `<document stem>.visual.json` beside it. Never rewrite the document.
+4. **Draft** `plan/<name>/plan.md` for the agent and `plan/<name>/brief.json` for the reader; front
    matter always carries `lane:` (contained | wide | closed).
-5. **Gate** — `python3 plan_tool.py check <plan.md>` must exit 0; it checks `brief.md` too. Fix each reported line, rerun;
+5. **Gate** — `python3 plan_tool.py check <plan.md>` must exit 0; it checks `brief.json` and the
+   contract JSON too. Fix each reported line, rerun;
    after 3 failed runs stop and report the remaining violations.
 6. **Review**, depth by lane (missing → wide): contained → inline, one pass by the plan-reviewer and
-   brief-reviewer criteria; wide/closed → `plan-reviewer` and `brief-reviewer` in parallel, each in a
-   fresh context (pass both paths + contents, plus the task text and `## Requirements` when
-   extracted). Verify each plan finding against the plan and the code, each brief finding against
-   `plan.md` and `brief.md`; drop the ones that do not hold.
+   visual-reviewer criteria; wide/closed → `plan-reviewer` and `visual-reviewer` in parallel, each
+   in a fresh context — the visual reviewer once for `brief.json` with `plan.md` as its source, and
+   once more for the contract JSON with the contract document as its source when there is one (pass
+   both paths + contents, plus the task text and `## Requirements` when extracted). Verify each plan
+   finding against the plan and the code, each visual finding against its JSON and its source;
+   drop the ones that do not hold.
 7. **Correct** — apply Blocking/Significant fixes to the flagged steps only, one round, then rerun
    the gate. Minor findings go to the report for the user to decide.
 8. **Render** — `python3 plan_tool.py render <plan.md>`, then start
@@ -87,35 +92,21 @@ parallel, so both sit on its last node); never add a node to it.
   `` `path/or/Symbol` — <exact change> → verify: <check> ``, then
   `<details><summary>Evidence</summary>` with the `file:line` trail. Ceiling ~12 step headings;
   evidence is uncounted. No codebase retelling, no rejected alternatives.
-- **brief.md** — the reader's document, plain Russian; `check` enforces the shape:
-  - `# <same title>`, then `## Схема`: one `flowchart TD` mermaid block — ≤8 nodes, ≤10 arrows,
-    no other shapes. A `new` or `changed` node is
-    `id["<plain name><br/><code name><br/><what changes, ≤5 words>"]:::new|changed`, a `same` node
-    `id["<plain name><br/><code name>"]:::same`; name and change ≤40 chars each. An arrow is
-    `a -->|<≤3 words>| b` with no Latin letter in its label.
-  - `## Что сделаем`: ≤5 points `### <n>. <plain title>`, each followed by a hidden
-    `<!-- S1 S2 -->` naming its plan steps (every step in exactly one point), then in this order and
-    with no other lines: an optional `Сейчас: <one sentence>`; a required `Сделаем: <paragraph>`,
-    which may continue on the following lines — naming the touched entities and interfaces in
-    backticks, one name per span, at least one shown on the diagram, ≤600 chars; and a
-    `Проверим: <observable check>` line. No sentence in `Сейчас:` or `Сделаем:` over 25 words. The
-    code name of every `new` or `changed` node appears in backticks in some point.
-  - `## Решения` (only with open questions): `### Вопрос <n> · <plain question>`, a required
-    `Суть: <gist>` (may continue on the following lines up to the first option, no sentence over
-    25 words), options `- A · <option> — <consequence>`, `Рекомендую: <key> — <why>`. Open
-    questions live only here.
-  - No paths, `file:line` or step ids anywhere the reader sees them.
-- **brief.md writing** — for a reader who has not seen the code; the gate cannot see these, the
-  brief reviewer checks them:
-  - The diagram shows every entity the plan creates or changes and nothing about process. Arrows
-    mean one thing — who calls or feeds whom — in plain Russian verbs.
-  - A point's title is the result in plain words. `Сейчас:` holds only how it is today, never the
-    change; `Сделаем:` opens with what becomes different for the user or the system, the next
-    sentences say how, naming the entities.
-  - `Суть:` is understandable without the code: what is being decided, why it needs deciding and
-    what it affects, with a concrete example.
+- **brief.json** — the reader's page: a `visualize` document (read that skill's `SKILL.md` for the
+  page model, the shape and the writing rules) built from `plan.md`, `"lang": "ru"`, plain Russian.
+  `check` runs visualize's checks plus these:
+  - Every section carries `"steps": ["S1", "S2"]` — every plan step in exactly one section — and
+    `"check"`: how the result is observed, one sentence.
+  - No `file:line` or step id anywhere the reader sees; files go only in `files`.
+  - Open questions live only in `questions`; the page shows each option as a button.
+- **brief.json writing** — for a reader who has not seen the code; the visual reviewer checks it:
+  - The overall diagram answers "what changes and where": every entity the plan creates or changes
+    is on it, and its arrows show who calls or feeds whom.
+  - A section's `title` is the result in plain words, its `takeaway` the conclusion, its diagram
+    the change it makes; `lines` hold only how it is today and what the diagram cannot carry.
+  - A question's `gist` is understandable without the code: what is being decided, why it needs
+    deciding and what it affects, with a concrete example.
   - A term the reader may not know is replaced or explained on first use (`clarity` law 12).
-  - Test before the gate: the diagram alone answers "what changes and where".
 - **Stages** only if at least one holds: more than one change contract (things the project rules
   require to change together in one commit); a part leaves the build green with its own gate; a
   part needs separate device verification or sits in the closed lane; more than ~8 files across
@@ -131,13 +122,14 @@ parallel, so both sit on its last node); never add a node to it.
 
 Comments file: `comments.md` beside `plan.md`. A line is `- [ ] [<S3 | T2 | Пункт 2 | Вопрос 1 |
 Схема | section>] «<quote>» @<name>: <text>`; quote and name are optional. Read the open `- [ ]`
-items. For each: edit only the addressed step, point or section (the quote pins the spot) — in
-`brief.md` and `plan.md` together whenever the change touches both:
+items. For each: edit only the addressed step, section or question (the quote pins the spot) — in
+`brief.json` and `plan.md` together whenever the change touches both. `Пункт <n>` is the n-th
+entry of `sections`, `Вопрос <n>` the n-th of `questions`:
 - `Выбран вариант <key>` or `Свой вариант: <text>` on `Вопрос <n>` is the answer → apply it to the
-  affected points and steps and remove the question from `## Решения`; the last pick or free
+  affected sections and steps and remove the question from `questions`; the last pick or free
   answer per question wins, earlier ones are marked `[x]` without a reply.
-- `[Схема] «<node plain name>»` or `«<from> → <to>»` → edit that node or arrow in the diagram of
-  `brief.md`, and the matching points and steps.
+- `[Схема] «<node label>»` or `«<from> → <to>»` → edit that node or arrow of the overall `flow`
+  (or `entities`/`links`) in `brief.json`, and the matching sections and steps.
 
 Mark each `[x]`, add an
 indented reply `  - @<agent>: <what changed>`. Re-scout only when a
@@ -150,7 +142,7 @@ running `serve` waits for the next submit as in step 8.
 
 ## Report
 
-In Russian, one line each: URL открытой страницы, путь к open-plan.command и пути к brief.md и plan.md, вердикт ревьюера, применённые правки,
+In Russian, one line each: URL открытой страницы, путь к open-plan.command и пути к brief.json и plan.md, вердикт ревьюера, применённые правки,
 открытые вопросы (unverified assumptions, rejected Minor findings). If a comment class repeats
 across 2+ plans, propose it as an instruction rule — never write a rule directly. Не
 пересказывать план прозой. Do not implement — that is `implement-plan`'s job.

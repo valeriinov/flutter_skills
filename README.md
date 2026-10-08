@@ -23,8 +23,8 @@ Skills and subagents in one step:
 ```
 
 Skills appear as `/flutter-skills:<skill>`, agents as
-`flutter-skills:code-reviewer`, `flutter-skills:plan-reviewer`,
-`flutter-skills:brief-reviewer` and `flutter-skills:visual-reviewer`. Nothing is
+`flutter-skills:code-reviewer`, `flutter-skills:plan-reviewer` and
+`flutter-skills:visual-reviewer`. Nothing is
 written to `~/.claude/skills/` or `~/.claude/agents/`, so your own skills and
 agents keep their names and their content.
 
@@ -121,11 +121,11 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 | `dart-documentation` | Dartdoc for public interfaces and extensions | Dart | — |
 | `dart-flutter-tests` | Create, update, or refactor Dart/Flutter tests | Dart/Flutter | — |
 | `implement-plan` | Implement a plan file, verify, then review the diff | any | `code-reviewer` |
-| `make-plan` | Draft an implementation plan: scout precedent, write, auto-review | any | `plan-reviewer`, `brief-reviewer` |
+| `make-plan` | Draft an implementation plan: scout precedent, write, auto-review | any | `plan-reviewer`, `visual-reviewer` |
 | `naming` | Check one name against the project's vocabulary | any | — |
 | `naming-conventions` | Record the project's naming conventions into `AGENTS.md` | any | — |
 | `review-changes` | Review uncommitted changes before committing | any | `code-reviewer` |
-| `review-plan` | Review a plan file before any code is written | any | `plan-reviewer`, `brief-reviewer` |
+| `review-plan` | Review a plan file before any code is written | any | `plan-reviewer`, `visual-reviewer` |
 | `review-pr` | Review a GitHub PR against its base branch into a document pasted back as comments | any | `code-reviewer` |
 | `visualize` | Turn a plan, brief or contract into an HTML page: one overall diagram plus a small diagram per point | any | `visual-reviewer` |
 
@@ -137,21 +137,18 @@ skills are installed together.
 
 ## Subagents
 
-Four Claude Code subagents live in `agents/`:
+Three Claude Code subagents live in `agents/`:
 
 - **`code-reviewer`** — reviews uncommitted changes for correctness, simplicity,
   consistency with project conventions, architectural fit, duplication, risks,
   and plan compliance when given a plan.
 - **`plan-reviewer`** — reviews an implementation plan *before* code is written,
   including an audit of unbacked assumptions.
-- **`brief-reviewer`** — reviews a plan's reader brief as someone who has not
-  seen the code: whether the diagram shows what changes, the points cover every
-  step in plain words, and each decision option states its consequence.
 - **`visual-reviewer`** — reviews a `visualize` page against its source: whether
   the overall diagram alone retells the document, every point's diagram adds to
   it, and every fact appears once without being invented.
 
-The plugin installs all four under the `flutter-skills:` prefix. To do it by hand
+The plugin installs all three under the `flutter-skills:` prefix. To do it by hand
 instead:
 
 ```bash
@@ -160,7 +157,7 @@ cp flutter_skills/agents/*.md ~/.claude/agents/
 ```
 
 That `cp` overwrites `~/.claude/agents/code-reviewer.md`,
-`plan-reviewer.md`, `brief-reviewer.md` and `visual-reviewer.md` if you have agents by those names — check first, or rename
+`plan-reviewer.md` and `visual-reviewer.md` if you have agents by those names — check first, or rename
 the copies. Use `<project>/.claude/agents/` instead of `~/.claude/agents/` to
 scope them to one project.
 

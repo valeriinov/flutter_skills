@@ -19,7 +19,7 @@ The page is read top-down, and each level is enough on its own:
    ("only if the order has a discount") is a `note` on that node here and a branch in its own
    section.
 2. **Points** — at most 6, each collapsed to `title` + `takeaway`. Reading only the takeaways
-   retells the source. Open questions sit above the diagram in `questions`, never as a point.
+   retells the source. Open questions sit below the points in `questions`, never as a point.
 3. **Point diagram** — every point has one. It zooms into its own topic: it may start from one
    overall node, and it adds at least one node or branch the overall diagram does not have. Text
    under it only adds detail the diagram cannot carry.

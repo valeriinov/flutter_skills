@@ -418,17 +418,42 @@ def mermaid_text(value):
 def render(doc):
     body = [
         f'<header><h1>{inline(doc["title"])}</h1><p class="summary">{inline(doc["summary"])}</p></header>',
-        questions_html(doc),
         overview(doc),
         sections_html(doc),
+        questions_html(doc),
     ]
-    return PAGE.format(
-        lang=html.escape(doc.get('lang', 'ru')),
-        title=html.escape(doc['title']),
-        body='\n'.join(body),
-        sections_by_entity=json.dumps(sections_by_overview_node(doc)).replace('<', '\\u003c'),
-        mermaid_url=MERMAID_URL,
-    )
+    replacements = {
+        '__LANG__': html.escape(doc.get('lang', 'ru')),
+        '__TITLE__': html.escape(doc['title']),
+        '__CSS__': f':root {{{TOKENS_CSS}}}\n{PAGE_CSS}{scoped_css(".visual")}',
+        '__MERMAID_URL__': MERMAID_URL,
+        '__RUNTIME__': RUNTIME_JS,
+        '__SECTIONS__': json.dumps(sections_by_overview_node(doc)).replace('<', '\\u003c'),
+        '__BODY__': '\n'.join(body),
+    }
+    page = PAGE
+    for key, value in replacements.items():
+        page = page.replace(key, value)
+    return page
+
+
+def scoped_css(scope):
+    """VISUAL_CSS with every selector prefixed by `scope`, so the page can sit inside another one."""
+    rules = re.findall(r'([^{}]+)\{([^{}]*)\}', VISUAL_CSS)
+    return '\n'.join(f'{", ".join(f"{scope} {part}" for part in selector_parts(head))} {{{body}}}'
+                     for head, body in rules)
+
+
+def selector_parts(head):
+    parts, depth, current = [], 0, ''
+    for char in head.strip():
+        depth += {'(': 1, ')': -1}.get(char, 0)
+        if char == ',' and depth == 0:
+            parts.append(current.strip())
+            current = ''
+            continue
+        current += char
+    return parts + [current.strip()]
 
 
 def questions_html(doc):
@@ -489,7 +514,7 @@ def overview(doc):
     ui = doc['ui']
     return (f'<section class="overview"><h2>{html.escape(ui["overview"])}</h2>'
             f'{diagram(source)}{legend(ui, has_branch(doc))}</section>'
-            '<div id="zoom" hidden><button type="button" class="zoom-close" aria-label="close">×</button>'
+            '<div class="zoom" hidden><button type="button" class="zoom-close" aria-label="close">×</button>'
             '<div class="zoom-body"></div></div>')
 
 
@@ -519,7 +544,7 @@ def diagram(source):
 
 
 def lines_html(lines):
-    rows = [f'<p><span class="point-label">{inline(line["label"])}:</span>{inline(line["text"])}</p>'
+    rows = [f'<p><span class="point-label">{inline(line["label"])}:</span> {inline(line["text"])}</p>'
             for line in lines]
     return f'<div class="lines">{"".join(rows)}</div>'
 
@@ -593,17 +618,7 @@ def inline(text):
     return re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', escaped)
 
 
-PAGE = '''<!doctype html>
-<html lang="{lang}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{title}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root {{
+TOKENS_CSS = """
   --ink: #151823; --ink-2: #5B6173; --ink-3: #3E4456;
   --blue: #3F5FD8; --blue-d: #2C47B3; --blue-l: #5577EE; --blue-bg: #E6ECFF; --blue-bg2: #F7F9FF; --blue-line: #C9D4FA;
   --line: #E3E6EE; --line-2: #D5D9E3; --section: #F4F5F9; --card: #FFFFFF; --badge: #E8EAF1;
@@ -616,229 +631,259 @@ PAGE = '''<!doctype html>
   --f-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   color-scheme: light;
-}}
-* {{ box-sizing: border-box; }}
-html {{ -webkit-text-size-adjust: 100%; }}
-body {{
+"""
+
+PAGE_CSS = """* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
   background: var(--section); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55;
   max-width: 792px; margin: 0 auto; padding: 24px 16px 48px; overflow-wrap: anywhere;
-}}
-h1, h2, h3 {{ line-height: 1.25; }}
-h1 {{ font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 7.4vw, 40px); line-height: 1.15; margin: 0 0 14px; }}
-h2 {{ font-family: var(--f-display); font-weight: 700; font-size: clamp(20px, 5.4vw, 24px); margin: 32px 0 14px; }}
-h3 {{ font-family: var(--f-body); font-weight: 700; font-size: 18px; margin: 16px 0 8px; }}
-.summary {{ color: var(--ink-2); font-size: 17px; margin: 0 0 8px; }}
-code {{ font-family: var(--f-mono); font-size: max(12px, .86em); background: var(--badge); color: var(--ink-3); padding: 1px 5px; border-radius: 6px; }}
-.eyebrow {{ font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); margin: 18px 0 8px; }}
-.diagram {{ background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; text-align: center; }}
-.h2-block .diagram {{ background: var(--blue-bg2); border-color: var(--line); padding: 12px; margin: 4px 0 12px; }}
-.diagram svg {{ max-width: 100%; height: auto; }}
-section > .diagram {{ width: min(1100px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }}
-.diagram .node rect {{ rx: 10px; ry: 10px; }}
-.mermaid-src {{ display: none; }}
-.n-code {{ font-family: var(--f-mono); font-size: 14px; opacity: .8; }}
-.n-change {{ font-size: 15px; font-style: italic; }}
-.n-file {{ font-family: var(--f-mono); font-size: 13px; opacity: .7; }}
-.legend {{ display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 10px 0 28px; }}
-.legend span::before {{ content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }}
-.legend .new::before, .mark.new, li.new .dot {{ background: var(--node-new-bg); border-color: var(--node-new-border); }}
-.legend .changed::before, .mark.changed, li.changed .dot {{ background: var(--node-changed-bg); border-color: var(--node-changed-border); }}
-.legend .same::before, .mark.same, li.same .dot {{ background: var(--node-same-bg); border-color: var(--node-same-border); }}
-.legend .branch::before {{ background: var(--node-branch-bg); border-color: var(--node-branch-border); }}
-:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:has(.n-branch) {{
+}
+h1, h2, h3 { line-height: 1.25; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 7.4vw, 40px); line-height: 1.15; margin: 0 0 14px; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(20px, 5.4vw, 24px); margin: 32px 0 14px; }
+h3 { font-family: var(--f-body); font-weight: 700; font-size: 18px; margin: 16px 0 8px; }
+.summary { color: var(--ink-2); font-size: 17px; margin: 0 0 8px; }
+code { font-family: var(--f-mono); font-size: max(12px, .86em); background: var(--badge); color: var(--ink-3); padding: 1px 5px; border-radius: 6px; }
+"""
+
+VISUAL_CSS = """.eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); margin: 18px 0 8px; }
+.diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; text-align: center; }
+.h2-block .diagram { background: var(--blue-bg2); border-color: var(--line); padding: 12px; margin: 4px 0 12px; }
+.diagram svg { max-width: 100%; height: auto; }
+section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }
+.diagram .node rect { rx: 10px; ry: 10px; }
+.mermaid-src { display: none; }
+.n-code { font-family: var(--f-mono); font-size: 14px; opacity: .8; }
+.n-change { font-size: 15px; font-style: italic; }
+.n-file { font-family: var(--f-mono); font-size: 13px; opacity: .7; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 10px 0 28px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
+.legend .new::before, .mark.new, li.new .dot { background: var(--node-new-bg); border-color: var(--node-new-border); }
+.legend .changed::before, .mark.changed, li.changed .dot { background: var(--node-changed-bg); border-color: var(--node-changed-border); }
+.legend .same::before, .mark.same, li.same .dot { background: var(--node-same-bg); border-color: var(--node-same-border); }
+.legend .branch::before { background: var(--node-branch-bg); border-color: var(--node-branch-border); }
+:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:has(.n-branch) {
   background: var(--node-branch-bg) !important; border: 1.5px solid var(--node-branch-border); border-radius: 999px;
   padding: 1px 10px; font-style: normal; font-weight: 700; color: var(--node-branch-fg);
-}}
-:is(.diagram, .zoom-body) .edgeLabel .n-branch, :is(.diagram, .zoom-body) .edgeLabel .n-branch .n-code {{ color: var(--node-branch-fg); }}
-.legend .context::before {{ background: var(--node-context-bg); border-color: var(--node-context-border); border-style: dashed; }}
-.sec {{ background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 12px; transition: box-shadow .3s, border-color .3s; }}
-.sec[open] {{ border-color: var(--blue-line); }}
-.sec.flash {{ border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-bg); }}
-.sec summary {{ display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; list-style: none; }}
-.sec summary::-webkit-details-marker {{ display: none; }}
-.sec summary::after {{ content: ""; flex: none; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; }}
-.sec[open] summary::after {{ transform: rotate(-135deg); }}
-.sec-head {{ display: flex; flex-direction: column; }}
-.sec-title {{ font-weight: 700; font-size: 17px; }}
-.takeaway {{ color: var(--ink-2); font-size: 15px; }}
-.sec summary .sec-title + .takeaway {{ margin-top: 2px; }}
-.sec-body {{ padding: 0 20px 16px; }}
-#decide h2 {{ color: #9A4312; }}
-.decision {{ border-color: #E08A4F; background: #FFF8F3; }}
-.options {{ list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }}
-.options li {{ background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; }}
-.options li.recommended {{ border-color: var(--blue-l); box-shadow: inset 0 0 0 1px var(--blue-l); }}
-.consequence {{ color: var(--ink-2); font-size: 15px; }}
-.recommendation {{ font-size: 15px; }}
-.diagram g.node {{ cursor: pointer; }}
-section.overview > .diagram {{ cursor: zoom-in; transition: border-color .15s, box-shadow .15s; }}
-section.overview > .diagram:hover {{ border-color: var(--blue-line); box-shadow: 0 4px 18px rgba(21, 24, 35, .06); }}
-:is(.diagram, .zoom-body) .edgeLabel {{ background: transparent !important; }}
-:is(.diagram, .zoom-body) .edgeLabel rect {{ fill: transparent !important; }}
-:is(.diagram, .zoom-body) .edgeLabel .labelBkg {{ background: transparent !important; max-width: none !important; display: flex !important; justify-content: center; width: 100%; }}
-:is(.diagram, .zoom-body) .edgeLabel foreignObject {{ overflow: visible; }}
-:is(.diagram, .zoom-body) .edgeLabel p {{ margin: 0; display: inline; background: transparent !important; }}
-:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel {{
+}
+:is(.diagram, .zoom-body) .edgeLabel .n-branch, :is(.diagram, .zoom-body) .edgeLabel .n-branch .n-code { color: var(--node-branch-fg); }
+.legend .context::before { background: var(--node-context-bg); border-color: var(--node-context-border); border-style: dashed; }
+.sec { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 12px; transition: box-shadow .3s, border-color .3s; }
+.sec[open] { border-color: var(--blue-line); }
+.sec.flash { border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-bg); }
+.sec summary { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; list-style: none; }
+.sec summary::-webkit-details-marker { display: none; }
+.sec summary::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; }
+.sec[open] summary::after { transform: rotate(-135deg); }
+.sec-head { display: flex; flex-direction: column; }
+.sec-title { font-weight: 700; font-size: 17px; }
+.takeaway { color: var(--ink-2); font-size: 15px; }
+.sec summary .sec-title + .takeaway { margin-top: 2px; }
+.sec-body { padding: 0 20px 16px; }
+#decide h2 { color: #9A4312; }
+.decision { border-color: #E08A4F; background: #FFF8F3; }
+.options { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
+.options li { background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; }
+.options li.recommended { border-color: var(--blue-l); box-shadow: inset 0 0 0 1px var(--blue-l); }
+.consequence { color: var(--ink-2); font-size: 15px; }
+.recommendation { font-size: 15px; }
+.diagram g.node { cursor: pointer; }
+section.overview > .diagram { cursor: zoom-in; transition: border-color .15s, box-shadow .15s; }
+section.overview > .diagram:hover { border-color: var(--blue-line); box-shadow: 0 4px 18px rgba(21, 24, 35, .06); }
+:is(.diagram, .zoom-body) .edgeLabel { background: transparent !important; }
+:is(.diagram, .zoom-body) .edgeLabel rect { fill: transparent !important; }
+:is(.diagram, .zoom-body) .edgeLabel .labelBkg { background: transparent !important; max-width: none !important; display: flex !important; justify-content: center; width: 100%; }
+:is(.diagram, .zoom-body) .edgeLabel foreignObject { overflow: visible; }
+:is(.diagram, .zoom-body) .edgeLabel p { margin: 0; display: inline; background: transparent !important; }
+:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel {
   display: inline-block; background: var(--card) !important; padding: 0 4px; font-size: 13px; font-weight: 500;
   font-style: italic; color: var(--ink-2); line-height: 1.5; white-space: nowrap;
-}}
-:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:empty {{ display: none; }}
-:is(.diagram, .zoom-body) .edgeLabel .n-code {{ font-family: var(--f-body); font-size: 13px; opacity: 1; color: var(--blue-d); }}
-#zoom {{ position: fixed; inset: 0; z-index: 20; background: var(--section); overflow: auto; padding: 56px 24px 24px; }}
-#zoom[hidden] {{ display: none; }}
-.zoom-body {{ width: max-content; min-width: 100%; display: flex; justify-content: center; }}
-.zoom-body svg {{ max-width: none !important; height: auto; }}
-.zoom-body g.node {{ cursor: pointer; }}
-.zoom-close {{ position: fixed; top: 12px; right: 16px; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-3); }}
-.h2-block {{ background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px 16px; margin: 0 0 16px; }}
-.lines p {{ margin: 0 0 8px; }}
-.point-label {{ font-weight: 600; margin-right: 6px; }}
-.files ul {{ list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }}
-.files li {{ display: flex; align-items: center; gap: 8px; font-size: 14px; }}
-.files code {{ background: none; padding: 0; }}
-.dot, .mark {{ width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }}
-.tree, .tree ul {{ list-style: none; margin: 0; padding: 0; }}
-.tree ul {{ margin-left: 6px; padding-left: 18px; border-left: 1.5px solid var(--line-2); }}
-.tree .row {{ display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 4px 0; }}
-.tree li.same > .row .field {{ color: var(--ink-2); background: none; padding: 0; }}
-.tree li.new > .row .field {{ background: var(--node-new-bg); color: var(--node-new-fg); font-weight: 600; }}
-.tree li.changed > .row .field {{ background: var(--node-changed-bg); color: var(--node-changed-fg); font-weight: 600; }}
-.values {{ flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }}
-.value {{ display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--node-same-border); background: var(--node-same-bg); border-radius: 8px; padding: 2px 8px; font-size: 13px; }}
-.value code {{ background: none; padding: 0; color: var(--node-same-fg); }}
-.value.new {{ border-color: var(--node-new-border); background: var(--node-new-bg); }}
-.value.new code {{ color: var(--node-new-fg); font-weight: 600; }}
-.value.changed {{ border-color: var(--node-changed-border); background: var(--node-changed-bg); }}
-.value.changed code {{ color: var(--node-changed-fg); font-weight: 600; }}
-.value-note {{ color: var(--ink-2); }}
-.type {{ font-size: 13px; color: var(--ink-2); }}
-.note {{ font-size: 14px; color: var(--ink-2); }}
-.example {{ display: inline-flex; align-items: center; }}
-.swatch {{ width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line-2); display: inline-block; vertical-align: -3px; margin-right: 6px; }}
-.table-wrap {{ overflow-x: auto; }}
-table {{ border-collapse: collapse; margin: 4px 0; font-size: 14px; width: 100%; }}
-th, td {{ padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }}
-th {{ font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }}
-tbody tr:last-child td {{ border-bottom: none; }}
-.steps {{ margin: 0; padding-left: 22px; display: grid; gap: 8px; }}
-.steps .row {{ display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }}
-.tag {{ font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--blue-bg); color: var(--blue-d); }}
-</style>
-</head>
-<body>
-{body}
-<script src="{mermaid_url}"></script>
-<script>
-const SECTIONS_BY_ENTITY = {sections_by_entity};
-const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const classDefs = () => ['new', 'changed', 'same', 'context', 'branch'].map(name =>
-  `  classDef ${{name}} fill:${{cssVar(`--node-${{name}}-bg`)}},stroke:${{cssVar(`--node-${{name}}-border`)}},` +
-  `color:${{cssVar(`--node-${{name}}-fg`)}},stroke-width:1.5px` + (name === 'context' ? ',stroke-dasharray:4 3' : ''));
-mermaid.initialize({{
-  startOnLoad: false,
-  securityLevel: 'strict',
-  theme: 'base',
-  themeVariables: {{
-    background: cssVar('--card'), primaryColor: cssVar('--section'), primaryTextColor: cssVar('--ink'),
-    primaryBorderColor: cssVar('--line-2'), lineColor: cssVar('--ink-2'), textColor: cssVar('--ink'),
-    edgeLabelBackground: cssVar('--card'), fontFamily: cssVar('--f-body'), fontSize: '17px',
-  }},
-  flowchart: {{ curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: true }},
-}});
-const LABEL_STOPS = [0.5, 0.62, 0.38, 0.72, 0.28, 0.8, 0.2];
-const LABEL_GAP = 6;
-const boxesOverlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-function labelShape(svg, label) {{
-  const rect = (label.querySelector('span.edgeLabel') || label).getBoundingClientRect();
-  if (!rect.width) return null;
-  const toSvg = svg.getScreenCTM().inverse();
-  const topLeft = new DOMPoint(rect.left, rect.top).matrixTransform(toSvg);
-  const bottomRight = new DOMPoint(rect.right, rect.bottom).matrixTransform(toSvg);
-  const anchor = label.transform.baseVal.consolidate().matrix;
-  return {{
-    dx: (topLeft.x + bottomRight.x) / 2 - anchor.e, dy: (topLeft.y + bottomRight.y) / 2 - anchor.f,
-    width: bottomRight.x - topLeft.x + LABEL_GAP, height: bottomRight.y - topLeft.y + LABEL_GAP,
-  }};
-}}
-function labelBox(shape, point) {{
-  const x = point.x + shape.dx;
-  const y = point.y + shape.dy;
-  return {{ left: x - shape.width / 2, right: x + shape.width / 2, top: y - shape.height / 2, bottom: y + shape.height / 2 }};
-}}
-const pointInBox = (point, box) => point.x > box.left && point.x < box.right && point.y > box.top && point.y < box.bottom;
-function pathSamples(path) {{
-  const length = path.getTotalLength();
-  return Array.from({{ length: Math.ceil(length / 4) + 1 }}, (_, step) => path.getPointAtLength(Math.min(step * 4, length)));
-}}
-function placeLabelsOnCurves(svg) {{
-  const paths = [...svg.querySelectorAll('.edgePaths path')];
-  const placed = [];
-  [...svg.querySelectorAll('g.edgeLabel')].forEach((label, index) => {{
-    const path = paths[index];
-    if (!path || !label.getAttribute('transform')) return;
-    const shape = labelShape(svg, label);
-    if (!shape) return;
+}
+:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:empty { display: none; }
+:is(.diagram, .zoom-body) .edgeLabel .n-code { font-family: var(--f-body); font-size: 13px; opacity: 1; color: var(--blue-d); }
+.zoom { position: fixed; inset: 0; z-index: 20; background: var(--section); overflow: auto; padding: 56px 24px 24px; }
+.zoom[hidden] { display: none; }
+.zoom-body { width: max-content; min-width: 100%; display: flex; justify-content: center; }
+.zoom-body svg { max-width: none !important; height: auto; }
+.zoom-body g.node { cursor: pointer; }
+.zoom-close { position: fixed; top: 12px; right: 16px; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card); font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-3); }
+.h2-block { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px 16px; margin: 0 0 16px; }
+.lines p { margin: 0 0 8px; }
+.point-label { font-weight: 600; margin-right: 6px; }
+.files ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.files li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.files code { background: none; padding: 0; }
+.dot, .mark { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 6px; padding-left: 18px; border-left: 1.5px solid var(--line-2); }
+.tree .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 4px 0; }
+.tree li.same > .row .field { color: var(--ink-2); background: none; padding: 0; }
+.tree li.new > .row .field { background: var(--node-new-bg); color: var(--node-new-fg); font-weight: 600; }
+.tree li.changed > .row .field { background: var(--node-changed-bg); color: var(--node-changed-fg); font-weight: 600; }
+.values { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
+.value { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--node-same-border); background: var(--node-same-bg); border-radius: 8px; padding: 2px 8px; font-size: 13px; }
+.value code { background: none; padding: 0; color: var(--node-same-fg); }
+.value.new { border-color: var(--node-new-border); background: var(--node-new-bg); }
+.value.new code { color: var(--node-new-fg); font-weight: 600; }
+.value.changed { border-color: var(--node-changed-border); background: var(--node-changed-bg); }
+.value.changed code { color: var(--node-changed-fg); font-weight: 600; }
+.value-note { color: var(--ink-2); }
+.type { font-size: 13px; color: var(--ink-2); }
+.note { font-size: 14px; color: var(--ink-2); }
+.example { display: inline-flex; align-items: center; }
+.swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line-2); display: inline-block; vertical-align: -3px; margin-right: 6px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; margin: 4px 0; font-size: 14px; width: 100%; }
+th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+tbody tr:last-child td { border-bottom: none; }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.steps .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.tag { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--blue-bg); color: var(--blue-d); }
+"""
+
+RUNTIME_JS = r"""
+function renderVisual(root, options = {}) {
+  const cssVar = name => getComputedStyle(root).getPropertyValue(name).trim();
+  const classDefs = () => ['new', 'changed', 'same', 'context', 'branch'].map(name =>
+    `  classDef ${name} fill:${cssVar(`--node-${name}-bg`)},stroke:${cssVar(`--node-${name}-border`)},` +
+    `color:${cssVar(`--node-${name}-fg`)},stroke-width:1.5px` + (name === 'context' ? ',stroke-dasharray:4 3' : ''));
+  const config = {
+    startOnLoad: false,
+    securityLevel: 'strict',
+    theme: 'base',
+    themeVariables: {
+      background: cssVar('--card'), primaryColor: cssVar('--section'), primaryTextColor: cssVar('--ink'),
+      primaryBorderColor: cssVar('--line-2'), lineColor: cssVar('--ink-2'), textColor: cssVar('--ink'),
+      edgeLabelBackground: cssVar('--card'), fontFamily: cssVar('--f-body'), fontSize: '17px',
+    },
+    flowchart: { curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: true },
+  };
+  const LABEL_STOPS = [0.5, 0.62, 0.38, 0.72, 0.28, 0.8, 0.2];
+  const LABEL_GAP = 6;
+  const boxesOverlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const pointInBox = (point, box) => point.x > box.left && point.x < box.right && point.y > box.top && point.y < box.bottom;
+  const labelShape = (svg, label) => {
+    const rect = (label.querySelector('span.edgeLabel') || label).getBoundingClientRect();
+    if (!rect.width) return null;
+    const toSvg = svg.getScreenCTM().inverse();
+    const topLeft = new DOMPoint(rect.left, rect.top).matrixTransform(toSvg);
+    const bottomRight = new DOMPoint(rect.right, rect.bottom).matrixTransform(toSvg);
+    const anchor = label.transform.baseVal.consolidate().matrix;
+    return {
+      dx: (topLeft.x + bottomRight.x) / 2 - anchor.e, dy: (topLeft.y + bottomRight.y) / 2 - anchor.f,
+      width: bottomRight.x - topLeft.x + LABEL_GAP, height: bottomRight.y - topLeft.y + LABEL_GAP,
+    };
+  };
+  const labelBox = (shape, point) => {
+    const x = point.x + shape.dx;
+    const y = point.y + shape.dy;
+    return { left: x - shape.width / 2, right: x + shape.width / 2, top: y - shape.height / 2, bottom: y + shape.height / 2 };
+  };
+  const pathSamples = path => {
     const length = path.getTotalLength();
-    const candidates = LABEL_STOPS.map(stop => path.getPointAtLength(length * stop));
-    const others = paths.filter(other => other !== path).flatMap(pathSamples);
-    const clearOfLabels = candidate => !placed.some(box => boxesOverlap(box, labelBox(shape, candidate)));
-    const clearOfPaths = candidate => !others.some(sample => pointInBox(sample, labelBox(shape, candidate)));
-    const point = candidates.find(candidate => clearOfLabels(candidate) && clearOfPaths(candidate))
-      || candidates.find(clearOfLabels) || candidates[0];
-    placed.push(labelBox(shape, point));
-    label.setAttribute('transform', `translate(${{point.x}}, ${{point.y}})`);
-  }});
-}}
-document.querySelectorAll('details.sec').forEach(card => card.addEventListener('toggle', () => {{
-  if (card.open) card.querySelectorAll('.diagram svg').forEach(placeLabelsOnCurves);
-}}));
-(async () => {{
-  await document.fonts.ready;
-  let count = 0;
-  for (const pre of document.querySelectorAll('.mermaid-src')) {{
-    count += 1;
-    const source = [pre.textContent.replaceAll('BRANCH_STROKE', cssVar('--node-branch-border')), ...classDefs()].join('\\n');
-    const {{ svg }} = await mermaid.render(`diagram-${{count}}`, source);
-    pre.insertAdjacentHTML('afterend', svg);
-    placeLabelsOnCurves(pre.nextElementSibling);
-  }}
-  const overview = document.querySelector('section.overview > .diagram svg');
-  if (!overview) return;
-  const zoom = document.getElementById('zoom');
-  const closeZoom = () => {{ zoom.hidden = true; zoom.querySelector('.zoom-body').innerHTML = ''; }};
-  const openSections = targets => targets.forEach((id, i) => {{
-    const card = document.getElementById(id);
+    return Array.from({ length: Math.ceil(length / 4) + 1 }, (_, step) => path.getPointAtLength(Math.min(step * 4, length)));
+  };
+  const placeLabelsOnCurves = svg => {
+    const paths = [...svg.querySelectorAll('.edgePaths path')];
+    const placed = [];
+    [...svg.querySelectorAll('g.edgeLabel')].forEach((label, index) => {
+      const path = paths[index];
+      if (!path || !label.getAttribute('transform')) return;
+      const shape = labelShape(svg, label);
+      if (!shape) return;
+      const length = path.getTotalLength();
+      const candidates = LABEL_STOPS.map(stop => path.getPointAtLength(length * stop));
+      const others = paths.filter(other => other !== path).flatMap(pathSamples);
+      const clearOfLabels = candidate => !placed.some(box => boxesOverlap(box, labelBox(shape, candidate)));
+      const clearOfPaths = candidate => !others.some(sample => pointInBox(sample, labelBox(shape, candidate)));
+      const point = candidates.find(candidate => clearOfLabels(candidate) && clearOfPaths(candidate))
+        || candidates.find(clearOfLabels) || candidates[0];
+      placed.push(labelBox(shape, point));
+      label.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+    });
+  };
+  const openSections = targets => targets.forEach((id, i) => {
+    const card = root.querySelector(`#${id}`);
     card.open = true;
     card.classList.add('flash');
     setTimeout(() => card.classList.remove('flash'), 1600);
-    if (i === 0) card.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
-  }});
-  const bindNodes = svg => svg.querySelectorAll('g.node').forEach(node => {{
-    const match = /^flowchart-n_(.+)-\\d+$/.exec(node.id);
-    const targets = match ? SECTIONS_BY_ENTITY[match[1]] || [] : [];
-    node.addEventListener('click', event => {{
-      event.stopPropagation();
-      closeZoom();
-      openSections(targets);
-    }});
-  }});
-  const openZoom = () => {{
-    const copy = overview.cloneNode(true);
-    const natural = overview.viewBox.baseVal.width;
-    copy.style.width = `${{Math.round(Math.max(natural, Math.min(natural * 1.35, innerWidth - 48)))}}px`;
-    zoom.querySelector('.zoom-body').append(copy);
-    bindNodes(copy);
-    zoom.hidden = false;
-  }};
-  bindNodes(overview);
-  overview.parentElement.addEventListener('click', openZoom);
-  zoom.querySelector('.zoom-close').addEventListener('click', closeZoom);
-  document.addEventListener('keydown', event => {{ if (event.key === 'Escape') closeZoom(); }});
-}})();
+    if (i === 0) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  const onNode = options.onNode || ((id, closeZoom) => {
+    closeZoom();
+    openSections((options.sectionsByNode || {})[id] || []);
+  });
+  root.querySelectorAll('details.sec').forEach(card => card.addEventListener('toggle', () => {
+    if (card.open) card.querySelectorAll('.diagram svg').forEach(placeLabelsOnCurves);
+  }));
+  return (async () => {
+    await document.fonts.ready;
+    for (const pre of root.querySelectorAll('.mermaid-src')) {
+      renderVisual.count = (renderVisual.count || 0) + 1;
+      const source = [pre.textContent.replaceAll('BRANCH_STROKE', cssVar('--node-branch-border')), ...classDefs()].join('\n');
+      mermaid.initialize(config);
+      const { svg } = await mermaid.render(`visual-${renderVisual.count}`, source);
+      pre.insertAdjacentHTML('afterend', svg);
+      placeLabelsOnCurves(pre.nextElementSibling);
+    }
+    const overview = root.querySelector('section.overview > .diagram svg');
+    if (!overview) return;
+    const zoom = root.querySelector('.zoom');
+    const closeZoom = () => { zoom.hidden = true; zoom.querySelector('.zoom-body').innerHTML = ''; };
+    const nodeId = node => (/flowchart-n_(.+)-\d+$/.exec(node.id) || [])[1];
+    const bindNodes = svg => svg.querySelectorAll('g.node').forEach(node => {
+      const id = nodeId(node);
+      if (!id) return;
+      node.addEventListener('click', event => {
+        event.stopPropagation();
+        onNode(id, closeZoom, node);
+      });
+    });
+    const openZoom = event => {
+      if (event.target.closest('g.node, g.edgeLabel')) return;
+      const copy = overview.cloneNode(true);
+      const natural = overview.viewBox.baseVal.width;
+      copy.style.width = `${Math.round(Math.max(natural, Math.min(natural * 1.35, innerWidth - 48)))}px`;
+      zoom.querySelector('.zoom-body').append(copy);
+      bindNodes(copy);
+      zoom.hidden = false;
+    };
+    bindNodes(overview);
+    overview.parentElement.addEventListener('click', openZoom);
+    zoom.querySelector('.zoom-close').addEventListener('click', closeZoom);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeZoom(); });
+    return overview;
+  })();
+}
+"""
+
+PAGE = """<!doctype html>
+<html lang="__LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+__CSS__
+</style>
+</head>
+<body>
+<main class="visual">
+__BODY__
+</main>
+<script src="__MERMAID_URL__"></script>
+<script>
+__RUNTIME__
+renderVisual(document.querySelector('.visual'), { sectionsByNode: __SECTIONS__ });
 </script>
 </body>
 </html>
-'''
+"""
 
 
 if __name__ == '__main__':
