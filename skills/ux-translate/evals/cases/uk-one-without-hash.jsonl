@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["files\t# missing in form one\tsource: #\ttarget: "]}, "lang": "uk"}
+{"file": "uk.json", "key": "files", "source": {"one": "One file", "other": "# files"}, "target": {"one": "Один файл", "few": "# файли", "many": "# файлів", "other": "# файлу"}}

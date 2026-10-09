@@ -1,0 +1,3 @@
+{"expect": {"exit": 0, "lines": []}, "lang": "en"}
+{"file": "en.json", "key": "post", "source": "Пост", "skip": true, "reason": "noun or verb; no call site found"}
+{"file": "en.json", "key": "greeting", "source": "Привіт, {name}!", "target": "Hi, {name}!"}

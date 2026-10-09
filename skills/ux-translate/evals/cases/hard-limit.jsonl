@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["tabBookings\tover hard limit\tlimit: 8\ttarget: 10 chars"]}, "lang": "uk"}
+{"file": "uk.json", "key": "tabBookings", "source": "Bookings", "target": "Бронювання", "ui": "tight", "limit": 8, "limit_hard": true}

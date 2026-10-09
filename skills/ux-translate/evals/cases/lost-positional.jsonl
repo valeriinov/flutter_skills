@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["positional\tplaceholders\tsource: {} {}\ttarget: {}"]}, "lang": "en"}
+{"file": "en.json", "key": "positional", "source": "Крок {} з {}", "target": "Step {} of the total"}

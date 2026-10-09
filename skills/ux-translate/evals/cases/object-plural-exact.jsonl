@@ -1,0 +1,2 @@
+{"expect": {"exit": 0, "lines": []}, "lang": "uk"}
+{"file": "uk.json", "key": "files", "source": {"=0": "No files", "one": "# file", "other": "# files"}, "target": {"=0": "Файлів немає", "one": "# файл", "few": "# файли", "many": "# файлів", "other": "# файлу"}}

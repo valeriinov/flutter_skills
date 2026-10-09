@@ -1,0 +1,4 @@
+{"expect": {"exit": 0, "lines": ["bookButton\twarning: over limit\tlimit: 11\ttarget: 17 chars", "seatsLeft\twarning: over limit in form many\tlimit: 14\ttarget: 16 chars"]}, "lang": "uk"}
+{"file": "uk.json", "key": "bookButton", "source": "Book desk", "target": "Забронювати місце", "ui": "tight", "limit": 11}
+{"file": "uk.json", "key": "bookButton", "source": "Book desk", "target": "Забронювати", "ui": "tight", "limit": 11}
+{"file": "uk.json", "key": "seatsLeft", "source": {"one": "# seat left", "other": "# seats left"}, "target": {"one": "# місце", "few": "# місця", "many": "Лишилося # місць", "other": "# місця"}, "ui": "tight", "limit": 14}

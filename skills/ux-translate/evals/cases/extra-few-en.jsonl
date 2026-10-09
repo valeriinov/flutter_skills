@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["items\tplural categories\texpected: one,other\ttarget: one,few,other"]}, "lang": "en"}
+{"file": "en.json", "key": "items", "source": {"one": "# товар", "few": "# товари", "many": "# товарів", "other": "# товару"}, "target": {"one": "# item", "few": "# items", "other": "# items"}}

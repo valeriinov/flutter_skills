@@ -1,0 +1,2 @@
+{"expect": {"exit": 2, "lines": ["invalid JSON"]}, "lang": "en"}
+{"file": "en.json", "key": "greeting", "source": "Привіт", "target": "Hi"

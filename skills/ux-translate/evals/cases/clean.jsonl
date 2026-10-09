@@ -1,0 +1,6 @@
+{"expect": {"exit": 0, "lines": []}, "lang": "en"}
+{"file": "en.json", "key": "greeting", "source": "Привіт, {name}!", "target": "Hi, {name}!"}
+{"file": "en.json", "key": "welcome", "source": "Вітаємо, {{user}}! <0>Докладніше</0>", "target": "<0>Learn more</0>: welcome, {{user}}!"}
+{"file": "en.json", "key": "progress", "source": "100%% із %1$s", "target": "100%% of %1$s"}
+{"file": "en.json", "key": "items", "source": {"one": "# товар", "few": "# товари", "many": "# товарів", "other": "# товару"}, "target": {"one": "# item", "other": "# items"}}
+{"file": "en.json", "key": "positional", "source": "Крок {} з {}", "target": "Step {} of {}"}

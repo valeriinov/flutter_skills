@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["greeting\tplaceholders\tsource: {name}\ttarget: {userName}"]}, "lang": "en"}
+{"file": "en.json", "key": "greeting", "source": "Привіт, {name}!", "target": "Hi, {userName}!"}

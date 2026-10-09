@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["items\tshape mismatch\tsource: object\ttarget: string"]}, "lang": "en"}
+{"file": "en.json", "key": "items", "source": {"one": "# товар", "few": "# товари", "many": "# товарів", "other": "# товару"}, "target": "# items"}

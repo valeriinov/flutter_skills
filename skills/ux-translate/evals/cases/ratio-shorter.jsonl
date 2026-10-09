@@ -1,0 +1,2 @@
+{"expect": {"exit": 0, "lines": ["refundRule\twarning: much shorter\tratio: 0.46\tcorridor: 0.8-1.4"]}, "lang": "en", "ratio": "0.8,1.4"}
+{"file": "en.json", "key": "refundRule", "source": "Кредити не повертаються після початку", "target": "No refunds, sorry", "ui": "loose"}

@@ -1,0 +1,3 @@
+{"expect": {"exit": 1, "lines": ["filesLeft\t# missing in form few of count", "filesLeft\tplaceholders in form many of count\tsource: {name}\ttarget: ", "role\tselect branches of role\tsource: client,other\ttarget: other"]}, "lang": "uk"}
+{"file": "app_uk.arb", "key": "filesLeft", "source": "{count, plural, one{# file left for {name}} other{# files left for {name}}}", "target": "{count, plural, one{Лишився # файл для {name}} few{Лишилося кілька файлів для {name}} many{Лишилося # файлів} other{Лишилося # файлу для {name}}}"}
+{"file": "app_uk.arb", "key": "role", "source": "{role, select, client{Client} other{Member}}", "target": "{role, select, other{Учасник}}"}

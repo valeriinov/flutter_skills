@@ -1,0 +1,3 @@
+{"expect": {"exit": 0, "lines": []}, "lang": "uk"}
+{"file": "app_uk.arb", "key": "filesLeft", "source": "{count, plural, =0{No files left} one{# file left for {name}} other{# files left for {name}}}", "target": "{count, plural, =0{Файлів не лишилося} one{Лишився # файл для {name}} few{Лишилося # файли для {name}} many{Лишилося # файлів для {name}} other{Лишилося # файлу для {name}}}"}
+{"file": "app_uk.arb", "key": "role", "source": "You are {role, select, client{a client} carrier{a carrier} other{a member}} in {space}", "target": "У просторі {space} ви {role, select, client{клієнт} carrier{перевізник} other{учасник}}"}
