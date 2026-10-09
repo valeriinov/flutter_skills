@@ -1,0 +1,19 @@
+{
+  "spacesTitle": "Простори",
+  "openArchiveButton": "До архіву",
+  "phoneFieldError": "Помилка валідації",
+  "phoneFormatError": "Неправильний формат номера",
+  "bookDeskButton": "Забронювати",
+  "hostCardTitle": "Ваш адміністратор",
+  "hostContactButton": "Написати адміністратору",
+  "hostOnSiteDescr": "Адміністратор допоможе з усім на місці.",
+  "hostLeftToast": "Адміністратор залишив простір",
+  "hostAssignedToast": "Адміністратора призначено",
+  "chatManagerReplied": "Менеджер відповів у чаті",
+  "chatManagerWaiting": "Очікується відповідь менеджера...",
+  "chatFilterManagers": "Менеджери",
+  "bookingCanceledToast": "Бронювання скасовано.",
+  "reserveCreatedToast": "Резерв створено",
+  "selectDateButton": "Обрати дату",
+  "deleteAccountTitle": "Видалити обліковий запис?"
+}

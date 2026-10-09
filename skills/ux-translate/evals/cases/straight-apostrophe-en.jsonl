@@ -1,0 +1,5 @@
+{"expect": {"exit": 0, "lines": ["warning: straight apostrophe", "warning: straight apostrophe in form other"]}, "lang": "en"}
+{"file": "en.json", "key": "saveFailed", "source": "Не вдалося зберегти", "target": "Couldn't save"}
+{"file": "en.json", "key": "saved", "source": "Збережено", "target": "Couldn’t be clearer: saved"}
+{"file": "en.json", "key": "left", "source": {"one": "{} день", "few": "{} дні", "many": "{} днів", "other": "{} дня"}, "target": {"one": "{} day’s left", "other": "{} days' left, don't wait"}}
+{"file": "en.json", "key": "quote", "source": "Натисніть «Далі»", "target": "Tap 'Next'"}

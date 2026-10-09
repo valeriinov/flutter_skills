@@ -1,0 +1,32 @@
+{
+  "skill_name": "ux-translate",
+  "evals": [
+    {
+      "id": 1,
+      "name": "brief-authority-and-synonyms",
+      "prompt": "Составь бриф локализации uk → en для проекта в папке fixture/: документы docs/voice-guide.md, docs/code-glossary.md, docs/ba-glossary.md; источник uk.json, цель en.json (засеяна источником); код lib/. Не жди моего «да»: остановись на гейте, сохрани предложенный бриф в outputs/brief.md и сообщение гейта (вопросы мне) в outputs/gate.md.",
+      "expected_output": "A brief whose terms table is a UI glossary with a column of source variants to flag; the gate asks which documents govern UI wording; the code glossary's identifiers are not used as English UI words; both host words (адміністратор ×5, менеджер ×3) are counted and the dispute shows the voice guide's word; the batch plan sums to 17.",
+      "files": [
+        "evals/fixture-terms/"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "translate-field-error-and-tight-button",
+      "prompt": "Переведи строки проекта в папке fixture/ на английский по брифу fixture/docs/brief.md: источник uk.json, цель en.json. Журнал черновиков и отчёт положи в outputs/, итоговый en.json — тоже в outputs/.",
+      "expected_output": "phoneFieldError is set in a catch (the check itself failed): it says the number couldn't be checked, not that it is invalid — phoneFormatError is the invalid case; openArchiveButton (opens the archive screen, 96 px button) keeps a verb (View archive / Open archive) and reports the overflow; host never becomes manager; English uses ’, never a straight apostrophe; check_drafts exits 0.",
+      "files": [
+        "evals/fixture-terms/"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "source-only-review",
+      "prompt": "Проверь украинские тексты в fixture/uk.json на консистентность и стиль по брифу fixture/docs/brief.md и гайду fixture/docs/voice-guide.md. Перевода нет, uk.json не меняй. Результат — таблица в outputs/review.md.",
+      "expected_output": "A table of uk strings to rephrase: менеджер → адміністратор (3 keys), резерв → бронювання, Обрати → Вибрати, the full stop after one sentence, обліковий запис flagged only if the brief says so; no meaning/calque/length reasons; uk.json unchanged.",
+      "files": [
+        "evals/fixture-terms/"
+      ]
+    }
+  ]
+}
