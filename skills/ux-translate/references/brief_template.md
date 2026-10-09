@@ -24,14 +24,19 @@ this order.
 - Source: <document and section>
 
 ## Terms
-At most 40: product names and do-not-translate, domain words, words ambiguous out of context.
-A translation comes only from the documents or accepted translations; otherwise the cell is
-empty and the term is an open question.
+The UI glossary: at most 40 product names and do-not-translate, domain words, words ambiguous
+out of context — one word per concept in each language. Authority, highest first: <the documents
+the user named as governing UI wording>. A translation comes only from those documents or
+accepted translations; otherwise the cell is empty and the term is an open question. The source
+file is never changed: a source string using a flagged variant is reported as a review
+recommendation.
 
-| term | <target language> | do not translate | meaning in this product | source |
-|---|---|---|---|---|
+| term (source UI word) | <target language> | do not translate | meaning in this product | source variants to flag | source |
+|---|---|---|---|---|---|
 
 ## Do not use
+Rows for both languages, each prefixed with its code.
+
 | word | use instead | source |
 |---|---|---|
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Portions derived from crowdin/skills (skills/translate/scripts/check-drafts.sh).
 # MIT License, Copyright (c) Crowdin.
-"""Check a drafts ledger (JSONL) for placeholder, plural and length problems.
+"""Check a drafts ledger (JSONL) for placeholder, plural, length and apostrophe problems.
 
 Usage: check_drafts.py <ledger.jsonl> --lang <code> [--ratio <min>,<max>]
 
@@ -19,6 +19,8 @@ from typing import NamedTuple
 
 CATEGORIES = ('zero', 'one', 'two', 'few', 'many', 'other')
 MIN_RATED_LENGTH = 10
+CURLY_APOSTROPHE_LANGS = ('en',)
+STRAIGHT_APOSTROPHE_RE = re.compile(r"(?<=[A-Za-z])'(?=[A-Za-z])")
 
 
 class PluralRule(NamedTuple):
@@ -67,7 +69,8 @@ def main(argv):
     rules = PLURAL_RULES.get(re.split(r'[-_]', lang)[0].lower())
     if rules is None:
         print(f'check_drafts: no plural table for {lang}; plural categories not checked', file=sys.stderr)
-    lines = [line for record in records for line in check_record(record, rules, ratio)]
+    curly = re.split(r'[-_]', lang)[0].lower() in CURLY_APOSTROPHE_LANGS
+    lines = [line for record in records for line in check_record(record, rules, ratio, curly)]
     for line in lines:
         print(line)
     return 1 if any('\twarning: ' not in line for line in lines) else 0
@@ -114,7 +117,7 @@ def read_ledger(path):
     return records
 
 
-def check_record(record, rules, ratio):
+def check_record(record, rules, ratio, curly=False):
     if 'target' not in record:
         return []
     source, target = record.get('source'), record['target']
@@ -127,6 +130,8 @@ def check_record(record, rules, ratio):
     else:
         issues = []
     issues += limit_issues(record, target) + ratio_issues(source, target, ratio)
+    if curly:
+        issues += apostrophe_issues(target)
     return [f'{record.get("file")}\t{record.get("key")}\t{what}\t{left}\t{right}' for what, left, right in issues]
 
 
@@ -236,6 +241,11 @@ def limit_issues(record, target):
     what = 'over hard limit' if record.get('limit_hard') is True else 'warning: over limit'
     return [(f'{what}{label}', f'limit: {limit}', f'target: {len(text)} chars')
             for label, text in rendered_forms(target) if len(text) > limit]
+
+
+def apostrophe_issues(target):
+    return [(f'warning: straight apostrophe{label}', 'use: ’', f'target: {text}')
+            for label, text in rendered_forms(target) if STRAIGHT_APOSTROPHE_RE.search(text)]
 
 
 def ratio_issues(source, target, ratio):

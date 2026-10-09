@@ -5,7 +5,7 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 ## Register and address
 
 - Address the user as `you`; the app speaks as `we` only when the brief allows it: `We sent a code to {email}`.
-- Contractions are the default in UI: `Couldn't save`, `You're offline`, `Don't show again`.
+- Contractions are the default in UI: `Couldn’t save`, `You’re offline`, `Don’t show again`.
 - No contractions in legal text and where the brief's voice is formal: `You do not have access`.
 - Calm and direct: no exclamation marks, no `Oops`, no `Whoops`: `Something went wrong`, not `Oops! Something went wrong!`.
 - No `please` in buttons, titles or errors; keep it only in a request that costs the user effort, if the brief allows: `Enter your code`.
@@ -21,7 +21,7 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 
 - No period in buttons, tabs, titles, labels, toasts of one phrase: `Changes saved`.
 - A period ends a full sentence in a description, error body or dialog body: `Check your connection and try again.`
-- Two sentences in one string — both end with a period: `Couldn't load the list. Pull down to retry.`
+- Two sentences in one string — both end with a period: `Couldn’t load the list. Pull down to retry.`
 - Curly quotes `“ ”` and apostrophe `’` in UI text: `Can’t find “{name}”`; straight quotes only when the brief says the font lacks curly ones.
 - Ellipsis `…` (one character) for an action that opens more input, and for progress: `Uploading…`, `Save as…`.
 - En dash `–` for ranges, no spaces: `9:00–18:00`; em dash `—` without spaces for a break in a sentence.
@@ -49,8 +49,8 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 
 - Use `they` for a person of unknown gender: `{name} added you. Reply to them`.
 - Role nouns without gender: `chairperson`, `staff`, `user`; never `he/she`.
-- Address the reader directly instead of a third person: `You're signed in`, not `The user is signed in`.
-- Ukrainian gender agreement in the source (`Він/Вона`, `зареєстрований/зареєстрована`) collapses to one English form: `You're registered`.
+- Address the reader directly instead of a third person: `You’re signed in`, not `The user is signed in`.
+- Ukrainian gender agreement in the source (`Він/Вона`, `зареєстрований/зареєстрована`) collapses to one English form: `You’re registered`.
 
 ## Button and CTA conventions
 
@@ -68,7 +68,7 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 - `Зміни успішно збережено` → `Changes saved`, not `Changes have been successfully saved`.
 - `Скасувати замовлення` → `Cancel order`, not `Cancel the order`.
 - `У вас залишилося 2 елементи` → `2 items left`, not `You have 2 items remaining`.
-- `Не вдалося завантажити дані` → `Couldn't load data`, not `It was not possible to load data`.
+- `Не вдалося завантажити дані` → `Couldn’t load data`, not `It was not possible to load data`.
 - `Виникла помилка` → `Something went wrong`, not `An error has arisen`.
 - `Здійснити оплату` → `Pay`, not `Carry out the payment`.
 - `Введіть, будь ласка, коректний email` → `Enter a valid email`, not `Please enter a correct email`.

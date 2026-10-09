@@ -12,7 +12,7 @@ do not say.
 - **Button / CTA** — the label names the action, not a generic answer: `Delete file`, not `OK`.
 - **Title** — a short noun phrase or the task, no verb echoing the button below: `Notifications`, not `Manage your notifications settings`.
 - **Description** — one fact or consequence the title does not already say: `Files stay on this device until you sync`, not `This screen shows your files`.
-- **Error** — what failed and what to do next, in plain words: `Couldn't send the message. Check your connection`, not `Error occurred`.
+- **Error** — what failed and what to do next, in plain words: `Couldn’t send the message. Check your connection`, not `Error occurred`.
 - **Error** — no blame, no system jargon: `That code has expired`, not `Invalid input: token expired (401)`.
 - **Empty state** — what will appear here and how to get it: `No saved items yet. Tap ♡ to save one`, not `List is empty`.
 - **Permission request** — why the app needs it, in the user's benefit, before the system dialog: `Allow notifications to know when a reply arrives`, not `The app requires notification permission`.
@@ -36,7 +36,7 @@ do not say.
 
 - **`tight`** (button, tab, chip, screen title, inline label, text with `maxLines`, ellipsis or fixed width) — no longer than `limit`: `Зберегти зміни` (14) → `Save changes` (12).
 - **`limit`** — the brief's explicit limit, otherwise the source length; `limit_hard: true` only when the brief says the limit is hard: a 12-character tab with `limit_hard` fails the check at 13.
-- **`loose`** (description, error body, dialog body, empty-state text) — no length limit; still no filler: `Couldn't load the list. Pull down to retry`.
+- **`loose`** (description, error body, dialog body, empty-state text) — no length limit; still no filler: `Couldn’t load the list. Pull down to retry`.
 - **Shortening order** — apply in this order until it fits, stop as soon as it fits:
   1. drop politeness: `Please enter your code` → `Enter your code`;
   2. drop repeated screen context: `Save profile changes` → `Save changes`;
@@ -44,13 +44,14 @@ do not say.
   4. shorter synonym with the same meaning: `Purchase` → `Buy`, `Modify` → `Edit`;
   5. drop an article or a possessive the target language allows: `Open your settings` → `Open settings`.
 - **Never shorten by** an abbreviation, a cut word or a lost consequence: `Settings`, not `Sett.`; `Delete account` stays two words, not `Delete`.
+- **Never shorten a button** into a bare noun that reads as another action: `До архіву` (opens the archive) → `View archive`, not `Archive` (reads as "archive this"); over the limit, keep the verb and report "decide: text or layout".
 - **Still too long** — keep the full meaning, mark it in the report as "decide: text or layout": `Підтвердити адресу електронної пошти` (36) on a 20-character button.
 - **Ratio corridor** — the language pack gives the expected target/source length ratio; strings under ~10 characters are not rated: much longer → on-screen check list; much shorter → re-read for lost meaning.
 
 ## Risk classes
 
-- **`payment`** — charges, refunds, payouts, prices, balance, failed payment: the money action stays named: `Не вдалося здійснити оплату {amount}` → `Payment of {amount} failed`, not `Couldn't process {amount}`.
-- **`security`** — sign-in, password, codes, sessions, account or data deletion: the consequence stays explicit: `All your data will be deleted. This can't be undone`.
+- **`payment`** — charges, refunds, payouts, prices, balance, failed payment: the money action stays named: `Не вдалося здійснити оплату {amount}` → `Payment of {amount} failed`, not `Couldn’t process {amount}`.
+- **`security`** — sign-in, password, codes, sessions, account or data deletion: the consequence stays explicit: `All your data will be deleted. This can’t be undone`.
 - **`legal`** — consent, terms, privacy, age, regulatory notices: terms from the brief only, no shortening for brevity: `I agree to the Terms of Use and Privacy Policy` keeps both document names.
 - **Handling** — draft it, set `risk` to the class (`payment`, `security`, `legal`; else `none`), and list it under "needs a human" in the report: `{"key": "payFailed", "risk": "payment", ...}`.
 - **Risk beats length** — on a `tight` risk string never drop the money, the irreversibility or the legal term to fit; report it instead: `Pay {amount}` over a limit stays, "decide: text or layout".

@@ -1,6 +1,6 @@
 ---
 name: ux-translate
-description: Translate app UI strings as a UX writer — localization brief, translation, review; deep uk and en packs. Use for "составь бриф локализации", "переведи строки", "проверь английские тексты".
+description: Translate app UI strings as a UX writer — localization brief, translation, review of translations or source copy; uk and en packs. Use for "бриф локализации", "переведи строки", "проверь тексты".
 argument-hint: "[ project docs and translation files | brief + target language | translations to review ]"
 ---
 
@@ -17,6 +17,7 @@ the session's scratch directory, written below as `<scratch>`.
 | project documents named, or no brief exists | Brief |
 | a brief exists and strings are to be translated | Translate |
 | finished translations are to be assessed | Review |
+| source strings are to be assessed, with no translation | Review, source only |
 
 ## Roles
 
@@ -65,12 +66,23 @@ target translation files, accepted translations. Output: a brief by
      tab, chip, title, toast — analysed once: line count, overflow, width/height, text scaling →
      `tight`/`loose`, `maxLines`, note) and the screenshot source, if the project keeps one;
    - translation files → string groups by screen or feature (key prefix or screenshot source),
-     the gap rule, conflicts among accepted translations.
+     the gap rule, conflicts among accepted translations, and for each core concept every
+     word form and synonym the source uses, counted by key — a role named two ways is the
+     conflict the brief exists to settle.
 2. **Assemble** — the main agent fills the template: terms ≤40 (product names and
    do-not-translate, domain words, ambiguous words); a term's translation comes only from the
    documents or accepted translations, else it is a question. A contradiction between documents
    is a question to the user, never a choice. Batch plan: each batch with its string count and
-   risk.
+   risk, counted by a script over the keys so the batches sum to the key count.
+   - **Authority first** — before filling terms, ask which documents govern what the user sees
+     and in what order. A code glossary names code entities: its identifiers are not UI words
+     unless a document says so. A glossary nobody maintains is reference, not authority.
+   - **The terms table is a UI glossary** — one word per concept in each language, plus the
+     source's other words for it, which a review flags; the source file is never changed.
+   - **A disputed source word** — the question shows each variant's count, whether the voice
+     guide or its author uses it, and, when the file is in git, which came first; frequency
+     alone does not make a word canonical, since later strings are often written without the
+     guide.
 3. **Review** — one reviewer in a fresh context checks the brief against the documents: a lost
    term, an invented translation, an unconfirmed limit. One round of fixes, no second review.
 4. **Gate** — propose a path for the brief, show the brief and the open questions, wait for "yes".
@@ -88,6 +100,11 @@ target translation files, accepted translations. Output: a brief by
    catalogue: layout limits (Flutter: `maxLines`, `TextOverflow.ellipsis`, fixed width, button,
    tab, `AppBar`; native: `numberOfLines`, `lineLimit`) → `ui` (`tight`/`loose`) and `limit` (the
    brief's explicit limit, else the source length for `tight`).
+   - **What triggers it** — for an error, status or confirmation, read the code branch that sets
+     the key: a `catch` or failed request means the operation failed, a failed check on the
+     value means the input is wrong, and a neighbouring key often holds the other case. The
+     source wording can be vaguer than the branch («Помилка валідації» set in a `catch` is
+     "Couldn’t check the number", not "Enter a valid number"); translate the branch.
 4. **Settle once** what the brief leaves open — register, one rendering per recurring term — and
    hold it everywhere; each choice is a decision in the report.
 5. **Draft** into `<scratch>/drafts-<lang>.jsonl`, one line per gap, self-checked by
@@ -101,7 +118,8 @@ target translation files, accepted translations. Output: a brief by
    <min>,<max>` (the corridor from the target language pack; no pack → omit `--ratio`). Exit 0 ok,
    1 errors, 2 usage or input error. Length-limit overflow and ratio deviation are warnings
    unless `limit_hard: true`: "much longer" goes to the on-screen check list, "much shorter" is
-   re-read for lost meaning. Exit 1 → fix the drafts and rerun before the review.
+   re-read for lost meaning; a straight apostrophe in English is fixed to `’` unless the brief
+   allows straight quotes. Exit 1 → fix the drafts and rerun before the review.
 7. **Review** — one reviewer in a fresh context by `references/reviewer.md`: ledger, brief and
    string contexts, never the translator's reasoning. Fix Blocking and Significant findings, one
    round.
@@ -111,6 +129,12 @@ target translation files, accepted translations. Output: a brief by
 10. **Report** (below); approved term decisions are appended to the brief.
 
 ## Review
+
+**Source only** — the same reviewer reads source strings with no translation: the brief's UI
+glossary and source-language do-not-use rows, the voice guide and the source language's pack
+(`references/lang/<source>.md`). Reasons that need a pair do not apply (`references/reviewer.md`).
+The result is the table below with the source string in `was`; nothing is written — the source
+file is never changed, so approved rows go to the report as recommendations.
 
 The reviewer by `references/reviewer.md` assesses existing translations against the brief, the
 language pack and the string context. Show a table `key | was | proposed | why`; after the user's

@@ -11,6 +11,7 @@ the brief.
 - **Source and target files** (Review mode) — no ledger: read each key's source and target value as the same row; take `ui`, `limit` and `risk` from the brief's component catalogue and risk keys.
 - **Brief** — terms, do-not-use words, voice and register, exceptions, limits, risk keys.
 - **String context** — key name, call site or component, screenshot when the brief names a screenshot source, neighbouring strings of the same screen.
+- **Source only** (Review, source only) — source strings with no translation: judge them against the brief's UI glossary, source-language do-not-use rows, the voice guide and the source language's pack. `meaning`, `calque` and `length` need a pair and do not apply; use `term`, `tone`, `CTA convention`, `risk`, and `tone` also for grammar and consistency with the other strings of the screen.
 - **Not input** — the translator's notes or explanations; when you receive them, ignore them.
 
 ## Checklist per key
