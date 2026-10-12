@@ -30,7 +30,8 @@ parallel, so all sit on its last node); never add a node to it.
 3. **Scout ∥ Contract**, in parallel:
    - Scout: 1–2 read-only agents (2 only when the affected features span areas); input = the
      affected features. Each returns with `file:line`: the closest precedent to copy, utilities to
-     reuse, the naming vocabulary of the affected layer.
+     reuse, the naming vocabulary of the affected layer, every call site of each API the change
+     alters, and every place the project rules say a change of that kind must also touch.
    - Contract: only if a backend input exists → run the `backend-contract` skill, then the
      `visualize` skill's Model, Write, Trace and Check steps on its document (no review of its
      own: step 6 reviews it). `## Contract` links the document; the Контракт tab draws

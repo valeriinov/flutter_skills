@@ -33,8 +33,11 @@ description: Implement a plan file step by step, verify, then review the diff. U
    written to a file; reading the report and the fixes go to the next fresh
    worker.
 6. Verify: if the project has a lint skill use it, otherwise run
-   format + analyze + tests for the stack. Fix until clean. Then reread every
-   comment line the diff adds and delete each one the comment rule does not allow.
+   format + analyze + tests for the stack. Fix until clean. Each test the diff
+   adds for a fix or a behaviour runs once against the code without that change
+   and must fail; the failure path the requirements name has a test of its own.
+   Then reread every comment line the diff adds and delete each one the comment
+   rule does not allow.
 7. Run the `code-reviewer` agent on the diff (listed as `<plugin>:code-reviewer`
    when installed as a plugin; if no such agent is available, do the review
    inline by the same criteria and say so), passing the plan file path and
