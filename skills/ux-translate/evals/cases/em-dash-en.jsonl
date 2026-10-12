@@ -1,0 +1,6 @@
+{"expect": {"exit": 0, "lines": ["warning: em dash", "warning: em dash", "warning: em dash in form other"]}, "lang": "en"}
+{"file": "en.json", "key": "noPrice", "source": "Ціни поки немає — запропонуйте свою", "target": "No price yet — offer your own"}
+{"file": "en.json", "key": "noPriceFixed", "source": "Ціни поки немає — запропонуйте свою", "target": "There’s no price yet, so offer your own"}
+{"file": "en.json", "key": "aside", "source": "Кілька днів — і готово", "target": "A few days—and done"}
+{"file": "en.json", "key": "range", "source": "1–5 кг", "target": "1–5 kg"}
+{"file": "en.json", "key": "left", "source": {"one": "{} день — залишився", "few": "{} дні", "many": "{} днів", "other": "{} дня"}, "target": {"one": "{} day left", "other": "{} days —left"}}

@@ -24,7 +24,7 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 - Two sentences in one string — both end with a period: `Couldn’t load the list. Pull down to retry.`
 - Curly quotes `“ ”` and apostrophe `’` in UI text: `Can’t find “{name}”`; straight quotes only when the brief says the font lacks curly ones.
 - Ellipsis `…` (one character) for an action that opens more input, and for progress: `Uploading…`, `Save as…`.
-- En dash `–` for ranges, no spaces: `9:00–18:00`; em dash `—` without spaces for a break in a sentence.
+- En dash `–` for ranges, no spaces: `9:00–18:00`. No em dash `—`: it reads as machine-written copy, so a break in a sentence becomes two sentences, a comma or a colon (`Ціни поки немає — запропонуйте свою` → `There’s no price yet, so offer your own`).
 - Oxford comma per the brief; default US style uses it: `Photos, videos, and files`.
 - A non-breaking space between a number and its unit: `10 MB`.
 
@@ -71,6 +71,7 @@ Language: English (`en`). Pair language: Ukrainian (`uk`). Read with `references
 - `Не вдалося завантажити дані` → `Couldn’t load data`, not `It was not possible to load data`.
 - `Виникла помилка` → `Something went wrong`, not `An error has arisen`.
 - `Здійснити оплату` → `Pay`, not `Carry out the payment`.
+- `Надіслати поштою`, `забрати з пошти` → `send via a delivery service`, `pick up from a delivery service branch`, not `send by mail`, `pick up from a post office`: Ukrainian «пошта» is a parcel network, English mail is a national postal service.
 - `Введіть, будь ласка, коректний email` → `Enter a valid email`, not `Please enter a correct email`.
 - `Ви впевнені, що хочете вийти?` → `Sign out?`, not `Are you sure you want to exit?`.
 - `Дані відсутні` → `No data yet`, not `Data is absent`.

@@ -29,6 +29,7 @@ do not say.
 - **Repeated screen context** — do not restate what the title or screen already shows: on a profile screen `Edit profile information` → `Edit`.
 - **Source word order** — rebuild the sentence for the target language: `У вас залишилося 2 елементи` → `2 items left`, not `You have 2 items remaining`.
 - **Literal idiom** — translate the meaning, not the image: `Все пропало` → `Something went wrong`, not `Everything is lost`.
+- **Culture-bound word** — a service or institution the source names generically is rendered by what the target reader pictures doing the same job, not by its dictionary pair; a pair naming a different institution is a question, not a guess: `Надіслати поштою` (a parcel network with branches) → `Send via a delivery service`, not `Send by mail` (a national postal service).
 - **Passive bureaucratic voice** — say who acts: `Request has been received by the system` → `We got your request`.
 - **Invented content** — no extra reassurance, emoji or exclamation the source lacks: `Saved` stays `Saved`, not `Saved! 🎉`.
 

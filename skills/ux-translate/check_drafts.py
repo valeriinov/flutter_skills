@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Portions derived from crowdin/skills (skills/translate/scripts/check-drafts.sh).
 # MIT License, Copyright (c) Crowdin.
-"""Check a drafts ledger (JSONL) for placeholder, plural, length and apostrophe problems.
+"""Check a drafts ledger (JSONL) for placeholder, plural, length, apostrophe and dash problems.
 
 Usage: check_drafts.py <ledger.jsonl> --lang <code> [--ratio <min>,<max>]
 
@@ -21,6 +21,7 @@ CATEGORIES = ('zero', 'one', 'two', 'few', 'many', 'other')
 MIN_RATED_LENGTH = 10
 CURLY_APOSTROPHE_LANGS = ('en',)
 STRAIGHT_APOSTROPHE_RE = re.compile(r"(?<=[A-Za-z])'(?=[A-Za-z])")
+NO_EM_DASH_LANGS = ('en',)
 
 
 class PluralRule(NamedTuple):
@@ -69,8 +70,10 @@ def main(argv):
     rules = PLURAL_RULES.get(re.split(r'[-_]', lang)[0].lower())
     if rules is None:
         print(f'check_drafts: no plural table for {lang}; plural categories not checked', file=sys.stderr)
-    curly = re.split(r'[-_]', lang)[0].lower() in CURLY_APOSTROPHE_LANGS
-    lines = [line for record in records for line in check_record(record, rules, ratio, curly)]
+    base = re.split(r'[-_]', lang)[0].lower()
+    curly = base in CURLY_APOSTROPHE_LANGS
+    no_em_dash = base in NO_EM_DASH_LANGS
+    lines = [line for record in records for line in check_record(record, rules, ratio, curly, no_em_dash)]
     for line in lines:
         print(line)
     return 1 if any('\twarning: ' not in line for line in lines) else 0
@@ -117,7 +120,7 @@ def read_ledger(path):
     return records
 
 
-def check_record(record, rules, ratio, curly=False):
+def check_record(record, rules, ratio, curly=False, no_em_dash=False):
     if 'target' not in record:
         return []
     source, target = record.get('source'), record['target']
@@ -132,6 +135,8 @@ def check_record(record, rules, ratio, curly=False):
     issues += limit_issues(record, target) + ratio_issues(source, target, ratio)
     if curly:
         issues += apostrophe_issues(target)
+    if no_em_dash:
+        issues += em_dash_issues(target)
     return [f'{record.get("file")}\t{record.get("key")}\t{what}\t{left}\t{right}' for what, left, right in issues]
 
 
@@ -246,6 +251,11 @@ def limit_issues(record, target):
 def apostrophe_issues(target):
     return [(f'warning: straight apostrophe{label}', 'use: ’', f'target: {text}')
             for label, text in rendered_forms(target) if STRAIGHT_APOSTROPHE_RE.search(text)]
+
+
+def em_dash_issues(target):
+    return [(f'warning: em dash{label}', 'use: two sentences, a comma or a colon', f'target: {text}')
+            for label, text in rendered_forms(target) if '—' in text]
 
 
 def ratio_issues(source, target, ratio):

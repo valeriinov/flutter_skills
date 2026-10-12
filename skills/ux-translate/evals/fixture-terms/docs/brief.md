@@ -55,7 +55,7 @@ A missing key, an empty value, or a value equal to the source.
 ## Batch plan
 | batch | key prefix | strings | risk |
 |---|---|---|---|
-| all | — | 17 | security |
+| all | — | 18 | security |
 
 ## Decisions
 | decision | language | date |

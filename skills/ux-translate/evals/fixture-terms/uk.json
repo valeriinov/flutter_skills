@@ -15,5 +15,6 @@
   "bookingCanceledToast": "Бронювання скасовано.",
   "reserveCreatedToast": "Резерв створено",
   "selectDateButton": "Обрати дату",
-  "deleteAccountTitle": "Видалити обліковий запис?"
+  "deleteAccountTitle": "Видалити обліковий запис?",
+  "accessCardByPostDescr": "Картку доступу надішлемо поштою. Заберіть її у відділенні у вашому місті."
 }

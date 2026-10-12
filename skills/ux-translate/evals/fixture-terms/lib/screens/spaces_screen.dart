@@ -17,6 +17,7 @@ class SpacesScreen extends StatelessWidget {
       ]),
       Text(LocaleKeys.hostCardTitle.tr()),
       Text(LocaleKeys.hostOnSiteDescr.tr()),
+      Text(LocaleKeys.accessCardByPostDescr.tr()),
       FilledButton(onPressed: () {}, child: Text(LocaleKeys.hostContactButton.tr())),
       FilledButton(onPressed: () {}, child: Text(LocaleKeys.selectDateButton.tr())),
       FilledButton(onPressed: () {}, child: Text(LocaleKeys.bookDeskButton.tr())),

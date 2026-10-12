@@ -68,7 +68,8 @@ target translation files, accepted translations. Output: a brief by
    - translation files → string groups by screen or feature (key prefix or screenshot source),
      the gap rule, conflicts among accepted translations, and for each core concept every
      word form and synonym the source uses, counted by key — a role named two ways is the
-     conflict the brief exists to settle.
+     conflict the brief exists to settle; and every service or institution word whose
+     dictionary pair names a different institution in the target culture (`пошта` → mail).
 2. **Assemble** — the main agent fills the template: terms ≤40 (product names and
    do-not-translate, domain words, ambiguous words); a term's translation comes only from the
    documents or accepted translations, else it is a question. A contradiction between documents
@@ -119,7 +120,7 @@ target translation files, accepted translations. Output: a brief by
    1 errors, 2 usage or input error. Length-limit overflow and ratio deviation are warnings
    unless `limit_hard: true`: "much longer" goes to the on-screen check list, "much shorter" is
    re-read for lost meaning; a straight apostrophe in English is fixed to `’` unless the brief
-   allows straight quotes. Exit 1 → fix the drafts and rerun before the review.
+   allows straight quotes, and an English em dash is rephrased away. Exit 1 → fix the drafts and rerun before the review.
 7. **Review** — one reviewer in a fresh context by `references/reviewer.md`: ledger, brief and
    string contexts, never the translator's reasoning. Fix Blocking and Significant findings, one
    round.
