@@ -101,6 +101,10 @@ was held to — analyze, tests, a device capture. A number outside the threshold
 user set is not "ok", whatever verdict the tool prints; say which gate ran before saying
 done.
 
+A step the session's tools can do — checking that a push landed, exporting a file, a click
+in the built-in browser — the agent does itself. The user is handed only what needs their
+hands, their credentials or their decision, and the hand-off says which of the three.
+
 A workflow or fan-out spawns at most five agents per run, counted along the run's longest
 path — sweep, lenses, verifiers, fixer and gate together. Over five, collapse the fan
 (one lens instead of three, one sceptic over the list instead of one per candidate, a
