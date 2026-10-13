@@ -57,11 +57,13 @@ parallel, so all sit on its last node); never add a node to it.
    browser, every comment and option pick is appended to the comments file at once,
    and "Отправить ревью" stops the server with `review submitted: <n> open comments`. Open
    comments can be edited or deleted on the page before submitting.
-   - No open comments → the button becomes "Имплементировать план": it opens one new terminal
-     window — Ghostty (1.3+, via its AppleScript) when installed, Terminal.app otherwise — with a
-     separate Claude Code session running `implement-plan` with subagents, and `serve` exits with
-     `implementation started` → stop and report that implementation runs in that window; no
-     Revise. macOS only — elsewhere the page shows the error and the user starts
+   - No open comments → the button becomes "Имплементировать план": it opens a separate Claude
+     Code session for `implement-plan` with subagents, first available of: Claude Desktop (a new
+     Code-session form in the project folder with the prompt pre-filled; the session starts only
+     when the user presses Enter; an untrusted folder first asks for trust) → Ghostty 1.3+ (a new
+     tab in the front window, a new window only when none is open) → Terminal.app (a new
+     window). `serve` exits with `implementation started: desktop|terminal` → stop and report
+     where the session waits (the Desktop form waiting for Enter, or the terminal); no Revise. macOS only — elsewhere the page shows the error and the user starts
      `implement-plan` themselves.
    - n > 0 → Revise mode. The page shows "Агент правит план…" and reloads on every change to
      the plan, brief or comments file while `serve` runs.

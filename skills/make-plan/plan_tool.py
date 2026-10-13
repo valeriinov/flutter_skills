@@ -12,6 +12,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -35,11 +36,18 @@ COMMENT_RE = re.compile(r'^- \[ \] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+): )
 OPEN_PREFIX = '- [ ] '
 IMPLEMENT_PROMPT = 'имплементируй план {} используй субагентов'
 GHOSTTY_SCRIPT = '''on run argv
+    set wasRunning to application "Ghostty" is running
     tell application "Ghostty"
         set config to new surface configuration
         set initial working directory of config to item 1 of argv
         set command of config to item 2 of argv
-        new window with configuration config
+        if (count of windows) > 0 then
+            set launchTab to selected tab of front window
+            new tab in front window with configuration config
+            if not wasRunning then close tab launchTab
+        else
+            new window with configuration config
+        end if
         activate
     end tell
 end run'''
@@ -537,15 +545,25 @@ def implement_session(plan_path):
     in_plan_folder = plan_dir.parent.name == 'plan'
     root = plan_dir.parent.parent if in_plan_folder else plan_dir
     target = plan_dir.relative_to(root) if in_plan_folder else plan_path.name
-    return root, f'claude {shlex.quote(IMPLEMENT_PROMPT.format(target))}'
+    return root, IMPLEMENT_PROMPT.format(target)
 
 def launch_implement(plan_path):
-    root, session = implement_session(plan_path)
+    root, prompt = implement_session(plan_path)
+    if launch_desktop(root, prompt):
+        return 'desktop', None
+    session = f'claude {shlex.quote(prompt)}'
     if launch_ghostty(root, session):
-        return None
+        return 'terminal', None
     if run_osascript(TERMINAL_SCRIPT, f'cd {shlex.quote(str(root))} && {session}'):
-        return None
-    return 'не удалось открыть терминал — запусти implement-plan сам'
+        return 'terminal', None
+    return None, 'не удалось открыть терминал — запусти implement-plan сам'
+
+def launch_desktop(root, prompt):
+    if subprocess.run(['open', '-Ra', 'Claude'], capture_output=True).returncode != 0:
+        return False
+    folder = urllib.parse.quote(str(root), safe='')
+    url = f'claude://code/new?folder={folder}&q={urllib.parse.quote(prompt, safe="")}'
+    return subprocess.run(['open', url], capture_output=True).returncode == 0
 
 def launch_ghostty(root, session):
     if subprocess.run(['open', '-Ra', 'Ghostty'], capture_output=True).returncode != 0:
@@ -637,12 +655,12 @@ def make_handler(plan_path):
             if count > 0:
                 self.reply(409, 'application/json', json.dumps({'open': count}))
                 return
-            error = launch_implement(plan_path)
+            where, error = launch_implement(plan_path)
             if error:
                 self.reply(500, 'application/json', json.dumps({'error': error}, ensure_ascii=False))
                 return
-            self.server.implementing = True
-            self.reply(200, 'application/json', json.dumps({'started': True}))
+            self.server.implementing = where
+            self.reply(200, 'application/json', json.dumps({'started': True, 'where': where}))
             threading.Thread(target=self.server.shutdown).start()
 
         def read_payload(self):
@@ -938,7 +956,7 @@ def cli_serve(argv):
         pass
     server.server_close()
     if server.implementing:
-        print('implementation started', flush=True)
+        print(f'implementation started: {server.implementing}', flush=True)
     elif server.submitted is not None:
         print(f'review submitted: {server.submitted} open comments', flush=True)
         print('Если агент не подхватил ревью сам, напиши ему: доработай план по комментариям', flush=True)

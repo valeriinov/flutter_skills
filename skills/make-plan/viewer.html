@@ -1055,7 +1055,9 @@ async function startImplementation(button, status) {
   }
   if (response.ok) {
     button.hidden = true;
-    status.textContent = 'Имплементация запущена в новом окне терминала';
+    status.textContent = body.where === 'desktop'
+      ? 'Сессия открыта в Claude Desktop — нажми Enter, чтобы начать'
+      : 'Имплементация запущена в новом окне терминала';
     return;
   }
   if (response.status === 409) {
