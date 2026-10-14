@@ -56,6 +56,8 @@ button { font-family: inherit; }
 .reasons { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); }
 .pair { display: grid; grid-template-columns: 2.4em minmax(0, 1fr); gap: 4px 10px; align-items: start; }
 .pair > b { font: 500 12px/1.9 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.pair > .was { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 6px; font-size: 13px; color: var(--muted); }
+.was .struck { text-decoration: line-through; }
 .forms { display: grid; gap: 4px; }
 .forms .form { display: grid; grid-template-columns: 3.6em minmax(0, 1fr); gap: 8px; }
 .forms .form i { font: normal 12px/1.9 var(--font-mono); color: var(--muted); }
@@ -340,6 +342,8 @@ body.has-downloads .export { display: grid; }
   let closeOrder = [];
   let R = null;
   let keysById = new Map();
+  let previousRound = null;
+  let previousKeysById = new Map();
   let termsById = new Map();
   let questionsById = new Map();
   let reviewById = new Map();
@@ -352,6 +356,8 @@ body.has-downloads .export { display: grid; }
   function selectSnapshot(n) {
     R = snapshots.get(n);
     keysById = new Map(R.keys.map((k) => [k.key, k]));
+    previousRound = ROUND_NUMBERS[ROUND_NUMBERS.indexOf(n) - 1] ?? null;
+    previousKeysById = new Map(previousRound === null ? [] : snapshots.get(previousRound).keys.map((k) => [k.key, k]));
     termsById = new Map(R.terms.map((x) => [x.id, x]));
     questionsById = new Map(R.questions.map((q) => [q.id, q]));
     reviewById = new Map(R.review.map((r) => [r.id, r]));
@@ -820,6 +826,14 @@ body.has-downloads .export { display: grid; }
     return flags;
   }
 
+  function wasLine(e, lang) {
+    const previous = previousKeysById.get(e.key);
+    if (!previous || !(e.changed || []).includes(lang)) return '';
+    const value = valueOf(previous, lang);
+    const shown = textPresent(value) ? `<div class="struck">${formsView(value)}</div>` : '<span>—</span>';
+    return `<div class="was"><span>${esc(t('changedWas', { n: previousRound }))}</span>${shown}</div>`;
+  }
+
   function matchesKey(e) {
     const f = keyFilter;
     if (f.confidence !== 'all' && e.confidence !== f.confidence) return false;
@@ -841,7 +855,7 @@ body.has-downloads .export { display: grid; }
       flags.has('invalid') ? chip('invalid', t('badgeInvalid')) : '',
       flags.has('project') ? chip('project', t('badgeProject')) : '',
       flags.has('added') ? chip('added', t('badgeAdded')) : '',
-      flags.has('changed') ? chip('changed', t('badgeChanged', { langs: e.changed.join(', ') })) : '',
+      flags.has('changed') ? chip('changed', t('badgeChanged', { langs: e.changed.join(', '), n: previousRound })) : '',
       e.identical ? `<span class="chip">${esc(t('badgeIdentical'))}</span>` : '',
       `<span class="chip edited" data-edited hidden>${esc(t('badgeEdited'))}</span>`,
     ].join('');
@@ -881,7 +895,7 @@ body.has-downloads .export { display: grid; }
     const rows = [SRC, TGT].map((lang) => {
       const editable = !conflict && lang === TGT;
       const body = editable ? editorHtml(docId, valueOf(e, TGT), custom ?? valueOf(e, TGT), e.key) : formsView(valueOf(e, lang));
-      return `<div class="pair"><b>${esc(lang)}</b>${body}</div>`;
+      return `<div class="pair"><b>${esc(lang)}</b>${body}${wasLine(e, lang)}</div>`;
     }).join('');
     const choice = conflict ? pickBlock(docId, conflictOptions(e), valueOf(e, editLangOf(e)), e.key) : '';
     const restore = conflict ? '' : `<button class="link-btn ctl" data-act="restore"${custom === null ? ' hidden' : ''}${dis()}>${esc(t('restore'))}</button>`;
