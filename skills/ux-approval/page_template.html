@@ -128,6 +128,12 @@ body.has-downloads .export { display: grid; }
 .sum-answers li { overflow-wrap: anywhere; }
 .sum-answers .who { font-weight: 700; }
 .notes { display: grid; gap: 10px; }
+.term-group { margin-top: 10px; font: 700 12px/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.term-list { padding: 0; gap: 0; overflow: hidden; }
+.term-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; min-height: 44px; padding: 4px 18px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.term-row .link-btn { flex: none; }
+.term-list > .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.term-list > :first-child { border-top: 0; }
 .note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
@@ -145,7 +151,7 @@ body.has-downloads .export { display: grid; }
 .chip.flag-conflict, .chip.flag-invalid { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-color: transparent; }
 .chip.flag-project, .chip.flag-added { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
 .chip.flag-changed, .chip.edited { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-line); }
-.chip.state-open, .chip.state-approved { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
+.chip.state-open {background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
 .chip.state-closed, .chip.state-past, .chip.state-final { background: var(--seg-track); color: var(--ink-soft); border-color: transparent; }
 .vals { display: grid; gap: 2px; }
 .vals b { font: 500 11px/1.6 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 6px; }
@@ -170,6 +176,28 @@ body.has-downloads .export { display: grid; }
 .table-wrap th { font-weight: 700; color: var(--ink-soft); }
 .filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
 @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; }
+  .table-wrap thead { display: none; }
+  .table-wrap tr { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+  .table-wrap tr + tr { margin-top: 8px; }
+  .table-wrap td { padding: 2px 0; border: 0; }
+  .table-wrap td:empty { display: none; }
+  .table-wrap td::before { content: attr(data-label) " · "; font: 500 11px/1.6 var(--font-mono); color: var(--muted); }
+  nav.tabs { min-width: 0; }
+  .tabs .segmented { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .tabs .segmented::-webkit-scrollbar { display: none; }
+  .tabs .segmented button { flex: none; }
+  .tabs .segmented.fade-right { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent); }
+  .tabs .segmented.fade-left { -webkit-mask-image: linear-gradient(90deg, transparent, #000 48px); mask-image: linear-gradient(90deg, transparent, #000 48px); }
+  .tabs .segmented.fade-left.fade-right { -webkit-mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(90deg, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
+}
+@media (max-width: 560px), (pointer: coarse) {
+  .link-btn { display: inline-flex; align-items: center; min-height: 44px; padding-block: 0; }
+  .segmented button, .opt, .more, .btn, .save-btn, .check { min-height: 44px; }
+  select, input[type="search"], input[type="email"] { min-height: 44px; }
+}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -627,8 +655,9 @@ body.has-downloads .export { display: grid; }
   function mdTable(rows) {
     const body = rows.filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r));
     const [head, ...rest] = body.map(tableCells);
+    const labels = (head || []).map((c) => esc(c.replace(/[`*]/g, '')));
     const th = (head || []).map((c) => `<th>${mdInline(c)}</th>`).join('');
-    const trs = rest.map((r) => `<tr>${r.map((c) => `<td>${mdInline(c)}</td>`).join('')}</tr>`).join('');
+    const trs = rest.map((r) => `<tr>${r.map((c, j) => `<td data-label="${labels[j] ?? ''}">${mdInline(c)}</td>`).join('')}</tr>`).join('');
     return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table></div>`;
   }
 
@@ -720,14 +749,23 @@ body.has-downloads .export { display: grid; }
   }
 
   function renderTerms() {
-    const ordered = [...R.terms.filter((term) => !term.approved), ...R.terms.filter((term) => term.approved)];
-    const cards = ordered.map((term) => (isCollapsedTerm(term) ? collapsedTermCard(term) : termCard(term)));
-    const approved = R.terms.filter((term) => term.approved).length;
-    const approvedIntro = approved ? `<p class="intro">${fmt(t('termsApproved', { n: approved }))}</p>` : '';
-    document.getElementById('panel-terms').innerHTML = cards.length
-      ? `<p class="intro">${fmt(t('termsIntro', { n: cards.length }))}</p>${approvedIntro}<p class="intro">${fmt(t('confidenceLegend'))}</p>${cards.join('')}`
-      : `<div class="empty">${esc(t('termsEmpty'))}</div>`;
+    const panel = document.getElementById('panel-terms');
+    if (!R.terms.length) {
+      panel.innerHTML = `<div class="empty">${esc(t('termsEmpty'))}</div>`;
+      return;
+    }
+    const pending = R.terms.filter((term) => !term.approved);
+    const rounds = [...new Set(R.terms.filter((term) => term.approved).map((term) => term.approved))].sort((a, b) => a - b);
+    const groups = rounds.map((n) => {
+      const terms = R.terms.filter((term) => term.approved === n);
+      return `<h3 class="term-group">${esc(t('termsApprovedRound', { n, count: terms.length }))}</h3>
+        <div class="card term-list">${terms.map(termItem).join('')}</div>`;
+    });
+    const summary = t('termsSummary', { pending: pending.length, approved: R.terms.length - pending.length });
+    panel.innerHTML = `<p class="intro">${esc(summary)}</p>${pending.map(termCard).join('')}${groups.join('')}`;
   }
+
+  const termItem = (term) => (isCollapsedTerm(term) ? termRow(term) : termCard(term));
 
   function termCard(term) {
     const docId = `term.${term.id}`;
@@ -743,7 +781,7 @@ body.has-downloads .export { display: grid; }
     ].filter(Boolean);
     return `<article class="card${term.confidence === 'low' ? ' low' : ''}" data-doc="${esc(docId)}">
       <div class="head"><div class="left"><h3>${fmt(term.source)} · ${termTarget(term)}</h3></div>
-        <div class="left">${term.approved ? approvedChip(term) : ''}${divergeChip()}${term.confidence ? confidenceChip(term.confidence) : ''}</div></div>
+        <div class="left">${divergeChip()}${term.confidence ? confidenceChip(term.confidence) : ''}</div></div>
       ${term.meaning ? `<p class="small flat">${fmt(term.meaning)}</p>` : ''}
       ${refs.length ? `<ul class="reasons">${refs.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
       ${pickBlock(docId, opts, '', term.source)}
@@ -756,15 +794,9 @@ body.has-downloads .export { display: grid; }
     return Boolean(term.approved) && !openedTerms.has(term.id) && !answeredByAnyone(`term.${term.id}`);
   }
 
-  function collapsedTermCard(term) {
-    return `<article class="card" data-term="${esc(term.id)}">
-        <div class="head"><div class="left"><h3>${fmt(term.source)} · ${termTarget(term)}</h3></div>
-          <div class="left">${approvedChip(term)}<button class="link-btn" data-act="open-term" data-term="${esc(term.id)}">${esc(t('edit'))}</button></div></div>
-      </article>`;
-  }
-
-  function approvedChip(term) {
-    return `<span class="chip state-approved">${esc(t('termApproved', { n: term.approved }))}</span>`;
+  function termRow(term) {
+    return `<div class="term-row" data-term="${esc(term.id)}"><span>${fmt(term.source)} · ${termTarget(term)}</span>
+      <button class="link-btn" data-act="open-term" data-term="${esc(term.id)}">${esc(t('edit'))}</button></div>`;
   }
 
   function termTarget(term) {
@@ -773,9 +805,9 @@ body.has-downloads .export { display: grid; }
 
   function replaceTermCard(id) {
     const term = termsById.get(id);
-    const card = document.querySelector(`#panel-terms article[data-term="${CSS.escape(id)}"], #panel-terms article[data-doc="${CSS.escape(`term.${id}`)}"]`);
+    const card = document.querySelector(`#panel-terms .term-row[data-term="${CSS.escape(id)}"], #panel-terms article[data-doc="${CSS.escape(`term.${id}`)}"]`);
     if (!term || !card) return;
-    card.outerHTML = isCollapsedTerm(term) ? collapsedTermCard(term) : termCard(term);
+    card.outerHTML = termItem(term);
     applyDoc(`term.${id}`);
   }
 
@@ -1285,9 +1317,25 @@ body.has-downloads .export { display: grid; }
   function selectTab(tab) {
     activeTab = tab;
     document.querySelectorAll('nav.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    revealTab(document.querySelector(`nav.tabs [data-tab="${tab}"]`));
     document.querySelectorAll('main > .panel').forEach((p) => { p.hidden = p.id !== `panel-${tab}`; });
     if (tab === 'summary') renderSummary();
     try { history.replaceState(null, '', `#${tab}`); } catch (e) { /* the frame may refuse history writes */ }
+  }
+
+  const tabStrip = document.querySelector('nav.tabs .segmented');
+
+  function revealTab(button) {
+    const strip = tabStrip.getBoundingClientRect();
+    const b = button.getBoundingClientRect();
+    if (b.left >= strip.left && b.right <= strip.right) return;
+    tabStrip.scrollLeft += b.left - strip.left - (strip.width - b.width) / 2;
+  }
+
+  function updateTabFade() {
+    const max = tabStrip.scrollWidth - tabStrip.clientWidth;
+    tabStrip.classList.toggle('fade-left', max > 4 && tabStrip.scrollLeft > 4);
+    tabStrip.classList.toggle('fade-right', max > 4 && tabStrip.scrollLeft < max - 4);
   }
 
   function indexRound() {
@@ -1537,6 +1585,8 @@ body.has-downloads .export { display: grid; }
     const b = ev.target.closest('[data-tab]');
     if (b) selectTab(b.dataset.tab);
   });
+  tabStrip.addEventListener('scroll', updateTabFade, { passive: true });
+  window.addEventListener('resize', updateTabFade);
 
   document.getElementById('round-switch').addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-round]');
@@ -1744,6 +1794,7 @@ body.has-downloads .export { display: grid; }
   renderRound();
   const initial = (location.hash || '').slice(1);
   if (TABS.includes(initial)) selectTab(initial);
+  updateTabFade();
   connect().catch(() => setMode('nodb'));
 })();
 </script>
