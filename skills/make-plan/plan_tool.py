@@ -544,7 +544,7 @@ def implement_session(plan_path):
     plan_dir = plan_path.resolve().parent
     in_plan_folder = plan_dir.parent.name == 'plan'
     root = plan_dir.parent.parent if in_plan_folder else plan_dir
-    target = plan_dir.relative_to(root) if in_plan_folder else plan_path.name
+    target = plan_dir if in_plan_folder else plan_path.resolve()
     return root, IMPLEMENT_PROMPT.format(target)
 
 def launch_implement(plan_path):
