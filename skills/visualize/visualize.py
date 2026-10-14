@@ -736,7 +736,7 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line-2); display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; margin: 4px 0; font-size: 14px; width: 100%; }
-th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: break-word; }
 th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
 tbody tr:last-child td { border-bottom: none; }
 .steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
