@@ -132,7 +132,11 @@ body.has-downloads .export { display: grid; }
 .term-list { padding: 0; gap: 0; overflow: hidden; }
 .term-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; min-height: 44px; padding: 4px 18px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .term-row .link-btn { flex: none; }
-.term-list > .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.term-list > .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; background: var(--brand-bg2); }
+.term-list > .card .head { flex-wrap: nowrap; align-items: flex-start; }
+.term-list > .card .head > .left:first-child { flex: 1 1 auto; min-width: 0; }
+.term-list > .card .head > .left:last-child { flex: none; }
+.ok-mark { color: var(--ok); font-weight: 700; }
 .term-list > :first-child { border-top: 0; }
 .note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
@@ -151,7 +155,7 @@ body.has-downloads .export { display: grid; }
 .chip.flag-conflict, .chip.flag-invalid { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-color: transparent; }
 .chip.flag-project, .chip.flag-added { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
 .chip.flag-changed, .chip.edited { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-line); }
-.chip.state-open {background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
+.chip.state-open { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
 .chip.state-closed, .chip.state-past, .chip.state-final { background: var(--seg-track); color: var(--ink-soft); border-color: transparent; }
 .vals { display: grid; gap: 2px; }
 .vals b { font: 500 11px/1.6 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 6px; }
@@ -781,7 +785,8 @@ body.has-downloads .export { display: grid; }
     ].filter(Boolean);
     return `<article class="card${term.confidence === 'low' ? ' low' : ''}" data-doc="${esc(docId)}">
       <div class="head"><div class="left"><h3>${fmt(term.source)} · ${termTarget(term)}</h3></div>
-        <div class="left">${divergeChip()}${term.confidence ? confidenceChip(term.confidence) : ''}</div></div>
+        <div class="left">${divergeChip()}${term.approved ? foldButton(term) : (term.confidence ? confidenceChip(term.confidence) : '')}</div></div>
+      ${term.approved ? approvedStatus(term) : ''}
       ${term.meaning ? `<p class="small flat">${fmt(term.meaning)}</p>` : ''}
       ${refs.length ? `<ul class="reasons">${refs.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
       ${pickBlock(docId, opts, '', term.source)}
@@ -795,8 +800,19 @@ body.has-downloads .export { display: grid; }
   }
 
   function termRow(term) {
-    return `<div class="term-row" data-term="${esc(term.id)}"><span>${fmt(term.source)} · ${termTarget(term)}</span>
+    return `<div class="term-row" data-term="${esc(term.id)}"><span><span class="ok-mark" aria-hidden="true">✓</span> ${fmt(term.source)} · ${termTarget(term)}</span>
       <button class="link-btn" data-act="open-term" data-term="${esc(term.id)}">${esc(t('edit'))}</button></div>`;
+  }
+
+  function foldButton(term) {
+    if (answeredByAnyone(`term.${term.id}`)) return '';
+    return `<button class="link-btn" data-act="close-term" data-term="${esc(term.id)}">${esc(t('termCollapse'))} <span aria-hidden="true">▴</span></button>`;
+  }
+
+  function approvedStatus(term) {
+    const approved = `<span class="ok-mark">✓ ${esc(t('termApproved', { n: term.approved }))}</span>`;
+    const confidence = term.confidence ? ` · ${esc(t('confidenceChip', { level: tMap('confidence', term.confidence) }))}` : '';
+    return `<p class="small muted flat">${approved}${confidence}</p>`;
   }
 
   function termTarget(term) {
@@ -1617,6 +1633,7 @@ body.has-downloads .export { display: grid; }
     if (name === 'goto') { goToObject(act.dataset.object, false); return; }
     if (name === 'edit') { goToObject(act.dataset.object, true); return; }
     if (name === 'open-term') { openedTerms.add(act.dataset.term); replaceTermCard(act.dataset.term); return; }
+    if (name === 'close-term') { openedTerms.delete(act.dataset.term); replaceTermCard(act.dataset.term); return; }
     if (name === 'note-add') { openNoteForm(null); return; }
     if (name === 'note-edit') { openNoteForm(act.dataset.object); return; }
     if (name === 'note-save') { saveNote(); return; }
