@@ -38,12 +38,27 @@ description: Implement a plan file step by step, verify, then review the diff. U
    and must fail; the failure path the requirements name has a test of its own.
    Then reread every comment line the diff adds and delete each one the comment
    rule does not allow.
-7. Run the `code-reviewer` agent on the diff (listed as `<plugin>:code-reviewer`
-   when installed as a plugin; if no such agent is available, do the review
-   inline by the same criteria and say so), passing the plan file path and
-   content — ask it to check plan compliance (every planned step implemented,
-   nothing beyond plan scope) alongside its normal criteria. Fix Blocking
-   findings; list the rest. When running a stage, set its status cell to `done`.
+7. When the plan or its last stage is done, run the `code-reviewer` agent
+   (listed as `<plugin>:code-reviewer` when installed as a plugin; if no such
+   agent is available, do the review inline by the same criteria and say so)
+   on the range `<plan base sha>...HEAD` plus uncommitted changes (no `base:` in
+   the plan → the uncommitted changes), passing the plan file path and content —
+   ask it to check plan compliance (every planned step implemented, nothing
+   beyond plan scope) alongside its normal criteria.
+   The prompt carries no file list and no "out of scope". Depth by the count of
+   non-generated files in the range: ≤ 25 — one agent; over 25 — two passes,
+   each with one agent per layer of the project's actual tree (4 layers:
+   domain / data / presentation / tests, or whatever the repo has), up to 8
+   agents, as `review-pr` §3. Verify each finding against the code yourself;
+   drop the ones that do not hold, naming in one line which and why.
+   Before fixing, record a snapshot — `git stash create` (empty output →
+   `HEAD`) — and the list `git ls-files --others --exclude-standard`. Fix every
+   verified finding, Minor included, yourself; spawn up to 4 workers only when
+   there are more findings than you fix yourself. Then one
+   re-review: one `code-reviewer` over `git diff <snapshot>` plus, read whole,
+   the untracked files the fix created (absent from that list) or edited,
+   Significant and above; verify and fix what it finds, no third round. When
+   running a stage, set its status cell to `done`.
 8. Report in Russian, one line each: что теперь работает, результат проверки,
    вердикт ревьюера, отклонения от плана (только если есть). End with a single
    offer to commit — never commit without confirmation.

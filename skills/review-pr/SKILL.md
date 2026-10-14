@@ -50,8 +50,12 @@ second request everything the first already carries.
 ## 3. Pick the depth
 
 - ≤ 25 non-generated files — one `code-reviewer` agent over the branch diff.
-- Over 25 — one agent per layer of the project's actual tree (domain / data / presentation /
-  tests, or whatever the repo really has), then deduplicate their findings yourself.
+- Over 25 — two passes, each with one agent per layer of the project's actual tree (4 layers:
+  domain / data / presentation / tests, or whatever the repo has), up to 8 agents, then
+  deduplicate their findings yourself.
+
+This is search and verification only: the findings go into the document, nothing is fixed
+and there is no re-review.
 
 Every agent prompt states: the changes are **not** uncommitted, review
 `git diff origin/<base>...origin/<head>`; read full files from the worktree at

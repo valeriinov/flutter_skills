@@ -105,9 +105,11 @@ A step the session's tools can do — checking that a push landed, exporting a f
 in the built-in browser — the agent does itself. The user is handed only what needs their
 hands, their credentials or their decision, and the hand-off says which of the three.
 
-A workflow or fan-out spawns at most five agents per run, counted along the run's longest
-path — sweep, lenses, verifiers, fixer and gate together. Over five, collapse the fan
-(one lens instead of three, one sceptic over the list instead of one per candidate, a
+A review run spends its agents by phase: the search up to 8 on a branch over 25
+non-generated files and 1 on a smaller one, the fix up to 4 workers, the re-review 1.
+Any other workflow or fan-out spawns at most five agents per run, counted along the run's
+longest path — sweep, lenses, verifiers, fixer and gate together. Over five, collapse the
+fan (one lens instead of three, one sceptic over the list instead of one per candidate, a
 pipeline instead of a fan-out); never raise the cap.
 
 ### 5. Communication
@@ -173,6 +175,11 @@ Precedence when it collides with the rules above:
   name, device model or harness feature that another machine or agent will not have.
   Examples come from the skill's own domain; a project-bound example belongs in that
   project's own skill.
+- A skill's or agent's eval lives beside it in `evals/` and is synthetic: it reproduces the
+  defect type, with no strings, names, paths or shas of a project.
+- An eval that needs a real codebase a synthetic case cannot stand in for — pairs of real
+  commits, findings from real reviews, their raw outputs — lives in that project's `plan/`
+  (or its worktree); only the procedure, free of project data, sits in the skill's `evals/`.
 
 ### 6. Naming
 
