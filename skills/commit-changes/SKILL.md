@@ -1,6 +1,6 @@
 ---
 name: commit-changes
-description: Split the working tree into logical commits in the user's format; never pushes. Use for "сделай коммит", "разбей на логические коммиты", "commit this", or a message alone.
+description: Split the tree into logical commits in the user's format; no push. Use for "сделай коммит", "разбей на логические коммиты", "commit this", or a message alone.
 argument-hint: "[ optional: how to split, or a ticket id ]"
 ---
 

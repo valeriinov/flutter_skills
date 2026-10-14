@@ -1,6 +1,6 @@
 ---
 name: clarifier
-description: Turn a document into a short text read in 3–5 minutes (RU, UK, EN) without losing facts; checks text for other skills. Use for "упрости текст", "сделай понятно", "clarify this doc".
+description: Turn a document into a short text read in 3–5 minutes (RU, UK, EN) without losing facts; checks text for skills. Use for "упрости текст", "сделай понятно", "clarify".
 argument-hint: "[ path to the document (optionally: 3 min) ]"
 ---
 
