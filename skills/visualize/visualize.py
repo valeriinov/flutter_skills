@@ -689,8 +689,9 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .consequence { color: var(--ink-2); font-size: 15px; }
 .recommendation { font-size: 15px; }
 .diagram g.node { cursor: pointer; }
-section.overview > .diagram { cursor: zoom-in; transition: border-color .15s, box-shadow .15s; }
-section.overview > .diagram:hover { border-color: var(--blue-line); box-shadow: 0 4px 18px rgba(21, 24, 35, .06); }
+:is(section.overview, .sec-body) > .diagram { cursor: zoom-in; transition: border-color .15s, box-shadow .15s; }
+:is(section.overview, .sec-body) > .diagram:hover { border-color: var(--blue-line); box-shadow: 0 4px 18px rgba(21, 24, 35, .06); }
+.sec-body > .diagram g.node { cursor: zoom-in; }
 :is(.diagram, .zoom-body) .edgeLabel { background: transparent !important; }
 :is(.diagram, .zoom-body) .edgeLabel rect { fill: transparent !important; }
 :is(.diagram, .zoom-body) .edgeLabel .labelBkg { background: transparent !important; max-width: none !important; display: flex !important; justify-content: center; width: 100%; }
@@ -841,17 +842,22 @@ function renderVisual(root, options = {}) {
         onNode(id, closeZoom, node);
       });
     });
-    const openZoom = event => {
-      if (event.target.closest('g.node, g.edgeLabel')) return;
-      const copy = overview.cloneNode(true);
-      const natural = overview.viewBox.baseVal.width;
+    const openZoom = svg => {
+      const copy = svg.cloneNode(true);
+      const natural = svg.viewBox.baseVal.width;
       copy.style.width = `${Math.round(Math.max(natural, Math.min(natural * 1.35, innerWidth - 48)))}px`;
       zoom.querySelector('.zoom-body').append(copy);
-      bindNodes(copy);
+      if (svg === overview) bindNodes(copy);
       zoom.hidden = false;
     };
     bindNodes(overview);
-    overview.parentElement.addEventListener('click', openZoom);
+    overview.parentElement.addEventListener('click', event => {
+      if (event.target.closest('g.node, g.edgeLabel')) return;
+      openZoom(overview);
+    });
+    root.querySelectorAll('.sec-body > .diagram svg').forEach(svg => {
+      svg.parentElement.addEventListener('click', () => openZoom(svg));
+    });
     zoom.querySelector('.zoom-close').addEventListener('click', closeZoom);
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeZoom(); });
     return overview;
