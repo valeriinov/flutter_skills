@@ -1,6 +1,6 @@
 ---
 name: make-plan
-description: Draft a plan from plan/<name>/inputs/ with gate, auto-review and plan.html; revise mode answers comments. Use for "составь план", "make a plan", "доработай план по комментариям".
+description: Draft a plan from plan/<name>/inputs/ with gate, review and plan.html; revise mode answers comments. Use for "составь план", "make a plan", "доработай план".
 argument-hint: "[ task description (optionally: plan name) | plan path + revise ]"
 ---
 
