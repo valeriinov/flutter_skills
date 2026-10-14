@@ -1,0 +1,27 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "batches",
+            1,
+            "expected"
+          ],
+          4
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:batches.plant: 3 keys, expected 4"
+  ]
+}

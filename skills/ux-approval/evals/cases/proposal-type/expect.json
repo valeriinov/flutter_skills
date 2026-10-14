@@ -1,0 +1,27 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            2,
+            "proposal"
+          ],
+          "Полив через {count} днів"
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:review.uk.plantDaysLeft: proposal is string, value is object"
+  ]
+}

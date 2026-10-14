@@ -128,6 +128,7 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 | `review-changes` | Review uncommitted changes before committing | any | `code-reviewer` |
 | `review-plan` | Review a plan file before any code is written | any | `plan-reviewer`, `visual-reviewer` |
 | `review-pr` | Review a GitHub PR against its base branch into a document pasted back as comments | any | `code-reviewer` |
+| `ux-approval` | Run UI text approval rounds in a shared artifact: create, next round from editors' answers and the project, finalize | any | — |
 | `ux-translate` | Translate app UI strings as a UX writer: localization brief, translation, review; deep uk and en packs | any | — |
 | `visualize` | Turn a plan, brief or contract into an HTML page: one overall diagram plus a small diagram per point | any | `visual-reviewer` |
 

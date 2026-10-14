@@ -1,0 +1,13 @@
+{
+  "homeTitle": "My plants",
+  "homeEmpty": "Add your first plant",
+  "plantWaterButton": "Water",
+  "plantWaterDone": "Watered: {name}",
+  "plantDaysLeft": {
+    "one": "{count} day until watering",
+    "other": "{count} days until watering"
+  },
+  "settingsTitle": "Settings",
+  "settingsReminder": "Watering reminders",
+  "commonOk": "OK"
+}

@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            2,
+            "was",
+            "few"
+          ],
+          "{count} дня до поливу"
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:review.uk.plantDaysLeft: was form few differs from the value"
+  ]
+}

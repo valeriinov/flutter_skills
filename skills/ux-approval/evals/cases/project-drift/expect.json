@@ -1,0 +1,161 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log-1.json",
+      "{case}/editors.json",
+      "{case}/rounds-1.json",
+      "--project",
+      "{case}/project-b",
+      "-o",
+      "{tmp}/r2"
+    ],
+    {
+      "copy": "{tmp}/r2/spec-next.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": [
+        [
+          [
+            "files",
+            "target",
+            "values",
+            "plantWaterButton"
+          ],
+          "Water the plant"
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log-2.json",
+      "{case}/editors.json",
+      "{case}/rounds-2.json",
+      "--project",
+      "{case}/project-b",
+      "-o",
+      "{tmp}/r3"
+    ],
+    {
+      "copy": "{tmp}/r3/spec-next.json",
+      "to": "{tmp}/r3/spec.json",
+      "set": [
+        [
+          [
+            "review"
+          ],
+          [
+            {
+              "lang": "uk",
+              "key": "homeEmpty",
+              "severity": "minor",
+              "reason": "tone",
+              "was": "`Додайте свою першу рослину`",
+              "proposal": "Додайте сюди першу рослину",
+              "why": "the list is empty"
+            }
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r3/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r3/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "read": "{tmp}/r3/uk.json"
+    },
+    {
+      "read": "{tmp}/r3/en.json"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r3/page.html",
+      "{case}/log-3.json",
+      "{case}/editors.json",
+      "{case}/rounds-3.json",
+      "--project",
+      "{case}/project-b",
+      "-o",
+      "{tmp}/r4"
+    ],
+    {
+      "read": "{tmp}/r4/uk.json"
+    },
+    {
+      "read": "{tmp}/r4/conflicts.md"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "project settingsTitle uk",
+    "conflict homeEmpty uk",
+    "added plantRename uk",
+    "removed settingsReminder",
+    "reconcile: artifact 5, project 1, conflict 1, added 1, removed 1",
+    "named 3: homeEmpty, settingsTitle, plantRename",
+    "changed plantWaterButton: en",
+    "low homeEmpty: conflict:uk",
+    "reconcile: artifact 7, project 0, conflict 1, added 0, removed 0",
+    "rounds 3",
+    "\"homeTitle\": \"Мої рослини\"",
+    "\"settingsTitle\": \"Параметри\"",
+    "\"homeEmpty\": \"Додайте свою першу рослину\"",
+    "\"plantWaterButton\": \"Water the plant\"",
+    "\"plantRename\": \"Rename plant\"",
+    "dispute uk.homeEmpty: Editor A over Editor B",
+    "- `uk.homeEmpty` — winner Editor A (key.homeEmpty): project",
+    "reconcile: artifact 8, project 0, conflict 0, added 0, removed 0",
+    "\"homeEmpty\": \"Додай першу рослину\""
+  ],
+  "absent": [
+    "settingsReminder\"",
+    "Додайте сюди першу рослину\""
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    {
+      "copy": "{case}/spec.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}",
+      "--stats"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "rounds 2",
+    "terms 3 (delta 1)",
+    "questions 1 (delta 0)",
+    "review 0 (delta 0)",
+    "changed plantWaterButton: en",
+    "low homeEmpty: conflict:uk",
+    "conflict 1"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log-1.json",
+      "{case}/editors.json",
+      "{case}/rounds-1.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/r2"
+    ],
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r2/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log-2.json",
+      "{case}/editors.json",
+      "{case}/rounds-2.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/r3"
+    ],
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r3/spec-next.json",
+      "--previous",
+      "{tmp}/r2/page.html"
+    ],
+    {
+      "read": "{tmp}/r3/en.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "project commonOk en",
+    "conflict settingsReminder en",
+    "reconcile: artifact 6, project 1, conflict 1, added 0, removed 0",
+    "answer key.settingsReminder: project value (Editor A)",
+    "reconcile: artifact 8, project 0, conflict 0, added 0, removed 0",
+    "\"settingsTitle\": \"Settings\""
+  ],
+  "absent": [
+    "\"settingsReminder\":",
+    "\"commonOk\":",
+    "spec:"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            0
+          ],
+          {
+            "lang": "en",
+            "key": "homeTitle",
+            "severity": "minor",
+            "reason": "term",
+            "was": "My plants",
+            "proposal": "Plants",
+            "why": "shorter title"
+          }
+        ],
+        [
+          [
+            "review",
+            1
+          ],
+          {
+            "lang": "en",
+            "key": "settingsTitle",
+            "severity": "minor",
+            "reason": "term",
+            "was": "Settings",
+            "proposal": "Preferences",
+            "why": "platform wording"
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/en.json"
+    },
+    {
+      "read": "{tmp}/out/spec-next.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "\"homeTitle\": \"Plants\"",
+    "\"settingsTitle\": \"App settings\"",
+    "\"proposal\": \"Preferences\"",
+    "disputes 0"
+  ],
+  "absent": []
+}

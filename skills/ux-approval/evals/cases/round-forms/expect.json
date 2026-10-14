@@ -1,0 +1,69 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round-get.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/get"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round-list.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/list"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round-bare.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/bare"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round-other.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/other"
+    ]
+  ],
+  "exit": 2,
+  "fragments": [
+    "wrote ",
+    "approval: round 1 is not closed: no rounds/1 document in the round file (found: rounds/2)"
+  ]
+}

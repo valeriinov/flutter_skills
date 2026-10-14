@@ -1,0 +1,27 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "terms",
+            0,
+            "id"
+          ],
+          "plant"
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:terms.plant: id must be \"рослина\", the slug of its source"
+  ]
+}

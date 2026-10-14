@@ -1,0 +1,217 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "key.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "My garden",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "key.homeTitle",
+      "by": "ed-b",
+      "at": "2026-03-01T09:05:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Plants",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev2",
+    "data": {
+      "object": "q.Q1",
+      "by": "ed-c",
+      "at": "2026-03-01T08:30:00Z",
+      "round": 1,
+      "pick": "b",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev3",
+    "data": {
+      "object": "q.Q1",
+      "by": "ed-a",
+      "at": "2026-03-01T09:10:00Z",
+      "round": 1,
+      "pick": "a",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev4",
+    "data": {
+      "object": "key.settingsTitle",
+      "by": "ed-c",
+      "at": "2026-03-01T09:15:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Preferences",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev5",
+    "data": {
+      "object": "key.settingsTitle",
+      "by": "ed-c",
+      "at": "2026-03-01T09:20:00Z",
+      "round": 1,
+      "pick": null,
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev6",
+    "data": {
+      "object": "review.uk.homeEmpty",
+      "by": "ed-b",
+      "at": "2026-03-01T09:25:00Z",
+      "round": 1,
+      "pick": "keep",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev7",
+    "data": {
+      "object": "key.plantWaterDone",
+      "by": "ed-a",
+      "at": "2026-03-01T09:30:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Watered: {nme}",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev8",
+    "data": {
+      "object": "review.uk.plantWaterDone",
+      "by": "ed-a",
+      "at": "2026-03-01T09:35:00Z",
+      "round": 1,
+      "pick": "accept",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev9",
+    "data": {
+      "object": "term.полив",
+      "by": "ed-b",
+      "at": "2026-03-01T09:40:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "watering",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev10",
+    "data": {
+      "object": "key.commonOk",
+      "by": "ed-a",
+      "at": "2026-03-01T09:45:00Z",
+      "round": 2,
+      "pick": "custom",
+      "text": "Okay",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev11",
+    "data": {
+      "object": "key.homeTitle",
+      "by": "ed-c",
+      "at": "2026-03-01T09:50:00Z",
+      "round": 1,
+      "pick": null,
+      "text": null,
+      "reviewed": true
+    }
+  },
+  {
+    "id": "ev12",
+    "data": {
+      "object": "key.plantWaterButton",
+      "by": "ed-b",
+      "at": "2026-03-02T11:00:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Late water",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev13",
+    "data": {
+      "object": "key.settingsReminder",
+      "by": "ed-b",
+      "at": "2026-03-01T10:00:00Z",
+      "pick": "custom",
+      "text": "Reminders",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev14",
+    "data": {
+      "object": "term.рослина",
+      "by": "ed-c",
+      "at": "2026-03-01T10:05:00Z",
+      "round": 1,
+      "pick": "a",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev14",
+    "data": {
+      "object": "note.k1x9",
+      "by": "ed-c",
+      "at": "2026-03-01T10:30:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Should reminders use relative times?",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev15",
+    "data": {
+      "object": "note.k2y7",
+      "by": "ed-b",
+      "at": "2026-03-01T10:31:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Withdrawn remark",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev16",
+    "data": {
+      "object": "note.k2y7",
+      "by": "ed-b",
+      "at": "2026-03-01T10:32:00Z",
+      "round": 1,
+      "pick": null,
+      "text": null,
+      "reviewed": false
+    }
+  }
+]

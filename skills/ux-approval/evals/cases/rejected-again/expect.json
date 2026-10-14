@@ -1,0 +1,31 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "rejected"
+          ],
+          [
+            {
+              "lang": "uk",
+              "key": "homeEmpty",
+              "proposal": "Додайте свою першу рослину"
+            }
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:review.uk.homeEmpty: proposal was rejected before"
+  ]
+}

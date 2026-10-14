@@ -1,0 +1,50 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "review.en.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "accept",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "key.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:05:00Z",
+      "round": 1,
+      "pick": null,
+      "text": null,
+      "reviewed": true
+    }
+  },
+  {
+    "id": "ev2",
+    "data": {
+      "object": "review.en.settingsTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:10:00Z",
+      "round": 1,
+      "pick": "keep",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev3",
+    "data": {
+      "object": "key.settingsTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:15:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "App settings",
+      "reviewed": false
+    }
+  }
+]

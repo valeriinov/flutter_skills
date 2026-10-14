@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}",
+      "--stats"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "ok",
+    "rounds 1",
+    "keys 8 (delta 8)",
+    "low plantWaterDone: question:Q1, risk:placeholder, review:blocking",
+    "batches home 2, plant 3, settings 2, common 1"
+  ]
+}

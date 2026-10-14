@@ -1,0 +1,67 @@
+{
+  "steps": [
+    [
+      "{case}/gen.py",
+      "write",
+      "{tmp}",
+      "660",
+      "5"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--template",
+      "{template}",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r3/spec.json",
+      "--template",
+      "{template}",
+      "--previous",
+      "{tmp}/r2/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r4/spec.json",
+      "--template",
+      "{template}",
+      "--previous",
+      "{tmp}/r3/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r5/spec.json",
+      "--template",
+      "{template}",
+      "--previous",
+      "{tmp}/r4/page.html",
+      "--stats"
+    ],
+    [
+      "{case}/gen.py",
+      "measure",
+      "{tmp}/r5/page.html",
+      "5000000"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "rounds 5",
+    "keys 660 (delta 660)",
+    "limit 5000000: under"
+  ]
+}

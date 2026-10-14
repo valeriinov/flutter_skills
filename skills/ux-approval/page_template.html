@@ -1,0 +1,1735 @@
+<style>
+:root {
+  --brand: #3F5FD8; --brand-strong: #2C47B3; --brand-soft: #E6ECFF; --brand-l: #5577EE;
+  --brand-bg2: #F7F9FF; --brand-line: #C9D4FA; --on-brand: #FFFFFF;
+  --ground: #F4F5F9; --surface: #FFFFFF; --surface-sunk: #F4F5F9;
+  --line: #E3E6EE; --line-strong: #D5D9E3;
+  --ink: #151823; --ink-soft: #3E4456; --muted: #5B6173; --code-bg: #E8EAF1;
+  --ok: #16A34A; --warn: #E08A4F; --danger: #DC2626;
+  --seg-track: #E9ECF4; --seg-on: #FFFFFF; --seg-shadow: 0 1px 3px rgba(21,24,35,.12);
+  --shadow: 0 1px 3px rgba(21,24,35,.08), 0 10px 28px -18px rgba(21,24,35,.3);
+  --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 15px/1.55 var(--font-body); padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+header.top { padding-block: 28px 4px; display: grid; gap: 14px; }
+.brand-row { display: flex; gap: 12px; align-items: center; }
+.logo { width: 36px; height: 36px; flex: none; border-radius: 10px; background: var(--brand-l); color: #FFFFFF; display: grid; place-items: center; font: 700 18px/1 var(--font-display); }
+.eyebrow { font: 700 11px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); margin: 0 0 4px; }
+h1 { font: 700 22px/1.25 var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font: 700 17px/1.3 var(--font-body); margin: 0; text-wrap: balance; }
+h3 { font: 700 16px/1.35 var(--font-body); margin: 0; text-wrap: balance; }
+.facts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; max-width: 76ch; }
+.facts li { display: flex; gap: 10px; align-items: baseline; }
+.facts b { flex: none; font: 700 12px/1 var(--font-mono); padding: 5px 10px; border: 1px solid var(--brand-line); border-radius: 999px; color: var(--brand); background: var(--brand-bg2); min-width: 4.4em; text-align: center; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--code-bg); border: 0; padding: 1px 5px; border-radius: 6px; overflow-wrap: anywhere; }
+.status { padding: 11px 14px; border-radius: 14px; background: var(--brand-soft); color: var(--ink); font-size: 14px; }
+.status[data-mode="refused"], .status[data-mode="nodb"] { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--ground); padding-block: 10px; }
+.segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 12px; background: var(--seg-track); max-width: 100%; }
+.segmented button { font: 700 14px/1 var(--font-body); padding: 9px 12px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.segmented button[aria-selected="true"], .segmented button[aria-pressed="true"] { background: var(--seg-on); color: var(--ink); box-shadow: var(--seg-shadow); }
+.segmented .n { font: 500 12px/1 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--brand-l); outline-offset: 2px; }
+.panel { display: grid; gap: 14px; }
+.intro { color: var(--muted); max-width: 72ch; margin: 0; }
+.legend b { color: var(--ink); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 10px; min-width: 0; box-shadow: var(--shadow); }
+.card.low { background: linear-gradient(color-mix(in srgb, var(--danger) 55%, transparent), color-mix(in srgb, var(--danger) 55%, transparent)) top / 100% 3px no-repeat, var(--surface); border-color: color-mix(in srgb, var(--danger) 30%, var(--line)); }
+.card .head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.card .head .left { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; min-width: 0; }
+.key { font: 500 14px/1.3 var(--font-mono); overflow-wrap: anywhere; }
+.chip { font: 700 12px/1 var(--font-body); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--brand-line); background: var(--surface); color: var(--ink-soft); white-space: nowrap; }
+.chip.low, .chip.blocking { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-color: transparent; }
+.chip.medium, .chip.significant { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: transparent; }
+.chip.high { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
+.chip.changed { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-line); }
+.chip.diverge { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.reasons { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: 2.4em minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+.pair > b { font: 500 12px/1.9 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.forms { display: grid; gap: 4px; }
+.forms .form { display: grid; grid-template-columns: 3.6em minmax(0, 1fr); gap: 8px; }
+.forms .form i { font: normal 12px/1.9 var(--font-mono); color: var(--muted); }
+.pair:has(> textarea) > b, .form:has(> textarea) > i { padding-top: 9px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { text-align: left; font: 500 14px/1.35 var(--font-body); padding: 9px 13px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; align-content: center; gap: 2px; max-width: 100%; }
+.opt:hover:not(:disabled) { border-color: var(--brand-line); background: var(--brand-bg2); }
+.opt small { color: var(--muted); font-size: 12px; }
+.opt[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.opt[aria-pressed="true"]:hover:not(:disabled) { background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand); }
+.opt[aria-pressed="true"] small, .opt[aria-pressed="true"] code { color: inherit; background: transparent; }
+.opt.is-pending { border-style: dashed; border-color: var(--brand); }
+.opt:disabled { cursor: default; opacity: 0.6; }
+.opt[aria-pressed="true"]:disabled { opacity: 1; }
+.tag { font: 700 11px/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); }
+.opt[aria-pressed="true"] .tag { color: inherit; }
+.email-row { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.email-row[data-missing] { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--brand-line); background: var(--brand-bg2); }
+.email-fields { display: flex; gap: 8px; max-width: 520px; }
+.save-btn { flex: none; font: 700 14px/1 var(--font-body); padding: 0 18px; border-radius: 12px; border: 0; background: var(--brand); color: var(--on-brand); cursor: pointer; }
+textarea, input[type="search"], input[type="email"], select { font: 14px/1.45 var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 9px 12px; width: 100%; min-width: 0; }
+textarea { resize: vertical; min-height: 2.6em; }
+textarea:disabled { background: var(--surface-sunk); color: var(--ink); }
+textarea.edited { border-color: var(--brand); }
+.card[data-pending] textarea, .card[data-pending] .check { opacity: 0.75; }
+.foot { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.check input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; min-width: 18px; min-height: 18px; margin: 0; border: 1.5px solid var(--muted); border-radius: 5px; background: var(--surface) center / 12px 12px no-repeat; cursor: pointer; }
+.check input:hover:not(:disabled) { border-color: var(--brand); }
+.check input:checked { background-color: var(--brand); border-color: var(--brand); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-4.9' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.check input:disabled { cursor: default; border-color: color-mix(in srgb, var(--muted) 60%, transparent); background-color: var(--surface-sunk); }
+.check input:checked:disabled { background-color: var(--brand); border-color: var(--brand); opacity: 0.7; }
+a { color: var(--brand); }
+.link-btn { font: 700 13px/1 var(--font-body); background: none; border: 0; padding: 4px 0; color: var(--brand); cursor: pointer; }
+.link-btn:disabled { color: var(--muted); cursor: default; }
+.link-btn.danger { color: var(--danger); }
+.unpick { justify-self: start; }
+.own-actions { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; margin-left: 10px; vertical-align: baseline; }
+.card.is-target { box-shadow: 0 0 0 3px var(--brand-l), var(--shadow); }
+.export { display: none; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+body.has-downloads .export { display: grid; }
+.export h3 { font-size: 14px; }
+.export-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.export-row .more { justify-self: auto; padding: 9px 14px; font-size: 13px; }
+.diff { display: grid; gap: 4px; }
+.diff .before { color: var(--muted); }
+.others { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-sunk); font-size: 13px; min-width: 0; }
+.others h4 { margin: 0; font: 700 11px/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.others ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.others li { overflow-wrap: anywhere; color: var(--ink-soft); }
+.others .who { font-weight: 700; color: var(--ink); }
+.others .when { color: var(--muted); font-variant-numeric: tabular-nums; }
+.others .ok { color: var(--ok); font-weight: 700; }
+.others details summary { cursor: pointer; color: var(--brand); font-weight: 700; }
+.others details ul { margin-top: 6px; }
+.filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
+.seg-row { display: flex; flex-wrap: wrap; gap: 8px 14px; grid-column: 1 / -1; align-items: center; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.more { justify-self: center; font: 700 14px/1 var(--font-body); padding: 11px 18px; border-radius: 12px; border: 1px solid var(--brand-line); background: var(--surface); color: var(--brand); cursor: pointer; }
+.part { display: grid; gap: 12px; }
+.note { border-style: dashed; box-shadow: none; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 16px; }
+.sum-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sum-list > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+.sum-list > li.diverged { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+.sum-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
+.sum-answers { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+.sum-answers li { overflow-wrap: anywhere; }
+.sum-answers .who { font-weight: 700; }
+.notes { display: grid; gap: 10px; }
+.note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+.btn { font: 700 14px/1 var(--font-body); padding: 11px 18px; border-radius: 12px; border: 1px solid var(--brand-line); background: var(--surface); color: var(--brand); cursor: pointer; }
+.btn:hover:not(:disabled) { background: var(--brand-bg2); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.btn.primary:hover:not(:disabled) { background: var(--brand-strong); border-color: var(--brand-strong); }
+.btn:disabled { opacity: 0.6; cursor: default; }
+.status[data-mode="lost"] { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.flat { margin: 0; }
+.rounds { display: grid; gap: 10px; }
+.roundbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.roundbar .detail { min-width: 0; overflow-wrap: anywhere; }
+.hint { margin: 0; padding: 11px 14px; border-radius: 14px; border: 1px solid var(--brand-line); background: var(--brand-bg2); color: var(--ink); font-size: 14px; max-width: 76ch; }
+.chip.flag-conflict, .chip.flag-invalid { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-color: transparent; }
+.chip.flag-project, .chip.flag-added { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.chip.flag-changed, .chip.edited { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-line); }
+.chip.state-open, .chip.state-approved { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
+.chip.state-closed, .chip.state-past, .chip.state-final { background: var(--seg-track); color: var(--ink-soft); border-color: transparent; }
+.vals { display: grid; gap: 2px; }
+.vals b { font: 500 11px/1.6 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 6px; }
+.opt[aria-pressed="true"] .vals b { color: inherit; }
+.closer { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--brand-line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.order { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.order li { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--surface-sunk); }
+.order .rank { font: 500 13px/1 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.order .who { font-weight: 700; overflow-wrap: anywhere; }
+.order .stats { grid-column: 2; }
+.order .moves { grid-row: 1 / span 2; grid-column: 3; display: flex; gap: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.brief > :not(.table-wrap):not(pre) { max-width: 76ch; }
+.brief h2, .brief h3, .brief h4 { margin-top: 8px; }
+.brief p, .brief ul, .brief ol, .brief blockquote, .brief pre { margin: 0; }
+.brief blockquote { padding-left: 12px; border-left: 2px solid var(--brand-line); color: var(--ink-soft); }
+.brief pre { overflow-x: auto; padding: 10px 12px; background: var(--code-bg); border-radius: 10px; }
+.brief pre code { background: none; padding: 0; }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+.table-wrap th, .table-wrap td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.table-wrap th { font-weight: 700; color: var(--ink-soft); }
+.filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand-row">
+      <span class="logo" aria-hidden="true" id="logo"></span>
+      <div>
+        <p class="eyebrow" id="eyebrow"></p>
+        <h1 id="heading"></h1>
+      </div>
+    </div>
+    <ul class="facts" id="facts" hidden></ul>
+    <div class="status" id="status" data-mode="loading"></div>
+    <form class="email-row" id="email-form" hidden>
+      <label for="email-input" id="email-label"></label>
+      <div class="email-fields">
+        <input type="email" id="email-input" autocomplete="email" required>
+        <button type="submit" class="save-btn" id="email-save"></button>
+      </div>
+      <span class="small muted" id="email-note"></span>
+    </form>
+  </header>
+
+  <section class="rounds" id="rounds">
+    <nav class="segmented" id="round-switch"></nav>
+    <div class="roundbar">
+      <span class="chip" id="round-state"></span>
+      <span class="small muted detail" id="round-detail"></span>
+      <button class="more" id="close-open" hidden></button>
+    </div>
+    <p class="hint" id="round-hint" hidden></p>
+    <section class="closer" id="close-panel" hidden>
+      <h2 id="close-title"></h2>
+      <p class="intro" id="close-intro"></p>
+      <ol class="order" id="close-order"></ol>
+      <div class="row">
+        <button class="btn primary" id="close-confirm"></button>
+        <button class="more" id="close-cancel"></button>
+      </div>
+      <span class="small muted" id="close-note"></span>
+    </section>
+  </section>
+
+  <nav class="tabs" id="tabs-nav">
+    <div class="segmented" role="tablist">
+      <button role="tab" data-tab="brief" aria-selected="false"><span data-label></span> <span class="n" id="n-brief"></span></button>
+      <button role="tab" data-tab="questions" aria-selected="true"><span data-label></span> <span class="n" id="n-questions"></span></button>
+      <button role="tab" data-tab="terms" aria-selected="false"><span data-label></span> <span class="n" id="n-terms"></span></button>
+      <button role="tab" data-tab="review" aria-selected="false"><span data-label></span> <span class="n" id="n-review"></span></button>
+      <button role="tab" data-tab="keys" aria-selected="false"><span data-label></span> <span class="n" id="n-keys"></span></button>
+      <button role="tab" data-tab="summary" aria-selected="false"><span data-label></span> <span class="n" id="n-summary"></span></button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <section class="panel" id="panel-brief" role="tabpanel" hidden></section>
+    <section class="panel" id="panel-questions" role="tabpanel"></section>
+    <section class="panel" id="panel-terms" role="tabpanel" hidden></section>
+    <section class="panel" id="panel-review" role="tabpanel" hidden></section>
+    <section class="panel" id="panel-keys" role="tabpanel" hidden>
+      <p class="intro" id="keys-intro"></p>
+      <p class="intro" id="keys-legend"></p>
+      <div class="filters">
+        <input type="search" id="keys-search">
+        <select id="keys-batch"></select>
+        <select id="keys-flag"></select>
+        <div class="seg-row">
+          <div class="segmented" id="keys-confidence" role="group"></div>
+          <label class="check small"><input type="checkbox" id="keys-unreviewed"> <span id="keys-unreviewed-label"></span></label>
+        </div>
+      </div>
+      <div class="count" id="keys-count"></div>
+      <div class="panel" id="keys-list"></div>
+      <button class="more" id="keys-more" hidden></button>
+    </section>
+    <section class="panel" id="panel-summary" role="tabpanel" hidden></section>
+  </main>
+</div>
+
+<script type="application/json" id="page-data">/*__DATA__*/</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById('page-data').textContent);
+  const UI = DATA.ui || {};
+  const SRC = DATA.sourceLang;
+  const TGT = DATA.targetLang;
+  const PAGE_SIZE = 40;
+  const TEXT_DELAY_MS = 900;
+  const CONFIDENCE_ORDER = ['low', 'medium', 'high'];
+  const FLAGS = ['conflict', 'invalid', 'project', 'added', 'changed'];
+  const LIST_IDS = { keys: 'key', terms: 'id', questions: 'id', review: 'id', batches: 'id' };
+  const TABS = ['brief', 'questions', 'terms', 'review', 'keys', 'summary'];
+  const EMPTY = Object.freeze({ pick: null, text: null, reviewed: false });
+
+  const t = (key, vars) => {
+    const raw = typeof UI[key] === 'string' ? UI[key] : key;
+    return vars ? raw.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : raw;
+  };
+  const tMap = (map, value) => (UI[map] && typeof UI[map][value] === 'string' ? UI[map][value] : String(value ?? ''));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+  const pressed = (on) => ` aria-pressed="${on ? 'true' : 'false'}"`;
+  const dis = () => (writable ? '' : ' disabled');
+  const textOf = (v) => (v && typeof v === 'object' ? Object.entries(v).map(([f, s]) => `${f}: ${s}`).join(' · ') : String(v ?? ''));
+  const textPresent = (v) => (v && typeof v === 'object' ? Object.values(v).some((s) => String(s ?? '').trim() !== '') : String(v ?? '').trim() !== '');
+  const isKey = (object) => object.startsWith('key.');
+  const roundOf = (ev) => (typeof ev.round === 'number' ? ev.round : 1);
+
+  function when(at) {
+    if (!at) return '';
+    try { return new Date(at).toLocaleString(DATA.lang, { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return String(at); }
+  }
+
+  // Round n = round 1 with every later delta applied: entries replaced by id, `removed` ids dropped.
+  const ROUNDS = [...(DATA.rounds || [])].sort((a, b) => a.round - b.round);
+  const ROUND_NUMBERS = ROUNDS.map((r) => r.round);
+  const LAST_ROUND = ROUND_NUMBERS[ROUND_NUMBERS.length - 1];
+  const snapshots = new Map();
+
+  function mergeList(prev, delta, removed, idField) {
+    const map = new Map(prev.map((e) => [e[idField], e]));
+    for (const e of delta) map.set(e[idField], e);
+    for (const id of removed) map.delete(id);
+    return [...map.values()];
+  }
+
+  function buildSnapshots() {
+    let prev = null;
+    for (const r of ROUNDS) {
+      const snap = {
+        round: r.round,
+        final: r.final === true,
+        origin: r.origin ?? (prev ? prev.origin : null),
+        brief: r.brief ?? (prev ? prev.brief : ''),
+        rejected: r.rejected || (prev ? prev.rejected : []),
+      };
+      for (const [list, idField] of Object.entries(LIST_IDS)) {
+        snap[list] = mergeList(prev ? prev[list] : [], r[list] || [], (r.removed || {})[list] || [], idField);
+      }
+      snapshots.set(r.round, snap);
+      prev = snap;
+    }
+  }
+
+  const allEvents = new Map();
+  let eventsByObject = new Map();
+  let latestByObject = new Map();
+  const editors = new Map();
+  const closedRounds = new Map();
+  let people = {};
+  const inflight = new Map();
+  const lastSent = new Map();
+  const awaiting = new Map();
+  const textTimers = new Map();
+  let mode = 'loading';
+  let writable = false;
+  let isOwner = false;
+  let viewerId = null;
+  let userNs = null;
+  let dbNs = null;
+  let logRef = null;
+  let editorReady = null;
+  let downloads = null;
+  let xlsxReady = null;
+  let activeTab = 'questions';
+  let selectedRound = LAST_ROUND;
+  let closeOrder = [];
+  let R = null;
+  let keysById = new Map();
+  let termsById = new Map();
+  let questionsById = new Map();
+  let reviewById = new Map();
+  let batchById = new Map();
+  let keyOrder = [];
+  const keyFilter = { confidence: 'all', batch: 'all', flag: 'all', query: '', unreviewed: false, shown: PAGE_SIZE };
+  const openedTerms = new Set();
+  let noteDraft = null;
+
+  function selectSnapshot(n) {
+    R = snapshots.get(n);
+    keysById = new Map(R.keys.map((k) => [k.key, k]));
+    termsById = new Map(R.terms.map((x) => [x.id, x]));
+    questionsById = new Map(R.questions.map((q) => [q.id, q]));
+    reviewById = new Map(R.review.map((r) => [r.id, r]));
+    batchById = new Map(R.batches.map((b) => [b.id, b]));
+    const rank = (k) => CONFIDENCE_ORDER.indexOf(k.confidence);
+    keyOrder = R.keys.map((k, i) => [k, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([k]) => k);
+  }
+
+  function roundState(n) {
+    const snap = snapshots.get(n);
+    if (snap && snap.final) return 'final';
+    if (closedRounds.has(String(n))) return 'closed';
+    if (n !== LAST_ROUND) return 'past';
+    return 'open';
+  }
+  const roundOpen = (n) => roundState(n) === 'open';
+
+  const latest = (object) => latestByObject.get(object) || new Map();
+  const mine = (object) => (viewerId && latest(object).get(viewerId)) || EMPTY;
+  const base = (object) => ((inflight.get(object) || 0) > 0 && lastSent.has(object) ? lastSent.get(object) : mine(object));
+  const cardEl = (docId) => document.querySelector(`[data-doc="${CSS.escape(docId)}"]`);
+
+  function who(id) {
+    const stored = editors.get(id);
+    const p = people[id];
+    return (stored && stored.email) || (p && p.name) || (stored && stored.name) || t('someone');
+  }
+
+  const conflictsOf = (e) => (e.projectChange || []).filter((p) => p.kind === 'conflict');
+  const isConflict = (e) => conflictsOf(e).length > 0;
+  const valueOf = (e, lang) => (e.values || {})[lang];
+
+  function editLangOf(e) {
+    const c = conflictsOf(e);
+    return c.length === 1 && c[0].lang === SRC ? SRC : TGT;
+  }
+
+  function plainKeyEntry(docId) {
+    if (!isKey(docId)) return null;
+    const e = keysById.get(docId.slice(4));
+    return e && !isConflict(e) ? e : null;
+  }
+
+  function termOptions(term) {
+    if (!term) return [];
+    const seen = new Set();
+    const out = [];
+    const raw = [[term.target, true], ...(term.variants || []).map((v) => [typeof v === 'string' ? v : v && v.text, false])];
+    for (const [text, current] of raw) {
+      if (typeof text !== 'string' || !text.trim() || seen.has(text)) continue;
+      seen.add(text);
+      out.push({ text, current });
+    }
+    return out;
+  }
+
+  function recommendationOf(q) {
+    const rec = q.recommendation;
+    if (!rec) return null;
+    return typeof rec === 'string' ? { key: rec, why: '' } : { key: rec.key, why: rec.why || '' };
+  }
+
+  function optionsFor(object) {
+    const id = object.slice(object.indexOf('.') + 1);
+    if (object.startsWith('q.')) return ((questionsById.get(id) || {}).options || []).map((o) => ({ key: o.key, label: `${o.key}. ${o.text}` }));
+    if (object.startsWith('term.')) return termOptions(termsById.get(id)).map((o) => ({ key: o.text, label: o.text }));
+    if (object.startsWith('review.')) return [{ key: 'accept', label: t('pickAccept') }, { key: 'keep', label: t('pickKeep') }];
+    return [{ key: 'artifact', label: t('pickArtifact') }, { key: 'project', label: t('pickProject') }];
+  }
+
+  function hasAnswer(object, ev) {
+    return Boolean(ev.pick) || textPresent(ev.text) || (isKey(object) && ev.reviewed === true);
+  }
+
+  function answeredByAnyone(object) {
+    for (const ev of latest(object).values()) if (hasAnswer(object, ev)) return true;
+    return false;
+  }
+
+  function reviewedByAnyone(object) {
+    for (const ev of latest(object).values()) if (ev.reviewed === true) return true;
+    return false;
+  }
+
+  function valueLabel(object, ev) {
+    if (object.startsWith('note.')) return textOf(ev.text);
+    if (ev.pick === 'custom' || (!ev.pick && textPresent(ev.text))) return t('answerCustom', { text: textOf(ev.text) });
+    if (!ev.pick) return isKey(object) && ev.reviewed === true ? t('answerReviewed') : t('answerNone');
+    const o = optionsFor(object).find((x) => x.key === ev.pick);
+    return o ? o.label : ev.pick;
+  }
+
+  function answerSignature(object, ev) {
+    if (!hasAnswer(object, ev)) return null;
+    if (ev.pick && ev.pick !== 'custom') return `p:${ev.pick}`;
+    if (textPresent(ev.text)) return `t:${JSON.stringify(ev.text)}`;
+    return 'reviewed';
+  }
+
+  function isDiverged(object) {
+    const values = new Set();
+    for (const ev of latest(object).values()) {
+      const s = answerSignature(object, ev);
+      if (s !== null) values.add(s);
+    }
+    return values.size > 1;
+  }
+
+  function confidenceChip(level) {
+    return `<span class="chip ${esc(level)}" title="${esc(tMap('confidenceHint', level))}">${esc(t('confidenceChip', { level: tMap('confidence', level) }))}</span>`;
+  }
+
+  const divergeChip = () => `<span class="chip diverge" data-diverge hidden>${esc(t('badgeDiverge'))}</span>`;
+  const othersSlot = () => '<div class="others" data-others hidden></div>';
+  const metaFoot = () => '<div class="foot"><span class="small muted" data-meta></span></div>';
+
+  function formsView(value) {
+    if (value && typeof value === 'object') {
+      return `<div class="forms">${Object.entries(value).map(([form, text]) => `<div class="form"><i>${esc(form)}</i><span>${fmt(text)}</span></div>`).join('')}</div>`;
+    }
+    return `<span>${fmt(value)}</span>`;
+  }
+
+  function area(docId, form, text, label) {
+    const id = `ed-${docId}${form ? `-${form}` : ''}`;
+    return `<textarea class="ctl" data-form="${esc(form)}" id="${esc(id)}" rows="${form ? 1 : 2}" placeholder="${esc(t('customPlaceholder'))}" aria-label="${esc(`${label} ${form}`.trim())}"${dis()}>${esc(text ?? '')}</textarea>`;
+  }
+
+  function editorHtml(docId, shape, current, label) {
+    if (shape && typeof shape === 'object') {
+      const cur = current && typeof current === 'object' ? current : {};
+      return `<div class="forms">${Object.keys(shape).map((form) => `<div class="form"><i>${esc(form)}</i>${area(docId, form, cur[form], label)}</div>`).join('')}</div>`;
+    }
+    return area(docId, '', typeof current === 'string' ? current : '', label);
+  }
+
+  function pickBlock(docId, options, shape, label) {
+    const a = mine(docId);
+    const buttons = options.map((o) => `<button class="opt ctl" data-pick="${esc(o.key)}"${pressed(a.pick === o.key)}${o.disabled ? ' disabled data-locked="1"' : dis()}>${o.html}</button>`).join('');
+    const custom = `<button class="opt ctl" data-act="custom"${pressed(a.pick === 'custom')}${dis()}><span>${esc(t('pickCustom'))}</span></button>`;
+    return `<div class="opts">${buttons}${custom}</div>
+      <button class="link-btn ctl unpick" data-act="unpick"${a.pick ? '' : ' hidden'}${dis()}>${esc(t('unpick'))}</button>
+      ${editorHtml(docId, shape, a.pick === 'custom' ? a.text : null, label)}`;
+  }
+
+  function renderHeader() {
+    document.title = DATA.title || DATA.product || '';
+    if (DATA.lang) document.documentElement.lang = DATA.lang;
+    document.getElementById('heading').textContent = t('heading', { product: DATA.product || '' });
+    document.getElementById('eyebrow').textContent = t('eyebrow', { product: DATA.product || '' });
+    document.getElementById('logo').textContent = Array.from(DATA.product || '')[0] || '';
+    const facts = Array.isArray(UI.facts) ? UI.facts : [];
+    const list = document.getElementById('facts');
+    list.hidden = !facts.length;
+    list.innerHTML = facts.map((f) => `<li><b>${esc(f.label)}</b><span>${fmt(f.text)}</span></li>`).join('');
+    document.getElementById('round-switch').setAttribute('aria-label', t('roundsLabel'));
+    document.getElementById('tabs-nav').setAttribute('aria-label', t('tabsLabel'));
+    const tabKeys = { brief: 'tabBrief', questions: 'tabQuestions', terms: 'tabTerms', review: 'tabReview', keys: 'tabKeys', summary: 'tabSummary' };
+    document.querySelectorAll('nav.tabs [data-tab]').forEach((b) => { b.querySelector('[data-label]').textContent = t(tabKeys[b.dataset.tab]); });
+    document.getElementById('email-label').textContent = t('emailLabel');
+    document.getElementById('email-input').placeholder = t('emailPlaceholder');
+    document.getElementById('email-save').textContent = t('emailSave');
+    document.getElementById('close-open').textContent = t('closeRound');
+    document.getElementById('close-title').textContent = t('closeTitle');
+    document.getElementById('close-intro').textContent = t('closeIntro');
+    document.getElementById('close-confirm').textContent = t('closeConfirm');
+    document.getElementById('close-cancel').textContent = t('cancel');
+    document.getElementById('keys-intro').textContent = t('keysIntro');
+    document.getElementById('keys-legend').textContent = t('confidenceLegend');
+    const search = document.getElementById('keys-search');
+    search.placeholder = t('searchPlaceholder');
+    search.setAttribute('aria-label', t('searchPlaceholder'));
+    document.getElementById('keys-batch').setAttribute('aria-label', t('filterBatch'));
+    document.getElementById('keys-flag').setAttribute('aria-label', t('filterFlag'));
+    document.getElementById('keys-confidence').setAttribute('aria-label', t('filterConfidence'));
+    document.getElementById('keys-unreviewed-label').textContent = t('filterHideReviewed');
+  }
+
+  function renderRoundSwitcher() {
+    const labels = { open: 'roundOpen', closed: 'roundClosed', past: 'roundPast', final: 'roundFinal' };
+    document.getElementById('round-switch').innerHTML = ROUND_NUMBERS.map((n) =>
+      `<button data-round="${n}"${pressed(n === selectedRound)}>${esc(t('roundLabel', { n }))} <span class="n">${esc(t(labels[roundState(n)]))}</span></button>`).join('');
+  }
+
+  function renderRoundBar() {
+    const state = roundState(selectedRound);
+    const labels = { open: 'roundStateOpen', closed: 'roundStateClosed', past: 'roundStatePast', final: 'roundStateFinal' };
+    const chip = document.getElementById('round-state');
+    chip.className = `chip state-${state}`;
+    chip.textContent = t(labels[state]);
+    const parts = [];
+    if (R.origin) parts.push(t('origin', { branch: R.origin.branch || '', commit: String(R.origin.commit || '').slice(0, 7) }));
+    const closed = closedRounds.get(String(selectedRound));
+    if (closed) parts.push(t('closedBy', { when: when(closed.closedAt), editor: who(closed.by) }));
+    document.getElementById('round-detail').textContent = parts.join(' · ');
+    const canClose = isOwner && Boolean(dbNs) && state === 'open' && mode !== 'lost';
+    document.getElementById('close-open').hidden = !canClose;
+    if (!canClose) document.getElementById('close-panel').hidden = true;
+    const hint = document.getElementById('round-hint');
+    hint.hidden = !(isOwner && state === 'closed' && selectedRound === LAST_ROUND);
+    hint.textContent = t('nextRoundHint', { n: selectedRound + 1 });
+  }
+
+  function mdInline(s) {
+    return esc(s)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\[([^\]]+)\]\([^\s)]+\)/g, '$1');
+  }
+
+  const isTableRow = (line) => /^\s*\|/.test(line);
+  const isListItem = (line) => /^\s*([-*]|\d+\.)\s+/.test(line);
+  const isListContinuation = (line) => /^\s+\S/.test(line) && !isListItem(line);
+  const isBlockStart = (line) => /^(#{1,6}\s|```|>\s?)/.test(line) || isTableRow(line) || isListItem(line);
+  const tableCells = (line) => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+
+  function mdToHtml(md) {
+    const lines = String(md || '').split('\n');
+    const out = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (!line.trim()) { i += 1; continue; }
+      const heading = line.match(/^(#{1,6})\s+(.*)$/);
+      if (heading) { const level = Math.min(heading[1].length + 1, 4); out.push(`<h${level}>${mdInline(heading[2])}</h${level}>`); i += 1; continue; }
+      if (/^```/.test(line)) {
+        const body = [];
+        i += 1;
+        while (i < lines.length && !/^```/.test(lines[i])) { body.push(lines[i]); i += 1; }
+        out.push(`<pre><code>${esc(body.join('\n'))}</code></pre>`);
+        i += 1;
+        continue;
+      }
+      if (isTableRow(line)) {
+        const rows = [];
+        while (i < lines.length && isTableRow(lines[i])) { rows.push(lines[i]); i += 1; }
+        out.push(mdTable(rows));
+        continue;
+      }
+      if (isListItem(line)) {
+        const ordered = /^\s*\d+\./.test(line);
+        const items = [];
+        while (i < lines.length && isListItem(lines[i])) {
+          let item = lines[i].replace(/^\s*([-*]|\d+\.)\s+/, '');
+          i += 1;
+          while (i < lines.length && isListContinuation(lines[i])) { item += ` ${lines[i].trim()}`; i += 1; }
+          items.push(item);
+        }
+        const tag = ordered ? 'ol' : 'ul';
+        out.push(`<${tag}>${items.map((x) => `<li>${mdInline(x)}</li>`).join('')}</${tag}>`);
+        continue;
+      }
+      if (/^>\s?/.test(line)) {
+        const body = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { body.push(lines[i].replace(/^>\s?/, '')); i += 1; }
+        out.push(`<blockquote>${mdInline(body.join(' '))}</blockquote>`);
+        continue;
+      }
+      const para = [];
+      while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i])) { para.push(lines[i]); i += 1; }
+      out.push(`<p>${mdInline(para.join(' '))}</p>`);
+    }
+    return out.join('');
+  }
+
+  function mdTable(rows) {
+    const body = rows.filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r));
+    const [head, ...rest] = body.map(tableCells);
+    const th = (head || []).map((c) => `<th>${mdInline(c)}</th>`).join('');
+    const trs = rest.map((r) => `<tr>${r.map((c) => `<td>${mdInline(c)}</td>`).join('')}</tr>`).join('');
+    return `<div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table></div>`;
+  }
+
+  function renderBrief() {
+    document.getElementById('panel-brief').innerHTML = textPresent(R.brief)
+      ? `<article class="card brief">${mdToHtml(R.brief)}</article>`
+      : `<div class="empty">${esc(t('briefEmpty'))}</div>`;
+  }
+
+  function renderQuestions() {
+    const cards = R.questions.map((q) => {
+      const docId = `q.${q.id}`;
+      const rec = recommendationOf(q);
+      const opts = (q.options || []).map((o) => ({
+        key: o.key,
+        html: `${rec && rec.key === o.key ? `<span class="tag">${esc(t('recommended'))}</span>` : ''}<span>${esc(o.key)}. ${fmt(o.text)}</span>${o.consequence ? `<small>${fmt(o.consequence)}</small>` : ''}`,
+      }));
+      const terms = (q.terms || []).map((id) => termsById.get(id)).filter(Boolean);
+      return `<article class="card" data-doc="${esc(docId)}">
+        <div class="head"><h3>${fmt(q.title)}</h3>${divergeChip()}</div>
+        <p class="small flat">${fmt(q.gist)}</p>
+        ${rec && rec.why ? `<p class="small muted flat">${fmt(t('recommendation', { key: rec.key, why: rec.why }))}</p>` : ''}
+        ${terms.length ? `<p class="small muted flat">${fmt(t('questionTerms', { terms: terms.map((x) => x.source).join(', ') }))}</p>` : ''}
+        ${pickBlock(docId, opts, '', q.title)}
+        ${othersSlot()}
+        ${metaFoot()}
+      </article>`;
+    });
+    const questions = cards.length
+      ? `<p class="intro">${fmt(t('questionsIntro', { n: cards.length }))}</p>${cards.join('')}`
+      : `<div class="empty">${esc(t('questionsEmpty'))}</div>`;
+    document.getElementById('panel-questions').innerHTML = `${questions}
+      <section class="notes"><h2 id="notes-title"></h2><p class="intro">${fmt(t('notesHint'))}</p>
+        <ul class="sum-list" id="notes-list"></ul><div id="note-form"></div></section>`;
+    noteDraft = null;
+    renderNotes();
+  }
+
+  function noteObjects() {
+    return [...latestByObject.keys()].filter((object) => object.startsWith('note.') && summaryTouched(object));
+  }
+
+  function renderNotes() {
+    const list = document.getElementById('notes-list');
+    if (!list) return;
+    const notes = noteObjects().map((object) => [object, ...[...latest(object).entries()].find(([, ev]) => hasAnswer(object, ev))]);
+    notes.sort((a, b) => String(a[2].at).localeCompare(String(b[2].at)));
+    document.getElementById('notes-title').textContent = t('notesTitle', { n: notes.length });
+    list.innerHTML = notes.map(([object, id, ev]) => `<li><div class="sum-head"><span><span class="who">${esc(who(id))}</span> <span class="small muted">· ${esc(when(ev.at))}</span></span>${id === viewerId && writable ? noteActions(object) : ''}</div>
+      <div class="note-text">${esc(textOf(ev.text))}</div></li>`).join('');
+    renderNoteForm();
+  }
+
+  function noteActions(object) {
+    const o = esc(object);
+    return `<span class="own-actions"><button class="link-btn" data-act="note-edit" data-object="${o}">${esc(t('edit'))}</button><button class="link-btn danger" data-act="note-delete" data-object="${o}">${esc(t('noteDelete'))}</button></span>`;
+  }
+
+  function renderNoteForm() {
+    const slot = document.getElementById('note-form');
+    if (!slot) return;
+    if (!writable) { noteDraft = null; slot.innerHTML = ''; return; }
+    if (noteDraft === null) { slot.innerHTML = `<button class="more" data-act="note-add">${esc(t('noteAdd'))}</button>`; return; }
+    if (slot.querySelector('#note-text')) return;
+    slot.innerHTML = `<div class="closer"><textarea id="note-text" rows="3" placeholder="${esc(t('notePlaceholder'))}"></textarea>
+      <div class="row"><button class="btn primary" data-act="note-save">${esc(t('noteSave'))}</button><button class="more" data-act="note-cancel">${esc(t('cancel'))}</button></div></div>`;
+    const field = slot.querySelector('#note-text');
+    field.value = noteDraft.text;
+    field.focus();
+  }
+
+  function openNoteForm(object) {
+    const ev = object ? latest(object).get(viewerId) : null;
+    noteDraft = { object: object || `note.${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, text: ev ? textOf(ev.text) : '' };
+    document.getElementById('note-form').innerHTML = '';
+    renderNoteForm();
+  }
+
+  function saveNote() {
+    const text = document.getElementById('note-text').value.trim();
+    if (text) save(noteDraft.object, { pick: 'custom', text });
+    closeNoteForm();
+  }
+
+  function closeNoteForm() {
+    noteDraft = null;
+    document.getElementById('note-form').innerHTML = '';
+    renderNoteForm();
+  }
+
+  function renderTerms() {
+    const ordered = [...R.terms.filter((term) => !term.approved), ...R.terms.filter((term) => term.approved)];
+    const cards = ordered.map((term) => (isCollapsedTerm(term) ? collapsedTermCard(term) : termCard(term)));
+    const approved = R.terms.filter((term) => term.approved).length;
+    const approvedIntro = approved ? `<p class="intro">${fmt(t('termsApproved', { n: approved }))}</p>` : '';
+    document.getElementById('panel-terms').innerHTML = cards.length
+      ? `<p class="intro">${fmt(t('termsIntro', { n: cards.length }))}</p>${approvedIntro}<p class="intro">${fmt(t('confidenceLegend'))}</p>${cards.join('')}`
+      : `<div class="empty">${esc(t('termsEmpty'))}</div>`;
+  }
+
+  function termCard(term) {
+    const docId = `term.${term.id}`;
+    const opts = termOptions(term).map((o) => ({
+      key: o.text,
+      html: `<span class="tag">${esc(o.current ? t('termCurrent') : t('termVariant'))}</span><span>${fmt(o.text)}</span>`,
+    }));
+    const keys = (term.match && term.match.keys) || [];
+    const questions = R.questions.filter((q) => (q.terms || []).includes(term.id)).map((q) => q.id);
+    const refs = [
+      questions.length ? esc(t('termQuestions', { ids: questions.join(', ') })) : '',
+      keys.length ? `${esc(t('termKeys', { n: keys.length }))} ${keys.map((k) => `<code>${esc(k)}</code>`).join(' ')}` : '',
+    ].filter(Boolean);
+    return `<article class="card${term.confidence === 'low' ? ' low' : ''}" data-doc="${esc(docId)}">
+      <div class="head"><div class="left"><h3>${fmt(term.source)} · ${termTarget(term)}</h3></div>
+        <div class="left">${term.approved ? approvedChip(term) : ''}${divergeChip()}${term.confidence ? confidenceChip(term.confidence) : ''}</div></div>
+      ${term.meaning ? `<p class="small flat">${fmt(term.meaning)}</p>` : ''}
+      ${refs.length ? `<ul class="reasons">${refs.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
+      ${pickBlock(docId, opts, '', term.source)}
+      ${othersSlot()}
+      ${metaFoot()}
+    </article>`;
+  }
+
+  function isCollapsedTerm(term) {
+    return Boolean(term.approved) && !openedTerms.has(term.id) && !answeredByAnyone(`term.${term.id}`);
+  }
+
+  function collapsedTermCard(term) {
+    return `<article class="card" data-term="${esc(term.id)}">
+        <div class="head"><div class="left"><h3>${fmt(term.source)} · ${termTarget(term)}</h3></div>
+          <div class="left">${approvedChip(term)}<button class="link-btn" data-act="open-term" data-term="${esc(term.id)}">${esc(t('edit'))}</button></div></div>
+      </article>`;
+  }
+
+  function approvedChip(term) {
+    return `<span class="chip state-approved">${esc(t('termApproved', { n: term.approved }))}</span>`;
+  }
+
+  function termTarget(term) {
+    return textPresent(term.target) ? fmt(term.target) : `<span class="muted">${esc(t('termNoTarget'))}</span>`;
+  }
+
+  function replaceTermCard(id) {
+    const term = termsById.get(id);
+    const card = document.querySelector(`#panel-terms article[data-term="${CSS.escape(id)}"], #panel-terms article[data-doc="${CSS.escape(`term.${id}`)}"]`);
+    if (!term || !card) return;
+    card.outerHTML = isCollapsedTerm(term) ? collapsedTermCard(term) : termCard(term);
+    applyDoc(`term.${id}`);
+  }
+
+  function renderReview() {
+    const groups = new Map();
+    for (const r of R.review) {
+      if (!groups.has(r.lang)) groups.set(r.lang, []);
+      groups.get(r.lang).push(r);
+    }
+    const html = [...groups.entries()].map(([lang, rows]) =>
+      `<div class="part"><h2>${esc(t('reviewGroup', { lang }))} <span class="count">${rows.length}</span></h2>${rows.map(reviewCard).join('')}</div>`);
+    document.getElementById('panel-review').innerHTML = html.length
+      ? `<p class="intro">${fmt(t('reviewIntro', { n: R.review.length }))}</p>${html.join('')}`
+      : `<div class="empty">${esc(t('reviewEmpty'))}</div>`;
+  }
+
+  function reviewCard(r) {
+    const docId = `review.${r.id}`;
+    const hasProposal = textPresent(r.proposal);
+    const opts = [
+      { key: 'accept', html: `<span>${esc(t('pickAccept'))}</span>${hasProposal ? '' : `<small>${esc(t('noProposal'))}</small>`}`, disabled: !hasProposal },
+      { key: 'keep', html: `<span>${esc(t('pickKeep'))}</span>` },
+    ];
+    return `<article class="card${r.severity === 'blocking' ? ' low' : ''}" data-doc="${esc(docId)}">
+      <div class="head"><div class="left"><span class="key">${esc(r.key)}</span><span class="chip">${esc(r.lang)}</span></div>
+        <div class="left">${divergeChip()}<span class="chip ${esc(r.severity)}">${esc(tMap('severity', r.severity))}</span></div></div>
+      ${r.reason ? `<p class="small muted flat">${fmt(tMap('reason', r.reason))}</p>` : ''}
+      <div class="diff small">
+        <div class="pair"><b>${esc(t('wasLabel'))}</b><div class="before">${formsView(r.was)}</div></div>
+        <div class="pair"><b>${esc(t('proposalLabel'))}</b><div>${hasProposal ? formsView(r.proposal) : '<span class="muted">—</span>'}</div></div>
+      </div>
+      ${r.why ? `<p class="small muted flat">${fmt(r.why)}</p>` : ''}
+      ${pickBlock(docId, opts, r.was, r.key)}
+      ${othersSlot()}
+      ${metaFoot()}
+    </article>`;
+  }
+
+  function keyCustomText(docId) {
+    const a = mine(docId);
+    return a.pick === 'custom' && textPresent(a.text) ? a.text : null;
+  }
+
+  function keyFlags(e) {
+    const flags = new Set((e.projectChange || []).map((p) => p.kind));
+    if ((e.invalid || []).length) flags.add('invalid');
+    if ((e.changed || []).length) flags.add('changed');
+    return flags;
+  }
+
+  function matchesKey(e) {
+    const f = keyFilter;
+    if (f.confidence !== 'all' && e.confidence !== f.confidence) return false;
+    if (f.batch !== 'all' && e.batch !== f.batch) return false;
+    if (f.flag !== 'all' && !keyFlags(e).has(f.flag)) return false;
+    if (f.unreviewed && reviewedByAnyone(`key.${e.key}`)) return false;
+    if (!f.query) return true;
+    const hay = `${e.key} ${textOf(valueOf(e, SRC))} ${textOf(valueOf(e, TGT))} ${textOf(keyCustomText(`key.${e.key}`))}`.toLowerCase();
+    return hay.includes(f.query);
+  }
+
+  function keyBadges(e) {
+    const flags = keyFlags(e);
+    const chip = (flag, text) => `<span class="chip flag-${flag}">${esc(text)}</span>`;
+    return [
+      divergeChip(),
+      e.confidence ? confidenceChip(e.confidence) : '',
+      flags.has('conflict') ? chip('conflict', t('badgeConflict')) : '',
+      flags.has('invalid') ? chip('invalid', t('badgeInvalid')) : '',
+      flags.has('project') ? chip('project', t('badgeProject')) : '',
+      flags.has('added') ? chip('added', t('badgeAdded')) : '',
+      flags.has('changed') ? chip('changed', t('badgeChanged', { langs: e.changed.join(', ') })) : '',
+      e.identical ? `<span class="chip">${esc(t('badgeIdentical'))}</span>` : '',
+      `<span class="chip edited" data-edited hidden>${esc(t('badgeEdited'))}</span>`,
+    ].join('');
+  }
+
+  function keyReasons(e) {
+    const rejected = (R.rejected || []).filter((x) => x.key === e.key);
+    const terms = (e.terms || []).map((id) => (termsById.get(id) || { source: id }).source);
+    return [
+      ...(e.invalid || []).map((x) => fmt(t('invalidReason', { lang: x.lang, reason: x.reason }))),
+      e.codeDefect ? fmt(t('codeDefect', { text: e.codeDefect })) : '',
+      e.risk ? fmt(t('riskNote', { risk: tMap('risk', e.risk) })) : '',
+      terms.length ? fmt(t('keyTerms', { terms: terms.join(', ') })) : '',
+      (e.questions || []).length ? fmt(t('keyQuestions', { ids: e.questions.join(', ') })) : '',
+      (e.reviewRows || []).length ? fmt(t('keyReviewRows', { n: e.reviewRows.length })) : '',
+      ...rejected.map((x) => fmt(t('rejectedNote', { lang: x.lang, text: textOf(x.proposal) }))),
+      e.identicalWhy ? fmt(e.identicalWhy) : '',
+    ].filter(Boolean);
+  }
+
+  function conflictOptions(e) {
+    const conflicts = conflictsOf(e);
+    const vals = (pick) => `<span class="vals">${conflicts.map((c) => `<span><b>${esc(c.lang)}</b>${esc(textOf(pick(c)))}</span>`).join('')}</span>`;
+    return [
+      { key: 'artifact', html: `<span class="tag">${esc(t('pickArtifact'))}</span>${vals((c) => valueOf(e, c.lang))}` },
+      { key: 'project', html: `<span class="tag">${esc(t('pickProject'))}</span>${vals((c) => c.value)}` },
+    ];
+  }
+
+  function keyCard(e) {
+    const docId = `key.${e.key}`;
+    const a = mine(docId);
+    const conflict = isConflict(e);
+    const custom = keyCustomText(docId);
+    const batch = batchById.get(e.batch);
+    const reasons = keyReasons(e);
+    const rows = [SRC, TGT].map((lang) => {
+      const editable = !conflict && lang === TGT;
+      const body = editable ? editorHtml(docId, valueOf(e, TGT), custom ?? valueOf(e, TGT), e.key) : formsView(valueOf(e, lang));
+      return `<div class="pair"><b>${esc(lang)}</b>${body}</div>`;
+    }).join('');
+    const choice = conflict ? pickBlock(docId, conflictOptions(e), valueOf(e, editLangOf(e)), e.key) : '';
+    const restore = conflict ? '' : `<button class="link-btn ctl" data-act="restore"${custom === null ? ' hidden' : ''}${dis()}>${esc(t('restore'))}</button>`;
+    return `<article class="card${e.confidence === 'low' ? ' low' : ''}" data-doc="${esc(docId)}">
+      <div class="head"><div class="left"><span class="key">${esc(e.key)}</span><span class="small muted">${esc(batch ? batch.label : e.batch || '')}</span></div>
+        <div class="left">${keyBadges(e)}</div></div>
+      ${reasons.length ? `<ul class="reasons">${reasons.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
+      ${rows}
+      ${choice}
+      ${othersSlot()}
+      <div class="foot">
+        <label class="check"><input type="checkbox" class="ctl" data-field="reviewed" id="rev-${esc(e.key)}"${a.reviewed === true ? ' checked' : ''}${dis()}> ${esc(t('reviewedLabel'))}</label>
+        <span class="small muted" data-meta></span>
+        <span>${restore}</span>
+      </div>
+    </article>`;
+  }
+
+  function renderKeyFilters() {
+    const counts = { all: R.keys.length };
+    for (const k of R.keys) counts[k.confidence] = (counts[k.confidence] || 0) + 1;
+    document.getElementById('keys-confidence').innerHTML = ['all', ...CONFIDENCE_ORDER].map((c) =>
+      `<button data-confidence="${c}"${pressed(keyFilter.confidence === c)}>${esc(c === 'all' ? t('filterAll') : tMap('confidence', c))} <span class="n">${counts[c] || 0}</span></button>`).join('');
+    if (keyFilter.batch !== 'all' && !batchById.has(keyFilter.batch)) keyFilter.batch = 'all';
+    const batch = document.getElementById('keys-batch');
+    batch.innerHTML = `<option value="all">${esc(t('filterBatchAll'))}</option>${R.batches.map((b) => `<option value="${esc(b.id)}">${esc(b.label)} (${b.count ?? ''})</option>`).join('')}`;
+    batch.value = keyFilter.batch;
+    const flagCounts = {};
+    for (const k of R.keys) for (const f of keyFlags(k)) flagCounts[f] = (flagCounts[f] || 0) + 1;
+    const flagLabels = { conflict: 'badgeConflict', invalid: 'badgeInvalid', project: 'badgeProject', added: 'badgeAdded', changed: 'filterChanged' };
+    const flag = document.getElementById('keys-flag');
+    flag.innerHTML = `<option value="all">${esc(t('filterFlagAll'))}</option>${FLAGS.filter((f) => flagCounts[f]).map((f) => `<option value="${f}">${esc(t(flagLabels[f]))} (${flagCounts[f]})</option>`).join('')}`;
+    if (keyFilter.flag !== 'all' && !flagCounts[keyFilter.flag]) keyFilter.flag = 'all';
+    flag.value = keyFilter.flag;
+  }
+
+  function renderKeys() {
+    const list = keyOrder.filter(matchesKey);
+    const visible = list.slice(0, keyFilter.shown);
+    document.getElementById('keys-list').innerHTML = visible.length
+      ? visible.map(keyCard).join('')
+      : `<div class="empty">${esc(t('keysEmpty'))}</div>`;
+    document.getElementById('keys-count').textContent = t('keysCount', { shown: visible.length, matched: list.length, total: R.keys.length });
+    const more = document.getElementById('keys-more');
+    more.hidden = list.length <= visible.length;
+    more.textContent = t('showMore', { n: Math.min(PAGE_SIZE, list.length - visible.length) });
+    document.querySelectorAll('#keys-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
+  }
+
+  function editorLine(object, id, ev) {
+    const me = id === viewerId ? ` ${t('you')}` : '';
+    const reviewed = isKey(object) && ev.reviewed === true ? ` · <span class="ok">${esc(t('reviewedLabel'))}</span>` : '';
+    return `<span class="who">${esc(who(id) + me)}</span> · ${fmt(valueLabel(object, ev))}${reviewed} · <span class="when">${esc(when(ev.at))}</span>`;
+  }
+
+  function sortedEvents(object) {
+    return [...(eventsByObject.get(object) || [])].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  }
+
+  function summaryTouched(object) {
+    for (const ev of latest(object).values()) {
+      if (isKey(object) ? Boolean(ev.pick) || textPresent(ev.text) : hasAnswer(object, ev)) return true;
+    }
+    return false;
+  }
+
+  function sectionRows() {
+    return [
+      ['tabQuestions', R.questions.map((q) => [`q.${q.id}`, fmt(q.title), false])],
+      ['notesSection', noteObjects().map((object) => [object, esc(t('notesSection')), false])],
+      ['tabTerms', R.terms.map((x) => [`term.${x.id}`, fmt(`${x.source} · ${x.target || '—'}`), false])],
+      ['tabReview', R.review.map((r) => [`review.${r.id}`, esc(`${r.lang} · ${r.key}`), true])],
+      ['tabKeys', R.keys.map((k) => [`key.${k.key}`, esc(k.key), true])],
+    ];
+  }
+
+  function exportBlock() {
+    const n = selectedRound;
+    const button = (act, label) => `<button class="more" data-act="${act}">${esc(label)}</button>`;
+    return `<div class="export">
+        <h3>${esc(t('exportTitle', { n }))}</h3>
+        <div class="export-row">
+          ${button('export-brief', t('exportBrief'))}
+          ${button('export-source', t('exportLangFile', { lang: SRC }))}
+          ${button('export-target', t('exportLangFile', { lang: TGT }))}
+          ${button('export-answers', t('exportAnswersJson'))}
+          ${button('export-xlsx', t('exportAnswersXlsx'))}
+        </div>
+        <span class="small muted" id="export-note"></span>
+      </div>`;
+  }
+
+  function renderSummary() {
+    const body = sectionRows().map(([title, rows]) => {
+      const items = rows.filter(([object]) => summaryTouched(object))
+        .map(([object, label, mono]) => ({ object, label, mono, diverged: isDiverged(object) }))
+        .sort((a, b) => Number(b.diverged) - Number(a.diverged));
+      if (!items.length) return '';
+      return `<h2>${esc(t(title))} <span class="count">${items.length}</span></h2><ul class="sum-list">${items.map(sumItem).join('')}</ul>`;
+    }).join('');
+    const reviewed = R.keys.filter((k) => reviewedByAnyone(`key.${k.key}`)).length;
+    document.getElementById('panel-summary').innerHTML =
+      `<p class="intro">${fmt(t('summaryIntro', { reviewed, total: R.keys.length }))}</p>
+      ${exportBlock()}
+      ${body || `<div class="empty">${esc(t('summaryEmpty'))}</div>`}`;
+  }
+
+  function sumItem(item) {
+    const lines = [...latest(item.object).entries()]
+      .filter(([, ev]) => hasAnswer(item.object, ev))
+      .sort((a, b) => String(b[1].at).localeCompare(String(a[1].at)))
+      .map(([id, ev]) => `<li>${editorLine(item.object, id, ev)}${id === viewerId && writable ? ownActions(item.object) : ''}</li>`).join('');
+    const key = isKey(item.object) ? keysById.get(item.object.slice(4)) : null;
+    const original = key ? `<span class="small muted">${esc(`${TGT}: ${textOf(valueOf(key, TGT))}`)}</span>` : '';
+    const chip = item.diverged ? `<span class="chip diverge">${esc(t('badgeDiverge'))}</span>` : '';
+    return `<li class="${item.diverged ? 'diverged' : ''}"><div class="sum-head"><span class="${item.mono ? 'key' : ''}">${item.label}</span><span class="own-actions">${chip}<button class="link-btn" data-act="goto" data-object="${esc(item.object)}">${esc(t('goto'))}</button></span></div>
+      ${original}<ul class="sum-answers">${lines}</ul></li>`;
+  }
+
+  function ownActions(object) {
+    const o = esc(object);
+    return `<span class="own-actions"><button class="link-btn" data-act="edit" data-object="${o}">${esc(t('edit'))}</button><button class="link-btn danger" data-act="clear" data-object="${o}">${esc(t('clearMine'))}</button></span>`;
+  }
+
+  function refreshCounts() {
+    const done = (ids) => ids.filter(answeredByAnyone).length;
+    document.getElementById('n-questions').textContent = `${done(R.questions.map((q) => `q.${q.id}`))}/${R.questions.length}`;
+    const pendingTerms = R.terms.filter((x) => !x.approved).map((x) => `term.${x.id}`);
+    document.getElementById('n-terms').textContent = pendingTerms.length ? `${done(pendingTerms)}/${pendingTerms.length}` : '✓';
+    document.getElementById('n-review').textContent = `${done(R.review.map((r) => `review.${r.id}`))}/${R.review.length}`;
+    document.getElementById('n-keys').textContent = `${done(R.keys.map((k) => `key.${k.key}`))}/${R.keys.length}`;
+    let answered = 0;
+    for (const object of latestByObject.keys()) if (summaryTouched(object)) answered += 1;
+    document.getElementById('n-summary').textContent = String(answered);
+    if (activeTab === 'summary') renderSummary();
+  }
+
+  function applyEditors(el, docId) {
+    const pending = (inflight.get(docId) || 0) > 0;
+    el.toggleAttribute('data-pending', pending);
+    const meta = el.querySelector('[data-meta]');
+    if (meta) {
+      const at = mine(docId).at;
+      meta.textContent = pending ? t('saving') : (at ? t('yourAnswerAt', { when: when(at) }) : '');
+    }
+    const chip = el.querySelector('[data-diverge]');
+    if (chip) chip.hidden = !isDiverged(docId);
+    const box = el.querySelector('[data-others]');
+    if (!box) return;
+    const events = sortedEvents(docId);
+    box.hidden = !events.length;
+    if (!events.length) { box.innerHTML = ''; return; }
+    const others = [...latest(docId).entries()].filter(([id, ev]) => id !== viewerId && hasAnswer(docId, ev));
+    const wasOpen = Boolean(box.querySelector('details[open]'));
+    const lines = others.length
+      ? `<ul>${others.map(([id, ev]) => `<li>${editorLine(docId, id, ev)}</li>`).join('')}</ul>`
+      : `<span class="muted">${esc(t('othersNone'))}</span>`;
+    const history = events.map((ev) => `<li>${editorLine(docId, ev.by, ev)}</li>`).join('');
+    box.innerHTML = `<h4>${esc(t('othersTitle'))}</h4>${lines}
+      <details${wasOpen ? ' open' : ''}><summary>${esc(t('historyTitle', { n: events.length }))}</summary><ul>${history}</ul></details>`;
+  }
+
+  function applyPressed(el, docId) {
+    const a = base(docId);
+    const typing = textTimers.has(docId);
+    el.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-pressed', String(!typing && a.pick === b.dataset.pick)));
+    const custom = el.querySelector('[data-act="custom"]');
+    if (custom) custom.setAttribute('aria-pressed', String(typing || a.pick === 'custom'));
+    const unpick = el.querySelector('[data-act="unpick"]');
+    if (unpick) unpick.hidden = typing || !a.pick;
+  }
+
+  function editorFill(docId, a) {
+    const plain = plainKeyEntry(docId);
+    if (plain) return a.pick === 'custom' && textPresent(a.text) ? a.text : valueOf(plain, TGT);
+    return a.pick === 'custom' ? a.text : null;
+  }
+
+  function applyDoc(docId) {
+    const el = cardEl(docId);
+    if (!el) return;
+    const a = base(docId);
+    const typing = textTimers.has(docId);
+    const sent = (inflight.get(docId) || 0) > 0;
+    applyPressed(el, docId);
+    if (!typing) {
+      const value = editorFill(docId, a);
+      el.querySelectorAll('textarea[data-form]').forEach((area) => {
+        if (area === document.activeElement) return;
+        const form = area.dataset.form;
+        area.value = form ? (value && typeof value === 'object' ? value[form] ?? '' : '') : (typeof value === 'string' ? value : '');
+      });
+    }
+    if (plainKeyEntry(docId)) {
+      const edited = a.pick === 'custom' && textPresent(a.text);
+      el.querySelectorAll('textarea[data-form]').forEach((area) => area.classList.toggle('edited', edited));
+      el.querySelector('[data-edited]').hidden = !edited;
+      el.querySelector('[data-act="restore"]').hidden = !edited;
+    }
+    const rev = el.querySelector('[data-field="reviewed"]');
+    if (rev && !sent) rev.checked = a.reviewed === true;
+    applyEditors(el, docId);
+  }
+
+  function statusText() {
+    if (mode === 'write' && !roundOpen(selectedRound)) return t('statusRoundLocked');
+    const keys = { loading: 'statusLoading', nodb: 'statusNoDb', read: 'statusRead', write: 'statusWrite', refused: 'statusRefused', lost: 'statusLost' };
+    return t(keys[mode] || 'statusRead');
+  }
+
+  function updateWritable() {
+    writable = mode === 'write' && roundOpen(selectedRound);
+    const status = document.getElementById('status');
+    status.dataset.mode = mode;
+    status.textContent = statusText();
+    document.querySelectorAll('.ctl').forEach((c) => { c.disabled = !writable || c.dataset.locked === '1'; });
+    renderRoundSwitcher();
+    renderRoundBar();
+    applyEmailForm();
+    renderNotes();
+  }
+
+  function setMode(next) {
+    mode = next;
+    updateWritable();
+  }
+
+  function sameAnswer(a, b) {
+    return (a.pick ?? null) === (b.pick ?? null)
+      && JSON.stringify(a.text ?? null) === JSON.stringify(b.text ?? null)
+      && (a.reviewed === true) === (b.reviewed === true);
+  }
+
+  function ensureEditor() {
+    if (editors.has(viewerId)) return Promise.resolve();
+    if (editorReady) return editorReady;
+    editorReady = (async () => {
+      const ref = dbNs.doc(`editors/${viewerId}`);
+      const snap = await ref.get();
+      if (snap.exists) return;
+      const me = await userNs.me();
+      await ref.set({ email: me.email || null, name: me.name || '', firstSeenAt: new Date().toISOString() });
+    })().catch(() => { editorReady = null; });
+    return editorReady;
+  }
+
+  function save(docId, patch) {
+    if (!writable || !logRef || !viewerId) return;
+    const prev = base(docId);
+    const next = { pick: prev.pick ?? null, text: prev.text ?? null, reviewed: prev.reviewed === true, ...patch };
+    if (sameAnswer(next, prev)) return;
+    const body = { object: docId, by: viewerId, at: new Date().toISOString(), round: selectedRound, ...next };
+    lastSent.set(docId, body);
+    inflight.set(docId, (inflight.get(docId) || 0) + 1);
+    applyDoc(docId);
+    ensureEditor().then(() => addOnce(body, true)).then((ref) => {
+      if (!ref) { settle(docId, true); return; }
+      if (allEvents.has(ref.id)) { settle(docId, false); return; }
+      awaiting.set(ref.id, docId);
+    });
+  }
+
+  function settle(docId, failed) {
+    inflight.set(docId, Math.max(0, (inflight.get(docId) || 0) - 1));
+    if (failed && !inflight.get(docId)) lastSent.delete(docId);
+    applyDoc(docId);
+  }
+
+  function addOnce(body, mayRetry) {
+    return logRef.add(body).catch((e) => {
+      const code = e && e.code;
+      if (code === 'unavailable' && mayRetry) {
+        return new Promise((r) => setTimeout(r, 400 + Math.random() * 800)).then(() => addOnce(body, false));
+      }
+      if (code === 'quota_exceeded') {
+        document.getElementById('status').textContent = t('statusQuota');
+        return null;
+      }
+      setMode('refused');
+      return null;
+    });
+  }
+
+  function cancelTyping(docId) {
+    clearTimeout(textTimers.get(docId));
+    textTimers.delete(docId);
+  }
+
+  function clearEditor(docId) {
+    const el = cardEl(docId);
+    if (el && !plainKeyEntry(docId)) el.querySelectorAll('textarea[data-form]').forEach((area) => { area.value = ''; });
+  }
+
+  function editorValue(el, docId) {
+    const areas = [...el.querySelectorAll('textarea[data-form]')];
+    if (!areas.length) return null;
+    let value = areas[0].value;
+    if (areas[0].dataset.form) {
+      value = {};
+      for (const area of areas) value[area.dataset.form] = area.value;
+    }
+    if (!textPresent(value)) return null;
+    const plain = plainKeyEntry(docId);
+    if (plain && JSON.stringify(value) === JSON.stringify(valueOf(plain, TGT))) return null;
+    return value;
+  }
+
+  function flushCard(docId) {
+    cancelTyping(docId);
+    const el = cardEl(docId);
+    const value = el ? editorValue(el, docId) : null;
+    if (value !== null) save(docId, { pick: 'custom', text: value });
+    else if (base(docId).pick === 'custom') save(docId, { pick: null, text: null });
+    applyDoc(docId);
+  }
+
+  function flushPendingText() {
+    for (const docId of [...textTimers.keys()]) flushCard(docId);
+  }
+
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingText(); });
+  window.addEventListener('pagehide', flushPendingText);
+
+  function onPick(docId, key) {
+    cancelTyping(docId);
+    clearEditor(docId);
+    save(docId, { pick: key, text: null });
+    applyDoc(docId);
+  }
+
+  function onUnpick(docId) {
+    cancelTyping(docId);
+    clearEditor(docId);
+    save(docId, { pick: null, text: null });
+    applyDoc(docId);
+  }
+
+  function onRestore(docId) {
+    cancelTyping(docId);
+    save(docId, { pick: null, text: null });
+    applyDoc(docId);
+  }
+
+  function tabFor(object) {
+    if (object.startsWith('q.') || object.startsWith('note.')) return 'questions';
+    if (object.startsWith('term.')) return 'terms';
+    if (object.startsWith('review.')) return 'review';
+    return 'keys';
+  }
+
+  function showKey(object) {
+    const key = object.slice(4);
+    Object.assign(keyFilter, { confidence: 'all', batch: 'all', flag: 'all', query: key.toLowerCase(), unreviewed: false, shown: PAGE_SIZE });
+    document.getElementById('keys-search').value = key;
+    document.getElementById('keys-unreviewed').checked = false;
+    renderKeyFilters();
+    renderKeys();
+  }
+
+  function goToObject(object, focus) {
+    const tab = tabFor(object);
+    if (tab === 'keys') showKey(object);
+    selectTab(tab);
+    const el = cardEl(object);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('is-target');
+    setTimeout(() => el.classList.remove('is-target'), 1600);
+    if (!focus) return;
+    const field = el.querySelector('textarea:not(:disabled)');
+    if (field) field.focus({ preventScroll: true });
+  }
+
+  function confirmClear(button) {
+    if (button.dataset.armed) {
+      save(button.dataset.object, { pick: null, text: null, reviewed: false });
+      return;
+    }
+    button.dataset.armed = '1';
+    button.textContent = t('clearConfirm');
+    setTimeout(() => {
+      delete button.dataset.armed;
+      button.textContent = t('clearMine');
+    }, 4000);
+  }
+
+  function selectTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('nav.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    document.querySelectorAll('main > .panel').forEach((p) => { p.hidden = p.id !== `panel-${tab}`; });
+    if (tab === 'summary') renderSummary();
+    try { history.replaceState(null, '', `#${tab}`); } catch (e) { /* the frame may refuse history writes */ }
+  }
+
+  function indexRound() {
+    eventsByObject = new Map();
+    latestByObject = new Map();
+    for (const ev of allEvents.values()) {
+      if (roundOf(ev) !== selectedRound) continue;
+      if (!eventsByObject.has(ev.object)) eventsByObject.set(ev.object, []);
+      eventsByObject.get(ev.object).push(ev);
+      if (!latestByObject.has(ev.object)) latestByObject.set(ev.object, new Map());
+      const byEditor = latestByObject.get(ev.object);
+      const cur = byEditor.get(ev.by);
+      if (!cur || String(ev.at) >= String(cur.at)) byEditor.set(ev.by, ev);
+    }
+  }
+
+  function renderRound() {
+    selectSnapshot(selectedRound);
+    indexRound();
+    renderBrief();
+    renderQuestions();
+    renderTerms();
+    renderReview();
+    renderKeyFilters();
+    renderKeys();
+    document.querySelectorAll('main [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
+    refreshCounts();
+    updateWritable();
+  }
+
+  function selectRound(n) {
+    if (n === selectedRound || !snapshots.has(n)) return;
+    flushPendingText();
+    selectedRound = n;
+    keyFilter.shown = PAGE_SIZE;
+    document.getElementById('close-panel').hidden = true;
+    renderRound();
+  }
+
+  function editorStats(id) {
+    let answers = 0;
+    let disputes = 0;
+    for (const [object, byEditor] of latestByObject) {
+      const ev = byEditor.get(id);
+      if (!ev || !hasAnswer(object, ev)) continue;
+      answers += 1;
+      if (isDiverged(object)) disputes += 1;
+    }
+    return { answers, disputes };
+  }
+
+  function roundEditors() {
+    const first = new Map();
+    for (const [object, byEditor] of latestByObject) {
+      for (const [id, ev] of byEditor) {
+        if (!hasAnswer(object, ev)) continue;
+        const at = String(ev.at);
+        if (!first.has(id) || at < first.get(id)) first.set(id, at);
+      }
+    }
+    return [...first.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id);
+  }
+
+  function renderCloseOrder() {
+    const last = closeOrder.length - 1;
+    document.getElementById('close-order').innerHTML = closeOrder.length
+      ? closeOrder.map((id, i) => `<li>
+          <span class="rank">${i + 1}</span><span class="who">${esc(who(id))}</span>
+          <span class="moves"><button class="link-btn" data-move="-1" data-index="${i}" aria-label="${esc(t('moveUp'))}"${i === 0 ? ' disabled' : ''}>↑</button><button class="link-btn" data-move="1" data-index="${i}" aria-label="${esc(t('moveDown'))}"${i === last ? ' disabled' : ''}>↓</button></span>
+          <span class="small muted stats">${esc(t('closeStats', editorStats(id)))}</span>
+        </li>`).join('')
+      : `<li class="muted">${esc(t('closeNoEditors'))}</li>`;
+  }
+
+  function openClosePanel() {
+    closeOrder = roundEditors();
+    document.getElementById('close-note').textContent = '';
+    document.getElementById('close-panel').hidden = false;
+    renderCloseOrder();
+  }
+
+  async function closeRound() {
+    if (!dbNs || !isOwner || !roundOpen(selectedRound)) return;
+    flushPendingText();
+    const n = selectedRound;
+    const button = document.getElementById('close-confirm');
+    const note = document.getElementById('close-note');
+    button.disabled = true;
+    note.textContent = t('closeSaving');
+    const body = { closedAt: new Date().toISOString(), by: viewerId, priority: [...closeOrder] };
+    try {
+      await dbNs.doc(`rounds/${n}`).set(body);
+      closedRounds.set(String(n), body);
+      document.getElementById('close-panel').hidden = true;
+      updateWritable();
+    } catch (e) {
+      note.textContent = e && e.code === 'invalid_argument' ? t('closeRefused') : t('closeFailed');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function historyJson() {
+    const events = [];
+    for (const [object, list] of eventsByObject) {
+      for (const ev of list) {
+        events.push({ object, round: roundOf(ev), by: ev.by, editor: who(ev.by), at: ev.at, pick: ev.pick ?? null, text: ev.text ?? null, reviewed: ev.reviewed === true, answer: valueLabel(object, ev) });
+      }
+    }
+    events.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    const current = [...latestByObject.entries()].map(([object, byEditor]) => ({
+      object,
+      diverged: isDiverged(object),
+      answers: [...byEditor.entries()].map(([id, ev]) => ({ by: id, editor: who(id), at: ev.at, pick: ev.pick ?? null, text: ev.text ?? null, reviewed: ev.reviewed === true, answer: valueLabel(object, ev) })),
+    }));
+    const editorList = [...editors.entries()].map(([id, e]) => ({ id, email: e.email || null, name: (people[id] && people[id].name) || e.name || '', firstSeenAt: e.firstSeenAt || null }));
+    const closed = closedRounds.get(String(selectedRound)) || null;
+    return JSON.stringify({ round: selectedRound, exportedAt: new Date().toISOString(), closed, editors: editorList, current, events }, null, 2);
+  }
+
+  function langFile(lang) {
+    const out = {};
+    for (const k of R.keys) out[k.key] = valueOf(k, lang);
+    return `${JSON.stringify(out, null, 2)}\n`;
+  }
+
+  const fileName = (suffix) => `${DATA.slug}-r${selectedRound}-${suffix}`;
+
+  function exportNote(text) {
+    const note = document.getElementById('export-note');
+    if (note) note.textContent = text;
+  }
+
+  async function saveFile(filename, data) {
+    if (!downloads) return;
+    try {
+      await downloads.save({ filename, data });
+      exportNote('');
+    } catch (e) {
+      const code = e && e.code;
+      if (code === 'declined') { exportNote(''); return; }
+      if (code === 'rate_limited') { exportNote(t('exportBusy')); return; }
+      if (code === 'extension_not_enabled') { exportNote(t('exportFormatOff')); return; }
+      document.body.classList.remove('has-downloads');
+    }
+  }
+
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (!xlsxReady) {
+      xlsxReady = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.onload = () => resolve(window.XLSX);
+        script.onerror = () => { xlsxReady = null; reject(new Error('xlsx')); };
+        document.head.appendChild(script);
+      });
+    }
+    return xlsxReady;
+  }
+
+  const cellText = (v) => (v && typeof v === 'object' ? Object.entries(v).map(([form, text]) => `${form}: ${text}`).join('\n') : String(v ?? ''));
+
+  function answeringEditors() {
+    const ids = new Set();
+    for (const byEditor of latestByObject.values()) for (const id of byEditor.keys()) ids.add(id);
+    return [...ids];
+  }
+
+  function keysSheet() {
+    const ids = answeringEditors();
+    const head = [t('colKey'), t('colBatch'), t('colConfidence'), SRC, TGT, ...ids.flatMap((id) => [t('colEditorAnswer', { editor: who(id) }), t('colEditorReviewed', { editor: who(id) })])];
+    const rows = R.keys.map((k) => {
+      const byEditor = latest(`key.${k.key}`);
+      const answers = ids.flatMap((id) => {
+        const ev = byEditor.get(id);
+        return [ev && hasAnswer(`key.${k.key}`, ev) ? valueLabel(`key.${k.key}`, ev) : '', ev && ev.reviewed === true ? t('yes') : ''];
+      });
+      const batch = batchById.get(k.batch);
+      return [k.key, batch ? batch.label : k.batch || '', tMap('confidence', k.confidence), cellText(valueOf(k, SRC)), cellText(valueOf(k, TGT)), ...answers];
+    });
+    return [head, ...rows];
+  }
+
+  function termsSheet() {
+    const ids = answeringEditors();
+    const head = [t('colTerm'), TGT, t('colMeaning'), t('colConfidence'), t('colVariants'), ...ids.map((id) => t('colEditorAnswer', { editor: who(id) }))];
+    const rows = R.terms.map((x) => {
+      const object = `term.${x.id}`;
+      const byEditor = latest(object);
+      const picks = ids.map((id) => {
+        const ev = byEditor.get(id);
+        return ev && hasAnswer(object, ev) ? valueLabel(object, ev) : '';
+      });
+      return [x.source, x.target || '', x.meaning || '', tMap('confidence', x.confidence), termOptions(x).filter((o) => !o.current).map((o) => o.text).join('\n'), ...picks];
+    });
+    return [head, ...rows];
+  }
+
+  const SECTION_ORDER = ['q.', 'note.', 'term.', 'review.', 'key.'];
+  const sectionLabel = (object) => t({ q: 'tabQuestions', note: 'notesSection', term: 'tabTerms', review: 'tabReview', key: 'tabKeys' }[object.slice(0, object.indexOf('.'))]);
+  const sectionRank = (object) => SECTION_ORDER.findIndex((p) => object.startsWith(p));
+
+  function answerRow(object, id, ev) {
+    return [sectionLabel(object), object.slice(object.indexOf('.') + 1), who(id), valueLabel(object, ev), ev.reviewed === true ? t('yes') : '', when(ev.at)];
+  }
+
+  function answerSheets() {
+    const head = [t('colSection'), t('colItem'), t('colEditor'), t('colAnswer'), t('colReviewed'), t('colTime')];
+    const current = [];
+    const objects = [...latestByObject.keys()].sort((a, b) => sectionRank(a) - sectionRank(b) || a.localeCompare(b));
+    for (const object of objects) {
+      for (const [id, ev] of latestByObject.get(object)) if (hasAnswer(object, ev)) current.push(answerRow(object, id, ev));
+    }
+    const history = [];
+    for (const [object, list] of eventsByObject) for (const ev of list) history.push({ at: String(ev.at), row: answerRow(object, ev.by, ev) });
+    history.sort((a, b) => a.at.localeCompare(b.at));
+    return [[t('sheetCurrent'), [head, ...current]], [t('sheetHistory'), [head, ...history.map((h) => h.row)]]];
+  }
+
+  async function exportXlsx() {
+    if (!downloads) return;
+    exportNote(t('exportPreparing'));
+    let X;
+    try {
+      X = await loadXlsx();
+    } catch (e) {
+      exportNote(t('exportXlsxFailed'));
+      return;
+    }
+    const sheets = [[t('sheetKeys'), keysSheet()], [t('sheetTerms'), termsSheet()], ...answerSheets()];
+    const book = X.utils.book_new();
+    for (const [name, rows] of sheets) X.utils.book_append_sheet(book, X.utils.aoa_to_sheet(rows), String(name).slice(0, 31));
+    const data = new Uint8Array(X.write(book, { bookType: 'xlsx', type: 'array' }));
+    await saveFile(fileName('answers.xlsx'), data);
+  }
+
+  const exportActions = {
+    'export-brief': () => saveFile(fileName('brief.md'), String(R.brief || '')),
+    'export-source': () => saveFile(fileName(`${SRC}.json`), langFile(SRC)),
+    'export-target': () => saveFile(fileName(`${TGT}.json`), langFile(TGT)),
+    'export-answers': () => saveFile(fileName('answers.json'), historyJson()),
+    'export-xlsx': () => exportXlsx(),
+  };
+
+  document.querySelector('nav.tabs').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-tab]');
+    if (b) selectTab(b.dataset.tab);
+  });
+
+  document.getElementById('round-switch').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-round]');
+    if (b) selectRound(Number(b.dataset.round));
+  });
+
+  document.getElementById('close-open').addEventListener('click', openClosePanel);
+  document.getElementById('close-cancel').addEventListener('click', () => { document.getElementById('close-panel').hidden = true; });
+  document.getElementById('close-confirm').addEventListener('click', closeRound);
+  document.getElementById('close-order').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-move]');
+    if (!b) return;
+    const i = Number(b.dataset.index);
+    const j = i + Number(b.dataset.move);
+    if (j < 0 || j >= closeOrder.length) return;
+    [closeOrder[i], closeOrder[j]] = [closeOrder[j], closeOrder[i]];
+    renderCloseOrder();
+  });
+
+  const main = document.getElementById('main');
+  main.addEventListener('click', (ev) => {
+    const pick = ev.target.closest('[data-pick]');
+    if (pick && !pick.disabled) { onPick(pick.closest('[data-doc]').dataset.doc, pick.dataset.pick); return; }
+    const act = ev.target.closest('[data-act]');
+    if (!act) return;
+    const name = act.dataset.act;
+    if (exportActions[name]) { exportActions[name](); return; }
+    if (name === 'goto') { goToObject(act.dataset.object, false); return; }
+    if (name === 'edit') { goToObject(act.dataset.object, true); return; }
+    if (name === 'open-term') { openedTerms.add(act.dataset.term); replaceTermCard(act.dataset.term); return; }
+    if (name === 'note-add') { openNoteForm(null); return; }
+    if (name === 'note-edit') { openNoteForm(act.dataset.object); return; }
+    if (name === 'note-save') { saveNote(); return; }
+    if (name === 'note-cancel') { closeNoteForm(); return; }
+    if (name === 'note-delete') { save(act.dataset.object, { pick: null, text: null }); return; }
+    if (name === 'clear') { confirmClear(act); return; }
+    const card = act.closest('[data-doc]');
+    if (!card || !writable) return;
+    if (name === 'custom') { const field = card.querySelector('textarea[data-form]'); if (field) field.focus(); return; }
+    if (name === 'unpick') { onUnpick(card.dataset.doc); return; }
+    if (name === 'restore') onRestore(card.dataset.doc);
+  });
+  main.addEventListener('input', (ev) => {
+    const area = ev.target;
+    if (area.tagName !== 'TEXTAREA' || area.dataset.form === undefined || !writable) return;
+    const el = area.closest('[data-doc]');
+    if (!el) return;
+    const docId = el.dataset.doc;
+    clearTimeout(textTimers.get(docId));
+    textTimers.set(docId, setTimeout(() => flushCard(docId), TEXT_DELAY_MS));
+    applyPressed(el, docId);
+  });
+  main.addEventListener('change', (ev) => {
+    const target = ev.target;
+    const el = target.closest('[data-doc]');
+    if (!el) return;
+    if (target.tagName === 'TEXTAREA') { if (textTimers.has(el.dataset.doc)) flushCard(el.dataset.doc); return; }
+    if (target.dataset.field === 'reviewed') save(el.dataset.doc, { reviewed: target.checked });
+  });
+
+  document.getElementById('keys-search').addEventListener('input', (ev) => {
+    keyFilter.query = ev.target.value.trim().toLowerCase();
+    keyFilter.shown = PAGE_SIZE;
+    renderKeys();
+  });
+  document.getElementById('keys-batch').addEventListener('change', (ev) => {
+    keyFilter.batch = ev.target.value;
+    keyFilter.shown = PAGE_SIZE;
+    renderKeys();
+  });
+  document.getElementById('keys-flag').addEventListener('change', (ev) => {
+    keyFilter.flag = ev.target.value;
+    keyFilter.shown = PAGE_SIZE;
+    renderKeys();
+  });
+  document.getElementById('keys-unreviewed').addEventListener('change', (ev) => {
+    keyFilter.unreviewed = ev.target.checked;
+    keyFilter.shown = PAGE_SIZE;
+    renderKeys();
+  });
+  document.getElementById('keys-confidence').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-confidence]');
+    if (!b) return;
+    keyFilter.confidence = b.dataset.confidence;
+    keyFilter.shown = PAGE_SIZE;
+    document.querySelectorAll('#keys-confidence [data-confidence]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    renderKeys();
+  });
+  document.getElementById('keys-more').addEventListener('click', () => {
+    keyFilter.shown += PAGE_SIZE;
+    renderKeys();
+  });
+
+  function onLog(snap) {
+    const touched = new Set();
+    for (const ch of snap.docChanges()) {
+      const ev = ch.doc.data();
+      if (!ev || typeof ev.object !== 'string' || typeof ev.by !== 'string') continue;
+      if (ch.type === 'removed') allEvents.delete(ch.doc.id);
+      else allEvents.set(ch.doc.id, ev);
+      if (roundOf(ev) === selectedRound) touched.add(ev.object);
+      if (awaiting.has(ch.doc.id)) { awaiting.delete(ch.doc.id); inflight.set(ev.object, Math.max(0, (inflight.get(ev.object) || 0) - 1)); }
+    }
+    const approvedTerms = [...touched].filter(isApprovedTermObject).map((object) => object.slice(5));
+    const wasCollapsed = new Map(approvedTerms.map((id) => [id, isCollapsedTerm(termsById.get(id))]));
+    indexRound();
+    approvedTerms.filter((id) => wasCollapsed.get(id) !== isCollapsedTerm(termsById.get(id))).forEach(replaceTermCard);
+    for (const object of touched) applyDoc(object);
+    if ([...touched].some((object) => object.startsWith('note.'))) renderNotes();
+    if (keyFilter.unreviewed && [...touched].some(isKey)) renderKeys();
+    refreshCounts();
+    resolvePeople();
+  }
+
+  function isApprovedTermObject(object) {
+    return object.startsWith('term.') && Boolean((termsById.get(object.slice(5)) || {}).approved);
+  }
+
+  function onEditors(snap) {
+    for (const ch of snap.docChanges()) {
+      if (ch.type === 'removed') editors.delete(ch.doc.id);
+      else editors.set(ch.doc.id, ch.doc.data() || {});
+    }
+    applyEmailForm();
+    reapplyAll();
+  }
+
+  function onRounds(snap) {
+    for (const ch of snap.docChanges()) {
+      if (ch.type === 'removed') closedRounds.delete(ch.doc.id);
+      else closedRounds.set(ch.doc.id, ch.doc.data() || {});
+    }
+    if (!roundOpen(selectedRound)) for (const docId of [...textTimers.keys()]) { cancelTyping(docId); applyDoc(docId); }
+    updateWritable();
+    if (activeTab === 'summary') renderSummary();
+  }
+
+  function applyEmailForm() {
+    const form = document.getElementById('email-form');
+    form.hidden = !writable;
+    if (!writable) return;
+    const saved = (editors.get(viewerId) || {}).email || '';
+    const input = document.getElementById('email-input');
+    if (input !== document.activeElement && !input.value) input.value = saved;
+    form.toggleAttribute('data-missing', !saved);
+    document.getElementById('email-note').textContent = saved ? t('emailSaved', { email: saved }) : t('emailMissing');
+  }
+
+  document.getElementById('email-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const input = document.getElementById('email-input');
+    const email = input.value.trim();
+    if (!writable || !dbNs || !viewerId || !input.checkValidity()) return;
+    const note = document.getElementById('email-note');
+    note.textContent = t('emailSaving');
+    try {
+      await ensureEditor();
+      await dbNs.doc(`editors/${viewerId}`).update({ email });
+    } catch (e) {
+      note.textContent = t('emailFailed');
+    }
+  });
+
+  function reapplyAll() {
+    document.querySelectorAll('main [data-doc]').forEach((el) => applyEditors(el, el.dataset.doc));
+    if (activeTab === 'summary') renderSummary();
+    renderRoundBar();
+    if (!document.getElementById('close-panel').hidden) renderCloseOrder();
+  }
+
+  async function resolvePeople() {
+    if (!userNs) return;
+    const ids = new Set(editors.keys());
+    for (const m of latestByObject.values()) for (const id of m.keys()) ids.add(id);
+    for (const c of closedRounds.values()) if (c.by) ids.add(c.by);
+    if (![...ids].some((id) => !(id in people))) return;
+    people = await userNs.profiles([...ids]);
+    reapplyAll();
+  }
+
+  async function connect() {
+    if (!window.claude || typeof window.claude.use !== 'function') { setMode('nodb'); return; }
+    window.claude.use('downloads').then((ns) => {
+      downloads = ns;
+      document.body.classList.toggle('has-downloads', Boolean(ns));
+    }).catch(() => {});
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    userNs = user;
+    if (user) isOwner = (await user.isOwner()) === true;
+    if (!db) { setMode('nodb'); return; }
+    dbNs = db;
+    if (user) viewerId = await user.id();
+    logRef = db.collection('log');
+    const lost = () => setMode('lost');
+    db.collection('editors').onSnapshot(onEditors, () => {});
+    db.collection('rounds').onSnapshot(onRounds, lost);
+    logRef.onSnapshot(onLog, lost);
+    if (!user || !viewerId) { setMode('read'); return; }
+    const [canWrite, canEdit] = await Promise.all([user.can('data.write'), user.canEdit()]);
+    setMode(canEdit === true && canWrite !== false ? 'write' : 'read');
+  }
+
+  buildSnapshots();
+  renderHeader();
+  renderRound();
+  const initial = (location.hash || '').slice(1);
+  if (TABS.includes(initial)) selectTab(initial);
+  connect().catch(() => setMode('nodb'));
+})();
+</script>

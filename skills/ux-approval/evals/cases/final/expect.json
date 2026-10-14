@@ -1,0 +1,68 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    {
+      "copy": "{cases}/spec-r2/spec.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": [
+        [
+          [
+            "final"
+          ],
+          true
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "copy": "{tmp}/r2/spec.json",
+      "to": "{tmp}/r3/spec.json",
+      "set": [
+        [
+          [
+            "round"
+          ],
+          3
+        ],
+        [
+          [
+            "final"
+          ],
+          false
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r3/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "round 2 final:",
+    "spec:round: previous page round 2 is final"
+  ]
+}

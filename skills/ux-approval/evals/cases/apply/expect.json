@@ -1,0 +1,75 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/rounds.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/spec-next.json"
+    },
+    {
+      "read": "{tmp}/out/conflicts.md"
+    },
+    {
+      "read": "{tmp}/out/free-text.md"
+    },
+    {
+      "read": "{tmp}/out/named-keys.txt"
+    },
+    [
+      "{skills}/ux-translate/check_drafts.py",
+      "{tmp}/out/changed-en.jsonl",
+      "--lang",
+      "en"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "dispute en.homeTitle: Editor B over Editor A, Editor C",
+    "- `en.homeTitle` — winner Editor B (key.homeTitle): \"Plants\"",
+    "dispute q.Q1: Editor A over Editor C",
+    "withdrawn key.settingsTitle by Editor C",
+    "answer review.uk.homeEmpty: keep, rejected (Editor B)",
+    "\"homeTitle\": \"Plants\"",
+    "\"settingsTitle\": \"Settings\"",
+    "\"plantWaterDone\": \"{name} полито\"",
+    "\"proposal\": \"Додайте свою першу рослину\"",
+    "| Q1 Як перекладати «полив»: watering | en | 2026-03-02 |",
+    "\"target\": \"watering\"",
+    "`term.полив` (Editor B): watering",
+    "reconcile: artifact 8, project 0, conflict 0, added 0, removed 0",
+    "plantWaterDone\tplaceholders",
+    "\"settingsReminder\": \"Reminders\"",
+    "answer term.рослина: kept, unknown pick a (Editor C)",
+    "\"approved\": 1",
+    "- `note.k1x9` (Editor C): Should reminders use relative times?"
+  ],
+  "absent": [
+    "Preferences",
+    "Okay",
+    "- Як перекладати «полив»",
+    "\"round\": 1,",
+    "Late water",
+    "Withdrawn remark"
+  ]
+}

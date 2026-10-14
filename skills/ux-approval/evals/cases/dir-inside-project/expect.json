@@ -1,0 +1,32 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{cases}/apply/log.json",
+      "{cases}/apply/editors.json",
+      "{cases}/apply/rounds.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{cases}/project/out"
+    ]
+  ],
+  "exit": 2,
+  "fragments": [
+    "lies inside --project"
+  ]
+}
