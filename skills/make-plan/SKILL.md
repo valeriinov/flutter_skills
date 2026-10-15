@@ -58,13 +58,20 @@ parallel, so all sit on its last node); never add a node to it.
    and "Отправить ревью" stops the server with `review submitted: <n> open comments`. Open
    comments can be edited or deleted on the page before submitting.
    - No open comments → the button becomes "Имплементировать план": it opens a separate Claude
-     Code session for `implement-plan` with subagents, first available of: Claude Desktop (a new
-     Code-session form in the project folder with the prompt pre-filled; the session starts only
-     when the user presses Enter; an untrusted folder first asks for trust) → Ghostty 1.3+ (a new
-     tab in the front window, a new window only when none is open) → Terminal.app (a new
-     window). `serve` exits with `implementation started: desktop|terminal` → stop and report
-     where the session waits (the Desktop form waiting for Enter, or the terminal); no Revise. macOS only — elsewhere the page shows the error and the user starts
-     `implement-plan` themselves.
+     Code session for `implement-plan` with subagents in the project folder.
+     - Under Claude Desktop `serve` exits with `implementation started: desktop`, `folder:` and
+       `prompt:` lines → propose the session with `start_session`: `initiation`
+       "own_initiative", `permission_mode` "auto", the `prompt:` line as the prompt, a
+       one-line `background` naming the plan, and stop.
+       The app refuses "user_asked" on a turn a background task started, and a card carries no
+       folder, so the card session opens in this session's folder: when that differs from
+       `folder:`, tell the user instead to start `implement-plan` there themselves.
+     - Elsewhere the first available of: Ghostty 1.3+ (a new tab in the front window, a new
+       window only when none is open) → Terminal.app (a new window). `serve` exits with
+       `implementation started: terminal` → stop and report that the session runs in the
+       terminal. macOS only — elsewhere the page shows the error and the user starts
+       `implement-plan` themselves.
+     - No Revise in either case.
    - n > 0 → Revise mode. The page shows "Агент правит план…" and reloads on every change to
      the plan, brief or comments file while `serve` runs.
    - n = 0, or the process ends any other way → stop and report.

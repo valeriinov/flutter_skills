@@ -12,7 +12,6 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.parse
 import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -35,6 +34,7 @@ ANCHOR_RE = re.compile(r'^[\w &-]{1,60}$')
 COMMENT_RE = re.compile(r'^- \[ \] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+): )?(.*)$')
 OPEN_PREFIX = '- [ ] '
 IMPLEMENT_PROMPT = 'имплементируй план {} используй субагентов'
+DESKTOP_ENTRYPOINT = 'claude-desktop'
 GHOSTTY_SCRIPT = '''on run argv
     set wasRunning to application "Ghostty" is running
     tell application "Ghostty"
@@ -548,22 +548,15 @@ def implement_session(plan_path):
     return root, IMPLEMENT_PROMPT.format(target)
 
 def launch_implement(plan_path):
-    root, prompt = implement_session(plan_path)
-    if launch_desktop(root, prompt):
+    if os.environ.get('CLAUDE_CODE_ENTRYPOINT') == DESKTOP_ENTRYPOINT:
         return 'desktop', None
+    root, prompt = implement_session(plan_path)
     session = f'claude {shlex.quote(prompt)}'
     if launch_ghostty(root, session):
         return 'terminal', None
     if run_osascript(TERMINAL_SCRIPT, f'cd {shlex.quote(str(root))} && {session}'):
         return 'terminal', None
     return None, 'не удалось открыть терминал — запусти implement-plan сам'
-
-def launch_desktop(root, prompt):
-    if subprocess.run(['open', '-Ra', 'Claude'], capture_output=True).returncode != 0:
-        return False
-    folder = urllib.parse.quote(str(root), safe='')
-    url = f'claude://code/new?folder={folder}&q={urllib.parse.quote(prompt, safe="")}'
-    return subprocess.run(['open', url], capture_output=True).returncode == 0
 
 def launch_ghostty(root, session):
     if subprocess.run(['open', '-Ra', 'Ghostty'], capture_output=True).returncode != 0:
@@ -957,6 +950,10 @@ def cli_serve(argv):
     server.server_close()
     if server.implementing:
         print(f'implementation started: {server.implementing}', flush=True)
+        if server.implementing == 'desktop':
+            root, prompt = implement_session(plan_path)
+            print(f'folder: {root}', flush=True)
+            print(f'prompt: {prompt}', flush=True)
     elif server.submitted is not None:
         print(f'review submitted: {server.submitted} open comments', flush=True)
         print('Если агент не подхватил ревью сам, напиши ему: доработай план по комментариям', flush=True)
