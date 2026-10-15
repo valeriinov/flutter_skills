@@ -294,6 +294,7 @@ def stem_errors(stems):
 
 def question_problems(spec):
     terms = {term.get('id') for term in spec.get('terms', [])}
+    source = source_values(spec)
     found = []
     for question in spec.get('questions', []):
         where = f'questions.{question.get("id")}'
@@ -305,6 +306,7 @@ def question_problems(spec):
         if recommended and recommended not in keys:
             found.append(f'{where}: recommendation {recommended} is not an option')
         found += [f'{where}: unknown term {term}' for term in question.get('terms', []) if term not in terms]
+        found += [f'{where}: unknown key {key}' for key in question.get('keys', []) if key not in source]
     return found
 
 
@@ -529,7 +531,7 @@ def key_entry(key, spec, index, previous_values):
         'batch': batch_of(key, spec.get('batches', [])),
         'terms': terms,
         'questions': [question['id'] for question in spec.get('questions', [])
-                      if set(question.get('terms', [])) & set(terms)],
+                      if set(question.get('terms', [])) & set(terms) or key in question.get('keys', [])],
         'risk': index['risk'].get(key),
         'reviewRows': [f'{row["lang"]}.{key}' for row in rows],
         'codeDefect': index['codeDefects'].get(key),
@@ -705,7 +707,11 @@ class Draft:
 
     def name(self, editor):
         doc = self.editors.get(editor, {})
-        return doc.get('name') or doc.get('email') or editor
+        return doc.get('name') or doc.get('email') or f'editor {self.editor_number(editor)}'
+
+    def editor_number(self, editor):
+        seen = sorted(self.editors, key=lambda other: (str(self.editors[other].get('firstSeenAt') or ''), other))
+        return seen.index(editor) + 1 if editor in seen else len(seen) + 1
 
     def set_value(self, lang, key, value):
         previous = self.values[lang].get(key)
@@ -802,9 +808,8 @@ def latest_answers(events):
 def answer_slots(draft, answers):
     slots = {}
     for object_id, by_editor in answers.items():
-        slot = slots.setdefault(slot_of(draft, object_id), {})
         for editor, event in by_editor.items():
-            slot.setdefault(editor, []).append(event)
+            slots.setdefault(slot_of(draft, object_id, editor), {}).setdefault(editor, []).append(event)
     return slots
 
 
@@ -826,10 +831,14 @@ def apply_displaced_keeps(draft, events, applied):
             apply_answer(draft, event['object'], event)
 
 
-def slot_of(draft, object_id):
+def slot_of(draft, object_id, editor):
     kind, _, rest = object_id.partition('.')
     if kind == 'key' and rest in draft.keys:
         return f'{edit_lang(draft, rest)}.{rest}'
+    if kind == 'source':
+        return f'{draft.source}.{rest}'
+    if kind == 'comment':
+        return f'{object_id}.{editor}'
     return rest if kind == 'review' else object_id
 
 
@@ -864,8 +873,8 @@ def record_dispute(draft, slot, by_editor, winner, losers):
 
 def apply_answer(draft, object_id, event):
     kind, _, rest = object_id.partition('.')
-    handler = {'key': apply_key, 'review': apply_review, 'term': apply_term, 'q': apply_question,
-               'note': apply_note}.get(kind)
+    handler = {'key': apply_key, 'source': apply_source, 'review': apply_review, 'term': apply_term,
+               'q': apply_question, 'note': apply_note, 'comment': apply_comment}.get(kind)
     outcome = handler(draft, rest, event) if handler else None
     print(f'answer {object_id}: {outcome or "skipped, unknown object"} ({draft.name(event["by"])})')
 
@@ -882,6 +891,15 @@ def apply_key(draft, key, event):
     if pick != 'custom' or is_blank(event.get('text')):
         return 'kept'
     draft.set_value(edit_lang(draft, key), key, event['text'])
+    return 'new value'
+
+
+def apply_source(draft, key, event):
+    if key not in draft.keys:
+        return None
+    if event.get('pick') != 'custom' or is_blank(event.get('text')):
+        return 'kept'
+    draft.set_value(draft.source, key, event['text'])
     return 'new value'
 
 
@@ -953,6 +971,13 @@ def apply_note(draft, note_id, event):
     if is_blank(event.get('text')):
         return None
     draft.free_text.append((f'note.{note_id}', event['by'], event['text']))
+    return 'comment'
+
+
+def apply_comment(draft, key, event):
+    if is_blank(event.get('text')):
+        return None
+    draft.free_text.append((f'comment.{key}', event['by'], event['text']))
     return 'comment'
 
 

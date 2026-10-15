@@ -1,0 +1,57 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            0
+          ],
+          {
+            "lang": "en",
+            "key": "homeTitle",
+            "severity": "minor",
+            "reason": "term",
+            "was": "My plants",
+            "proposal": "Plants",
+            "why": "shorter title"
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/conflicts.md"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "dispute en.homeTitle: editor 1 over editor 2",
+    "- `en.homeTitle` — winner editor 1 (key.homeTitle): \"My garden\"",
+    "  - over editor 2 (review.en.homeTitle): accept"
+  ],
+  "absent": [
+    "ed-a",
+    "ed-b"
+  ]
+}

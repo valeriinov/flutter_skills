@@ -14,6 +14,7 @@
   color-scheme: light;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--ground); color: var(--ink); font: 15px/1.55 var(--font-body); padding-inline: 16px; padding-block: 0 48px; }
 .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
 header.top { padding-block: 28px 4px; display: grid; gap: 14px; }
@@ -61,7 +62,15 @@ button { font-family: inherit; }
 .forms { display: grid; gap: 4px; }
 .forms .form { display: grid; grid-template-columns: 3.6em minmax(0, 1fr); gap: 8px; }
 .forms .form i { font: normal 12px/1.9 var(--font-mono); color: var(--muted); }
-.pair:has(> textarea) > b, .form:has(> textarea) > i { padding-top: 9px; }
+.pair:has(> textarea) > b, .form:has(> .field) > i { padding-top: 9px; }
+.forms .form > .field-note { grid-column: 2; }
+.pair.with-role { grid-template-columns: 5.6em minmax(0, 1fr); }
+.pair .role { display: block; font: 500 11px/1.3 var(--font-body); text-transform: none; letter-spacing: 0; }
+.pair.base { background: var(--brand-bg2); border: 1px solid var(--brand-line); border-radius: 10px; padding: 8px; margin: 0 -9px; }
+.pair.base .role { color: var(--brand-strong); }
+.pair.readonly { background: none; border: 0; border-radius: 0; padding: 0; margin: 0; }
+.pair.readonly > .field { color: var(--muted); }
+.pair.conflict { border-left: 2px solid var(--danger); padding-left: 8px; }
 .opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .opt { text-align: left; font: 500 14px/1.35 var(--font-body); padding: 9px 13px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; align-content: center; gap: 2px; max-width: 100%; }
 .opt:hover:not(:disabled) { border-color: var(--brand-line); background: var(--brand-bg2); }
@@ -81,8 +90,18 @@ button { font-family: inherit; }
 textarea, input[type="search"], input[type="email"], select { font: 14px/1.45 var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 9px 12px; width: 100%; min-width: 0; }
 textarea { resize: vertical; min-height: 2.6em; }
 textarea:disabled { background: var(--surface-sunk); color: var(--ink); }
-textarea.edited { border-color: var(--brand); }
-.card[data-pending] textarea, .card[data-pending] .check { opacity: 0.75; }
+.field { position: relative; min-width: 0; }
+.field > textarea { display: block; }
+.field.edited textarea { border-color: var(--brand); background: var(--brand-soft); padding-right: 40px; }
+.restore-btn { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 7px; background: none; color: var(--muted); cursor: pointer; }
+.restore-btn svg { width: 16px; height: 16px; }
+.restore-btn:hover:not(:disabled) { background: var(--brand-bg2); color: var(--brand); }
+.restore-btn:disabled { color: var(--muted); cursor: default; }
+.pair > .field-note { grid-column: 2; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13px; }
+.forms .form > .field-note { font-size: 13px; }
+.edited-note { color: var(--muted); overflow-wrap: anywhere; }
+.edited-note s { color: var(--ink-soft); }
+[data-pending] textarea, [data-pending] .check { opacity: 0.75; }
 .foot { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
 .check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
 .check input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; min-width: 18px; min-height: 18px; margin: 0; border: 1.5px solid var(--muted); border-radius: 5px; background: var(--surface) center / 12px 12px no-repeat; cursor: pointer; }
@@ -139,6 +158,16 @@ body.has-downloads .export { display: grid; }
 .ok-mark { color: var(--ok); font-weight: 700; }
 .term-list > :first-child { border-top: 0; }
 .note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.key-block { display: grid; gap: 10px; min-width: 0; }
+.foot-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
+.card > .check { justify-self: start; }
+.toggle-btn { display: inline-flex; gap: 5px; align-items: center; font: 600 13px/1.2 var(--font-body); padding: 4px 9px; border-radius: 8px; border: 1px solid var(--brand-line); background: var(--surface); color: var(--brand); cursor: pointer; }
+.toggle-btn[aria-expanded="true"] { background: var(--brand-soft); }
+.toggle-btn .n { font: 500 12px/1 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.toggle-btn .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.card .head .chip { padding: 3px 7px; border-radius: 6px; white-space: normal; }
+.others li.differs { border-left: 2px solid var(--warn); padding-left: 8px; }
+.others .diverge-line { color: var(--warn); font-weight: 700; }
 @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 .btn { font: 700 14px/1 var(--font-body); padding: 11px 18px; border-radius: 12px; border: 1px solid var(--brand-line); background: var(--surface); color: var(--brand); cursor: pointer; }
@@ -179,6 +208,7 @@ body.has-downloads .export { display: grid; }
 .table-wrap th, .table-wrap td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--line); }
 .table-wrap th { font-weight: 700; color: var(--ink-soft); }
 .filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+.filters.single { grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 560px) { .filters { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) {
   .table-wrap { overflow-x: visible; }
@@ -189,6 +219,11 @@ body.has-downloads .export { display: grid; }
   .table-wrap td { padding: 2px 0; border: 0; }
   .table-wrap td:empty { display: none; }
   .table-wrap td::before { content: attr(data-label) " · "; font: 500 11px/1.6 var(--font-mono); color: var(--muted); }
+  .card .head .left { gap: 4px 6px; }
+  .pair.with-role { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pair.with-role > .was, .pair.with-role > .field-note { grid-column: 1; }
+  .pair.with-role > b { display: flex; gap: 5px; align-items: baseline; line-height: 1.3; padding-top: 0; }
+  .pair.with-role .role::before { content: "· "; }
   nav.tabs { min-width: 0; }
   .tabs .segmented { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .tabs .segmented::-webkit-scrollbar { display: none; }
@@ -201,6 +236,8 @@ body.has-downloads .export { display: grid; }
   .link-btn { display: inline-flex; align-items: center; min-height: 44px; padding-block: 0; }
   .segmented button, .opt, .more, .btn, .save-btn, .check { min-height: 44px; }
   select, input[type="search"], input[type="email"] { min-height: 44px; }
+  .toggle-btn { position: relative; }
+  .toggle-btn::after { content: ""; position: absolute; inset: -8px 0; }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -263,7 +300,10 @@ body.has-downloads .export { display: grid; }
     <section class="panel" id="panel-brief" role="tabpanel" hidden></section>
     <section class="panel" id="panel-questions" role="tabpanel"></section>
     <section class="panel" id="panel-terms" role="tabpanel" hidden></section>
-    <section class="panel" id="panel-review" role="tabpanel" hidden></section>
+    <section class="panel" id="panel-review" role="tabpanel" hidden>
+      <div class="filters single"><input type="search" id="review-search"></div>
+      <div class="panel" id="review-list"></div>
+    </section>
     <section class="panel" id="panel-keys" role="tabpanel" hidden>
       <p class="intro" id="keys-intro"></p>
       <p class="intro" id="keys-legend"></p>
@@ -294,7 +334,7 @@ body.has-downloads .export { display: grid; }
   const PAGE_SIZE = 40;
   const TEXT_DELAY_MS = 900;
   const CONFIDENCE_ORDER = ['low', 'medium', 'high'];
-  const FLAGS = ['conflict', 'invalid', 'project', 'added', 'changed'];
+  const FLAGS = ['conflict', 'invalid', 'project', 'added', 'changed', 'commented', 'review'];
   const LIST_IDS = { keys: 'key', terms: 'id', questions: 'id', review: 'id', batches: 'id' };
   const TABS = ['brief', 'questions', 'terms', 'review', 'keys', 'summary'];
   const EMPTY = Object.freeze({ pick: null, text: null, reviewed: false });
@@ -309,6 +349,7 @@ body.has-downloads .export { display: grid; }
   const pressed = (on) => ` aria-pressed="${on ? 'true' : 'false'}"`;
   const dis = () => (writable ? '' : ' disabled');
   const textOf = (v) => (v && typeof v === 'object' ? Object.entries(v).map(([f, s]) => `${f}: ${s}`).join(' · ') : String(v ?? ''));
+  const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
   const textPresent = (v) => (v && typeof v === 'object' ? Object.values(v).some((s) => String(s ?? '').trim() !== '') : String(v ?? '').trim() !== '');
   const isKey = (object) => object.startsWith('key.');
   const roundOf = (ev) => (typeof ev.round === 'number' ? ev.round : 1);
@@ -372,6 +413,7 @@ body.has-downloads .export { display: grid; }
   let activeTab = 'questions';
   let selectedRound = LAST_ROUND;
   let closeOrder = [];
+  let orderLang = null;
   let R = null;
   let keysById = new Map();
   let previousRound = null;
@@ -379,9 +421,12 @@ body.has-downloads .export { display: grid; }
   let termsById = new Map();
   let questionsById = new Map();
   let reviewById = new Map();
+  let reviewByKey = new Map();
   let batchById = new Map();
   let keyOrder = [];
   const keyFilter = { confidence: 'all', batch: 'all', flag: 'all', query: '', unreviewed: false, shown: PAGE_SIZE };
+  let reviewQuery = '';
+  let keysRenderPending = false;
   const openedTerms = new Set();
   let noteDraft = null;
 
@@ -393,6 +438,8 @@ body.has-downloads .export { display: grid; }
     termsById = new Map(R.terms.map((x) => [x.id, x]));
     questionsById = new Map(R.questions.map((q) => [q.id, q]));
     reviewById = new Map(R.review.map((r) => [r.id, r]));
+    reviewByKey = new Map();
+    for (const r of R.review) reviewByKey.set(r.key, [...(reviewByKey.get(r.key) || []), r]);
     batchById = new Map(R.batches.map((b) => [b.id, b]));
     const rank = (k) => CONFIDENCE_ORDER.indexOf(k.confidence);
     keyOrder = R.keys.map((k, i) => [k, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([k]) => k);
@@ -427,10 +474,72 @@ body.has-downloads .export { display: grid; }
     return c.length === 1 && c[0].lang === SRC ? SRC : TGT;
   }
 
+  const isSourceDoc = (object) => object.startsWith('source.');
+  const isNoteLike = (object) => object.startsWith('note.') || object.startsWith('comment.');
+  const rowLangOf = (docId) => (isSourceDoc(docId) ? SRC : TGT);
+
+  function keyEntryOf(docId) {
+    if (!isKey(docId) && !isSourceDoc(docId)) return null;
+    return keysById.get(docId.slice(docId.indexOf('.') + 1)) || null;
+  }
+
   function plainKeyEntry(docId) {
-    if (!isKey(docId)) return null;
-    const e = keysById.get(docId.slice(4));
+    const e = keyEntryOf(docId);
     return e && !isConflict(e) ? e : null;
+  }
+
+  function slotObjects(e, lang) {
+    const objects = (reviewByKey.get(e.key) || []).filter((r) => r.lang === lang).map((r) => `review.${r.id}`);
+    if (lang === SRC) objects.push(`source.${e.key}`);
+    if (editLangOf(e) === lang) objects.push(`key.${e.key}`);
+    return objects;
+  }
+
+  const answerOf = (object, id) => (id === viewerId ? base(object) : latest(object).get(id) || EMPTY);
+
+  function setsValue(object, ev) {
+    if (object.startsWith('review.')) return true;
+    if (ev.pick === 'custom') return textPresent(ev.text);
+    return ev.pick === 'project' || ev.pick === 'artifact';
+  }
+
+  function outranks([objectA, a], [objectB, b]) {
+    const valueA = setsValue(objectA, a);
+    if (valueA !== setsValue(objectB, b)) return valueA;
+    return String(a.at) > String(b.at);
+  }
+
+  function slotWinner(e, lang, order, skip) {
+    const objects = slotObjects(e, lang).filter((object) => object !== skip);
+    for (const id of order) {
+      const answers = objects.map((object) => [object, answerOf(object, id)]).filter(([object, ev]) => hasAnswer(object, ev));
+      if (answers.length) return answers.reduce((best, cur) => (outranks(cur, best) ? cur : best));
+    }
+    return null;
+  }
+
+  function slotText(e, lang, order, skip) {
+    const winner = slotWinner(e, lang, order, skip) || projectSourceWinner(e, lang, order, skip);
+    return winner ? answerText(e, lang, ...winner) : valueOf(e, lang);
+  }
+
+  function projectSourceWinner(e, lang, order, skip) {
+    if (lang !== SRC || editLangOf(e) === SRC) return null;
+    const winner = slotWinner(e, TGT, order, skip);
+    return winner && winner[0] === `key.${e.key}` && winner[1].pick === 'project' ? winner : null;
+  }
+
+  function answerText(e, lang, object, ev) {
+    if (ev.pick === 'custom' && textPresent(ev.text)) return ev.text;
+    if (object.startsWith('review.')) return reviewAcceptText(e, lang, object, ev);
+    const change = ev.pick === 'project' ? conflictsOf(e).find((c) => c.lang === lang) : null;
+    return change ? change.value : valueOf(e, lang);
+  }
+
+  function reviewAcceptText(e, lang, object, ev) {
+    const row = reviewById.get(object.slice(7));
+    if (ev.pick !== 'accept' || !row || !textPresent(row.proposal)) return valueOf(e, lang);
+    return row.proposal;
   }
 
   function termOptions(term) {
@@ -475,7 +584,7 @@ body.has-downloads .export { display: grid; }
   }
 
   function valueLabel(object, ev) {
-    if (object.startsWith('note.')) return textOf(ev.text);
+    if (isNoteLike(object)) return textOf(ev.text);
     if (ev.pick === 'custom' || (!ev.pick && textPresent(ev.text))) return t('answerCustom', { text: textOf(ev.text) });
     if (!ev.pick) return isKey(object) && ev.reviewed === true ? t('answerReviewed') : t('answerNone');
     const o = optionsFor(object).find((x) => x.key === ev.pick);
@@ -503,6 +612,7 @@ body.has-downloads .export { display: grid; }
   }
 
   const divergeChip = () => `<span class="chip diverge" data-diverge hidden>${esc(t('badgeDiverge'))}</span>`;
+  const RESTORE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/></svg>';
   const othersSlot = () => '<div class="others" data-others hidden></div>';
   const metaFoot = () => '<div class="foot"><span class="small muted" data-meta></span></div>';
 
@@ -518,12 +628,17 @@ body.has-downloads .export { display: grid; }
     return `<textarea class="ctl" data-form="${esc(form)}" id="${esc(id)}" rows="${form ? 1 : 2}" placeholder="${esc(t('customPlaceholder'))}" aria-label="${esc(`${label} ${form}`.trim())}"${dis()}>${esc(text ?? '')}</textarea>`;
   }
 
-  function editorHtml(docId, shape, current, label) {
+  function editorHtml(docId, shape, current, label, wrap = (html) => html) {
     if (shape && typeof shape === 'object') {
       const cur = current && typeof current === 'object' ? current : {};
-      return `<div class="forms">${Object.keys(shape).map((form) => `<div class="form"><i>${esc(form)}</i>${area(docId, form, cur[form], label)}</div>`).join('')}</div>`;
+      return `<div class="forms">${Object.keys(shape).map((form) => `<div class="form"><i>${esc(form)}</i>${wrap(area(docId, form, cur[form], label), form)}</div>`).join('')}</div>`;
     }
-    return area(docId, '', typeof current === 'string' ? current : '', label);
+    return wrap(area(docId, '', typeof current === 'string' ? current : '', label), '');
+  }
+
+  function restorableField(html, form) {
+    const field = `<div class="field" data-slot="${esc(form)}">${html}<button class="restore-btn ctl" data-act="restore" hidden${dis()}>${RESTORE_ICON}</button></div>`;
+    return form ? `${field}<div class="field-note"><span class="edited-note" data-edited="${esc(form)}" hidden></span></div>` : field;
   }
 
   function pickBlock(docId, options, shape, label) {
@@ -553,15 +668,14 @@ body.has-downloads .export { display: grid; }
     document.getElementById('email-input').placeholder = t('emailPlaceholder');
     document.getElementById('email-save').textContent = t('emailSave');
     document.getElementById('close-open').textContent = t('closeRound');
-    document.getElementById('close-title').textContent = t('closeTitle');
-    document.getElementById('close-intro').textContent = t('closeIntro');
-    document.getElementById('close-confirm').textContent = t('closeConfirm');
     document.getElementById('close-cancel').textContent = t('cancel');
     document.getElementById('keys-intro').textContent = t('keysIntro');
     document.getElementById('keys-legend').textContent = t('confidenceLegend');
-    const search = document.getElementById('keys-search');
-    search.placeholder = t('searchPlaceholder');
-    search.setAttribute('aria-label', t('searchPlaceholder'));
+    for (const id of ['keys-search', 'review-search']) {
+      const search = document.getElementById(id);
+      search.placeholder = t('searchPlaceholder');
+      search.setAttribute('aria-label', t('searchPlaceholder'));
+    }
     document.getElementById('keys-batch').setAttribute('aria-label', t('filterBatch'));
     document.getElementById('keys-flag').setAttribute('aria-label', t('filterFlag'));
     document.getElementById('keys-confidence').setAttribute('aria-label', t('filterConfidence'));
@@ -587,7 +701,7 @@ body.has-downloads .export { display: grid; }
     document.getElementById('round-detail').textContent = parts.join(' · ');
     const canClose = isOwner && Boolean(dbNs) && state === 'open' && mode !== 'lost';
     document.getElementById('close-open').hidden = !canClose;
-    if (!canClose) document.getElementById('close-panel').hidden = true;
+    if (!canClose && orderLang === null) document.getElementById('close-panel').hidden = true;
     const hint = document.getElementById('round-hint');
     hint.hidden = !(isOwner && state === 'closed' && selectedRound === LAST_ROUND);
     hint.textContent = t('nextRoundHint', { n: selectedRound + 1 });
@@ -829,15 +943,22 @@ body.has-downloads .export { display: grid; }
 
   function renderReview() {
     const groups = new Map();
-    for (const r of R.review) {
+    for (const r of R.review.filter(matchesReview)) {
       if (!groups.has(r.lang)) groups.set(r.lang, []);
       groups.get(r.lang).push(r);
     }
     const html = [...groups.entries()].map(([lang, rows]) =>
       `<div class="part"><h2>${esc(t('reviewGroup', { lang }))} <span class="count">${rows.length}</span></h2>${rows.map(reviewCard).join('')}</div>`);
-    document.getElementById('panel-review').innerHTML = html.length
+    document.getElementById('review-list').innerHTML = html.length
       ? `<p class="intro">${fmt(t('reviewIntro', { n: R.review.length }))}</p>${html.join('')}`
-      : `<div class="empty">${esc(t('reviewEmpty'))}</div>`;
+      : `<div class="empty">${esc(t(R.review.length ? 'keysEmpty' : 'reviewEmpty'))}</div>`;
+  }
+
+  function matchesReview(r) {
+    if (!reviewQuery) return true;
+    const answers = [...latest(`review.${r.id}`).values()].map((ev) => textOf(ev.text));
+    const hay = [r.key, textOf(r.was), textOf(r.proposal), r.why, r.reason ? tMap('reason', r.reason) : '', ...answers].join(' ').toLowerCase();
+    return hay.includes(reviewQuery);
   }
 
   function reviewCard(r) {
@@ -857,14 +978,10 @@ body.has-downloads .export { display: grid; }
       </div>
       ${r.why ? `<p class="small muted flat">${fmt(r.why)}</p>` : ''}
       ${pickBlock(docId, opts, r.was, r.key)}
+      <p class="small muted flat" data-overridden hidden>${esc(t('reviewOverridden'))}</p>
       ${othersSlot()}
       ${metaFoot()}
     </article>`;
-  }
-
-  function keyCustomText(docId) {
-    const a = mine(docId);
-    return a.pick === 'custom' && textPresent(a.text) ? a.text : null;
   }
 
   function keyFlags(e) {
@@ -886,18 +1003,25 @@ body.has-downloads .export { display: grid; }
     const f = keyFilter;
     if (f.confidence !== 'all' && e.confidence !== f.confidence) return false;
     if (f.batch !== 'all' && e.batch !== f.batch) return false;
-    if (f.flag !== 'all' && !keyFlags(e).has(f.flag)) return false;
+    if (f.flag !== 'all' && !hasFlag(e, f.flag)) return false;
     if (f.unreviewed && reviewedByAnyone(`key.${e.key}`)) return false;
     if (!f.query) return true;
-    const hay = `${e.key} ${textOf(valueOf(e, SRC))} ${textOf(valueOf(e, TGT))} ${textOf(keyCustomText(`key.${e.key}`))}`.toLowerCase();
+    const comments = [...latest(`comment.${e.key}`).values()].map((ev) => textOf(ev.text));
+    const texts = [valueOf(e, SRC), valueOf(e, TGT), slotText(e, SRC, [viewerId]), slotText(e, TGT, [viewerId])].map(textOf);
+    const hay = [e.key, ...texts, ...comments].join(' ').toLowerCase();
     return hay.includes(f.query);
+  }
+
+  function hasFlag(e, flag) {
+    if (flag === 'commented') return answeredByAnyone(`comment.${e.key}`);
+    if (flag === 'review') return reviewByKey.has(e.key);
+    return keyFlags(e).has(flag);
   }
 
   function keyBadges(e) {
     const flags = keyFlags(e);
     const chip = (flag, text) => `<span class="chip flag-${flag}">${esc(text)}</span>`;
     return [
-      divergeChip(),
       e.confidence ? confidenceChip(e.confidence) : '',
       flags.has('conflict') ? chip('conflict', t('badgeConflict')) : '',
       flags.has('invalid') ? chip('invalid', t('badgeInvalid')) : '',
@@ -905,7 +1029,6 @@ body.has-downloads .export { display: grid; }
       flags.has('added') ? chip('added', t('badgeAdded')) : '',
       flags.has('changed') ? chip('changed', t('badgeChanged', { langs: e.changed.join(', '), n: previousRound })) : '',
       e.identical ? `<span class="chip">${esc(t('badgeIdentical'))}</span>` : '',
-      `<span class="chip edited" data-edited hidden>${esc(t('badgeEdited'))}</span>`,
     ].join('');
   }
 
@@ -934,32 +1057,59 @@ body.has-downloads .export { display: grid; }
   }
 
   function keyCard(e) {
-    const docId = `key.${e.key}`;
-    const a = mine(docId);
-    const conflict = isConflict(e);
-    const custom = keyCustomText(docId);
     const batch = batchById.get(e.batch);
     const reasons = keyReasons(e);
-    const rows = [SRC, TGT].map((lang) => {
-      const editable = !conflict && lang === TGT;
-      const body = editable ? editorHtml(docId, valueOf(e, TGT), custom ?? valueOf(e, TGT), e.key) : formsView(valueOf(e, lang));
-      return `<div class="pair"><b>${esc(lang)}</b>${body}${wasLine(e, lang)}</div>`;
-    }).join('');
-    const choice = conflict ? pickBlock(docId, conflictOptions(e), valueOf(e, editLangOf(e)), e.key) : '';
-    const restore = conflict ? '' : `<button class="link-btn ctl" data-act="restore"${custom === null ? ' hidden' : ''}${dis()}>${esc(t('restore'))}</button>`;
-    return `<article class="card${e.confidence === 'low' ? ' low' : ''}" data-doc="${esc(docId)}">
+    return `<article class="card${e.confidence === 'low' ? ' low' : ''}" data-card="${esc(e.key)}">
       <div class="head"><div class="left"><span class="key">${esc(e.key)}</span><span class="small muted">${esc(batch ? batch.label : e.batch || '')}</span></div>
         <div class="left">${keyBadges(e)}</div></div>
       ${reasons.length ? `<ul class="reasons">${reasons.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
-      ${rows}
-      ${choice}
-      ${othersSlot()}
-      <div class="foot">
-        <label class="check"><input type="checkbox" class="ctl" data-field="reviewed" id="rev-${esc(e.key)}"${a.reviewed === true ? ' checked' : ''}${dis()}> ${esc(t('reviewedLabel'))}</label>
-        <span class="small muted" data-meta></span>
-        <span>${restore}</span>
-      </div>
+      ${sourceBlock(e)}
+      ${targetBlock(e)}
+      <div class="others" data-panel-body="others" hidden></div>
+      ${commentBlock(e)}
+      <label class="check"><input type="checkbox" class="ctl" data-field="reviewed" data-object="${esc(`key.${e.key}`)}" id="rev-${esc(e.key)}"${mine(`key.${e.key}`).reviewed === true ? ' checked' : ''}${dis()}> ${esc(t('reviewedLabel'))}</label>
     </article>`;
+  }
+
+  function textRow(docId, e, lang, editable) {
+    const shape = valueOf(e, lang);
+    const body = editable ? editorHtml(docId, shape, slotText(e, lang, [viewerId]), e.key, restorableField) : `<div class="field">${formsView(shape)}</div>`;
+    const note = editable && typeof shape !== 'object' ? '<span class="edited-note" data-edited="" hidden></span>' : '';
+    const base = lang === SRC;
+    const conflict = conflictsOf(e).some((c) => c.lang === lang);
+    return `<div class="pair with-role${base ? ' base' : ''}${editable ? '' : ' readonly'}${conflict ? ' conflict' : ''}"><b>${esc(lang)}<span class="role">${esc(t(base ? 'roleSource' : 'roleTarget'))}</span></b>${body}${wasLine(e, lang)}
+      <div class="field-note">${note}<span class="small muted" data-meta></span></div></div>`;
+  }
+
+  function sourceBlock(e) {
+    const docId = `source.${e.key}`;
+    return `<div class="key-block" data-doc="${esc(docId)}">${textRow(docId, e, SRC, !isConflict(e))}</div>`;
+  }
+
+  function targetBlock(e) {
+    const docId = `key.${e.key}`;
+    const conflict = isConflict(e);
+    const choice = conflict ? `<p class="small muted flat">${esc(t('conflictHint'))}</p>${pickBlock(docId, conflictOptions(e), valueOf(e, editLangOf(e)), e.key)}` : '';
+    return `<div class="key-block" data-doc="${esc(docId)}">
+      ${textRow(docId, e, TGT, !conflict)}
+      ${choice}
+      <div class="foot">
+        <span class="foot-actions">
+          <button class="toggle-btn" data-act="toggle" data-panel="comment" aria-expanded="false">${esc(t('commentToggle'))}<span class="n" data-count hidden></span></button>
+          <button class="toggle-btn" data-act="toggle" data-panel="others" aria-expanded="false" hidden>${esc(t('othersTitle'))}<span class="n" data-count hidden></span><span class="dot" data-diverge hidden></span></button>
+        </span>
+      </div>
+    </div>`;
+  }
+
+  function commentBlock(e) {
+    const docId = `comment.${e.key}`;
+    const label = t('commentToggle');
+    return `<div class="key-block" data-doc="${esc(docId)}" data-panel-body="comment" hidden>
+      <textarea class="ctl" data-form="" id="${esc(`cm-${e.key}`)}" rows="2" placeholder="${esc(t('notePlaceholder'))}" aria-label="${esc(`${label} ${e.key}`)}"${dis()}></textarea>
+      ${othersSlot()}
+      ${metaFoot()}
+    </div>`;
   }
 
   function renderKeyFilters() {
@@ -973,7 +1123,9 @@ body.has-downloads .export { display: grid; }
     batch.value = keyFilter.batch;
     const flagCounts = {};
     for (const k of R.keys) for (const f of keyFlags(k)) flagCounts[f] = (flagCounts[f] || 0) + 1;
-    const flagLabels = { conflict: 'badgeConflict', invalid: 'badgeInvalid', project: 'badgeProject', added: 'badgeAdded', changed: 'filterChanged' };
+    flagCounts.commented = R.keys.filter((k) => answeredByAnyone(`comment.${k.key}`)).length;
+    flagCounts.review = R.keys.filter((k) => reviewByKey.has(k.key)).length;
+    const flagLabels = { conflict: 'badgeConflict', invalid: 'badgeInvalid', project: 'badgeProject', added: 'badgeAdded', changed: 'filterChanged', commented: 'filterCommented', review: 'filterReviewRows' };
     const flag = document.getElementById('keys-flag');
     flag.innerHTML = `<option value="all">${esc(t('filterFlagAll'))}</option>${FLAGS.filter((f) => flagCounts[f]).map((f) => `<option value="${f}">${esc(t(flagLabels[f]))} (${flagCounts[f]})</option>`).join('')}`;
     if (keyFilter.flag !== 'all' && !flagCounts[keyFilter.flag]) keyFilter.flag = 'all';
@@ -993,10 +1145,11 @@ body.has-downloads .export { display: grid; }
     document.querySelectorAll('#keys-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
   }
 
-  function editorLine(object, id, ev) {
+  function editorLine(object, id, ev, lang) {
     const me = id === viewerId ? ` ${t('you')}` : '';
     const reviewed = isKey(object) && ev.reviewed === true ? ` · <span class="ok">${esc(t('reviewedLabel'))}</span>` : '';
-    return `<span class="who">${esc(who(id) + me)}</span> · ${fmt(valueLabel(object, ev))}${reviewed} · <span class="when">${esc(when(ev.at))}</span>`;
+    const tag = lang ? ` · ${esc(lang.toUpperCase())}` : '';
+    return `<span class="who">${esc(who(id) + me)}</span>${tag} · ${fmt(valueLabel(object, ev))}${reviewed} · <span class="when">${esc(when(ev.at))}</span>`;
   }
 
   function sortedEvents(object) {
@@ -1017,6 +1170,8 @@ body.has-downloads .export { display: grid; }
       ['tabTerms', R.terms.map((x) => [`term.${x.id}`, fmt(`${x.source} · ${x.target || '—'}`), false])],
       ['tabReview', R.review.map((r) => [`review.${r.id}`, esc(`${r.lang} · ${r.key}`), true])],
       ['tabKeys', R.keys.map((k) => [`key.${k.key}`, esc(k.key), true])],
+      ['sectionSource', R.keys.map((k) => [`source.${k.key}`, esc(k.key), true])],
+      ['sectionKeyComments', R.keys.map((k) => [`comment.${k.key}`, esc(k.key), true])],
     ];
   }
 
@@ -1056,8 +1211,9 @@ body.has-downloads .export { display: grid; }
       .filter(([, ev]) => hasAnswer(item.object, ev))
       .sort((a, b) => String(b[1].at).localeCompare(String(a[1].at)))
       .map(([id, ev]) => `<li>${editorLine(item.object, id, ev)}${id === viewerId && writable ? ownActions(item.object) : ''}</li>`).join('');
-    const key = isKey(item.object) ? keysById.get(item.object.slice(4)) : null;
-    const original = key ? `<span class="small muted">${esc(`${TGT}: ${textOf(valueOf(key, TGT))}`)}</span>` : '';
+    const key = keyEntryOf(item.object);
+    const lang = key && isKey(item.object) ? editLangOf(key) : rowLangOf(item.object);
+    const original = key ? `<span class="small muted">${esc(`${lang}: ${textOf(valueOf(key, lang))}`)}</span>` : '';
     const chip = item.diverged ? `<span class="chip diverge">${esc(t('badgeDiverge'))}</span>` : '';
     return `<li class="${item.diverged ? 'diverged' : ''}"><div class="sum-head"><span class="${item.mono ? 'key' : ''}">${item.label}</span><span class="own-actions">${chip}<button class="link-btn" data-act="goto" data-object="${esc(item.object)}">${esc(t('goto'))}</button></span></div>
       ${original}<ul class="sum-answers">${lines}</ul></li>`;
@@ -1074,7 +1230,8 @@ body.has-downloads .export { display: grid; }
     const pendingTerms = R.terms.filter((x) => !x.approved).map((x) => `term.${x.id}`);
     document.getElementById('n-terms').textContent = pendingTerms.length ? `${done(pendingTerms)}/${pendingTerms.length}` : '✓';
     document.getElementById('n-review').textContent = `${done(R.review.map((r) => `review.${r.id}`))}/${R.review.length}`;
-    document.getElementById('n-keys').textContent = `${done(R.keys.map((k) => `key.${k.key}`))}/${R.keys.length}`;
+    const keysDone = R.keys.filter((k) => answeredByAnyone(`key.${k.key}`) || answeredByAnyone(`source.${k.key}`)).length;
+    document.getElementById('n-keys').textContent = `${keysDone}/${R.keys.length}`;
     let answered = 0;
     for (const object of latestByObject.keys()) if (summaryTouched(object)) answered += 1;
     document.getElementById('n-summary').textContent = String(answered);
@@ -1086,24 +1243,96 @@ body.has-downloads .export { display: grid; }
     el.toggleAttribute('data-pending', pending);
     const meta = el.querySelector('[data-meta]');
     if (meta) {
-      const at = mine(docId).at;
+      const own = mine(docId);
+      const at = hasAnswer(docId, own) ? own.at : null;
       meta.textContent = pending ? t('saving') : (at ? t('yourAnswerAt', { when: when(at) }) : '');
     }
+    const e = keyEntryOf(docId);
+    if (e) { applyKeyOthers(e); return; }
     const chip = el.querySelector('[data-diverge]');
     if (chip) chip.hidden = !isDiverged(docId);
     const box = el.querySelector('[data-others]');
     if (!box) return;
-    const events = sortedEvents(docId);
-    box.hidden = !events.length;
-    if (!events.length) { box.innerHTML = ''; return; }
-    const others = [...latest(docId).entries()].filter(([id, ev]) => id !== viewerId && hasAnswer(docId, ev));
+    fillOthers(box, [[docId, '']]);
+    box.hidden = !otherAnswers([[docId, '']]).length;
+  }
+
+  function applyKeyOthers(e) {
+    const block = cardEl(`key.${e.key}`);
+    if (!block) return;
+    const card = block.closest('.card');
+    const objects = [[`source.${e.key}`, SRC], [`key.${e.key}`, editLangOf(e)]];
+    const panel = card.querySelector('[data-panel-body="others"]');
+    fillOthers(panel, objects, true);
+    const button = card.querySelector('[data-panel="others"]');
+    const count = new Set(otherAnswers(objects).map(([, , id]) => id)).size;
+    button.hidden = !count;
+    setCount(button, count);
+    const diverged = objects.some(([object]) => differsFromMine(object));
+    button.querySelector('[data-diverge]').hidden = !diverged;
+    button.title = diverged ? t('divergeHint') : '';
+    if (!count) { closePanel(card, 'others'); return; }
+    if (panel.dataset.opened || !diverged) return;
+    openPanel(card, 'others', true);
+  }
+
+  function fillOthers(box, objects, markDiffers) {
+    const events = objects.flatMap(([object, lang]) => historyEvents(object).filter((ev) => !isWithdrawnBy(object, ev.by)).map((ev) => [object, lang, ev.by, ev]))
+      .sort((a, b) => String(b[3].at).localeCompare(String(a[3].at)));
+    if (!events.length) { box.innerHTML = ''; return 0; }
+    const others = otherAnswers(objects);
+    const line = ([object, lang, id, ev]) => `<li>${editorLine(object, id, ev, lang)}</li>`;
+    const otherLine = (entry) => (markDiffers && differsFromMineAt(entry[0], entry[3])
+      ? `<li class="differs">${editorLine(entry[0], entry[2], entry[3], entry[1])} · <span class="diverge-line">${esc(t('divergeLine'))}</span></li>`
+      : line(entry));
     const wasOpen = Boolean(box.querySelector('details[open]'));
-    const lines = others.length
-      ? `<ul>${others.map(([id, ev]) => `<li>${editorLine(docId, id, ev)}</li>`).join('')}</ul>`
-      : `<span class="muted">${esc(t('othersNone'))}</span>`;
-    const history = events.map((ev) => `<li>${editorLine(docId, ev.by, ev)}</li>`).join('');
-    box.innerHTML = `<h4>${esc(t('othersTitle'))}</h4>${lines}
-      <details${wasOpen ? ' open' : ''}><summary>${esc(t('historyTitle', { n: events.length }))}</summary><ul>${history}</ul></details>`;
+    const lines = others.length ? `<ul>${others.map(otherLine).join('')}</ul>` : `<span class="muted">${esc(t('othersNone'))}</span>`;
+    const title = objects.every(([object]) => object.startsWith('comment.')) ? 'commentsTitle' : 'othersTitle';
+    box.innerHTML = `<h4>${esc(t(title))}</h4>${lines}
+      <details${wasOpen ? ' open' : ''}><summary>${esc(t('historyTitle', { n: events.length }))}</summary><ul>${events.map(line).join('')}</ul></details>`;
+    return events.length;
+  }
+
+  function historyEvents(object) {
+    return sortedEvents(object).filter((ev, i, list) => i === 0 || list[i - 1].by !== ev.by);
+  }
+
+  function isWithdrawnBy(object, by) {
+    const last = latest(object).get(by);
+    return Boolean(last) && !hasAnswer(object, last);
+  }
+
+  function otherAnswers(objects) {
+    return objects.flatMap(([object, lang]) => [...latest(object).entries()]
+      .filter(([id, ev]) => id !== viewerId && hasAnswer(object, ev))
+      .map(([id, ev]) => [object, lang, id, ev]));
+  }
+
+  function setCount(button, count) {
+    const n = button.querySelector('[data-count]');
+    n.hidden = !count;
+    n.textContent = String(count);
+  }
+
+  function closePanel(card, name) {
+    card.querySelector(`[data-panel-body="${name}"]`).hidden = true;
+    card.querySelector(`[data-panel="${name}"]`).setAttribute('aria-expanded', 'false');
+  }
+
+  function differsFromMine(object) {
+    return [...latest(object).entries()].some(([id, ev]) => id !== viewerId && differsFromMineAt(object, ev));
+  }
+
+  function differsFromMineAt(object, ev) {
+    const own = answerSignature(object, mine(object));
+    return own !== null && ![null, own].includes(answerSignature(object, ev));
+  }
+
+  function openPanel(card, name, open) {
+    const panel = card.querySelector(`[data-panel-body="${name}"]`);
+    panel.hidden = !open;
+    panel.dataset.opened = '1';
+    card.querySelector(`[data-panel="${name}"]`).setAttribute('aria-expanded', String(open));
   }
 
   function applyPressed(el, docId) {
@@ -1118,7 +1347,7 @@ body.has-downloads .export { display: grid; }
 
   function editorFill(docId, a) {
     const plain = plainKeyEntry(docId);
-    if (plain) return a.pick === 'custom' && textPresent(a.text) ? a.text : valueOf(plain, TGT);
+    if (plain) return slotText(plain, rowLangOf(docId), [viewerId]);
     return a.pick === 'custom' ? a.text : null;
   }
 
@@ -1137,15 +1366,60 @@ body.has-downloads .export { display: grid; }
         area.value = form ? (value && typeof value === 'object' ? value[form] ?? '' : '') : (typeof value === 'string' ? value : '');
       });
     }
-    if (plainKeyEntry(docId)) {
-      const edited = a.pick === 'custom' && textPresent(a.text);
-      el.querySelectorAll('textarea[data-form]').forEach((area) => area.classList.toggle('edited', edited));
-      el.querySelector('[data-edited]').hidden = !edited;
-      el.querySelector('[data-act="restore"]').hidden = !edited;
-    }
-    const rev = el.querySelector('[data-field="reviewed"]');
+    const plain = plainKeyEntry(docId);
+    if (plain) applyEdited(el, docId, plain, a);
+    const rev = isKey(docId) ? el.closest('.card').querySelector('[data-field="reviewed"]') : null;
     if (rev && !sent) rev.checked = a.reviewed === true;
+    if (docId.startsWith('review.')) applyOverridden(el, docId);
+    if (docId.startsWith('comment.')) applyComments(el, docId);
     applyEditors(el, docId);
+  }
+
+  function applyEdited(el, docId, e, a) {
+    const own = a.pick === 'custom' && textPresent(a.text) ? a.text : null;
+    const shown = slotText(e, rowLangOf(docId), [viewerId], docId);
+    el.querySelectorAll('[data-slot]').forEach((field) => applyEditedSlot(el, field, own, shown));
+  }
+
+  function applyEditedSlot(el, field, own, shown) {
+    const form = field.dataset.slot;
+    const was = slotPart(shown, form);
+    const edited = own !== null && (!form || slotPart(own, form) !== was);
+    field.classList.toggle('edited', edited);
+    const note = el.querySelector(`[data-edited="${CSS.escape(form)}"]`);
+    note.hidden = !edited;
+    note.innerHTML = `${esc(t('editedMark'))} · ${textPresent(was) ? `<s>${esc(clip(was, 80))}</s>` : '—'}`;
+    const restore = field.querySelector('[data-act="restore"]');
+    const label = t('restoreTo', { text: clip(was, 40) });
+    restore.hidden = !edited;
+    restore.title = label;
+    restore.setAttribute('aria-label', label);
+  }
+
+  function slotPart(value, form) {
+    if (!form) return textOf(value);
+    return value && typeof value === 'object' ? String(value[form] ?? '') : '';
+  }
+
+  function applyOverridden(el, docId) {
+    const row = reviewById.get(docId.slice(7));
+    const e = row && keysById.get(row.key);
+    if (!e) return;
+    el.querySelector('[data-overridden]').hidden = !isOverridden(docId, e, row.lang);
+  }
+
+  function isOverridden(docId, e, lang) {
+    if (!hasAnswer(docId, base(docId))) return false;
+    const winner = slotWinner(e, lang, [viewerId]);
+    return Boolean(winner) && winner[0] !== docId;
+  }
+
+  function applyComments(el, docId) {
+    const count = [...latest(docId).values()].filter((ev) => hasAnswer(docId, ev)).length;
+    const card = el.closest('.card');
+    setCount(card.querySelector('[data-panel="comment"]'), count);
+    if (!count || el.dataset.opened) return;
+    openPanel(card, 'comment', true);
   }
 
   function statusText() {
@@ -1247,8 +1521,13 @@ body.has-downloads .export { display: grid; }
     }
     if (!textPresent(value)) return null;
     const plain = plainKeyEntry(docId);
-    if (plain && JSON.stringify(value) === JSON.stringify(valueOf(plain, TGT))) return null;
+    if (plain && matchesSlot(value, slotText(plain, rowLangOf(docId), [viewerId], docId))) return null;
     return value;
+  }
+
+  function matchesSlot(value, shown) {
+    if (typeof value !== 'object') return slotPart(value, '') === slotPart(shown, '');
+    return Object.keys(value).every((form) => slotPart(value, form) === slotPart(shown, form));
   }
 
   function flushCard(docId) {
@@ -1281,10 +1560,16 @@ body.has-downloads .export { display: grid; }
     applyDoc(docId);
   }
 
-  function onRestore(docId) {
-    cancelTyping(docId);
-    save(docId, { pick: null, text: null });
-    applyDoc(docId);
+  function onRestore(docId, form) {
+    const area = form ? cardEl(docId).querySelector(`textarea[data-form="${CSS.escape(form)}"]`) : null;
+    if (!area) {
+      cancelTyping(docId);
+      save(docId, { pick: null, text: null });
+      applyDoc(docId);
+      return;
+    }
+    area.value = slotPart(slotText(plainKeyEntry(docId), rowLangOf(docId), [viewerId], docId), form);
+    flushCard(docId);
   }
 
   function tabFor(object) {
@@ -1295,7 +1580,7 @@ body.has-downloads .export { display: grid; }
   }
 
   function showKey(object) {
-    const key = object.slice(4);
+    const key = object.slice(object.indexOf('.') + 1);
     Object.assign(keyFilter, { confidence: 'all', batch: 'all', flag: 'all', query: key.toLowerCase(), unreviewed: false, shown: PAGE_SIZE });
     document.getElementById('keys-search').value = key;
     document.getElementById('keys-unreviewed').checked = false;
@@ -1309,12 +1594,21 @@ body.has-downloads .export { display: grid; }
     selectTab(tab);
     const el = cardEl(object);
     if (!el) return;
-    el.scrollIntoView({ block: 'center' });
-    el.classList.add('is-target');
-    setTimeout(() => el.classList.remove('is-target'), 1600);
+    const card = el.closest('.card') || el;
+    card.scrollIntoView({ block: 'center' });
+    card.classList.add('is-target');
+    setTimeout(() => card.classList.remove('is-target'), 1600);
     if (!focus) return;
+    if (el.dataset.panelBody) openPanel(card, el.dataset.panelBody, true);
+    const details = el.querySelector('details');
+    if (details) details.open = true;
     const field = el.querySelector('textarea:not(:disabled)');
     if (field) field.focus({ preventScroll: true });
+  }
+
+  function togglePanel(button) {
+    const card = button.closest('.card');
+    openPanel(card, button.dataset.panel, card.querySelector(`[data-panel-body="${button.dataset.panel}"]`).hidden);
   }
 
   function confirmClear(button) {
@@ -1403,9 +1697,10 @@ body.has-downloads .export { display: grid; }
     return { answers, disputes };
   }
 
-  function roundEditors() {
+  function roundEditors(counted = () => true) {
     const first = new Map();
     for (const [object, byEditor] of latestByObject) {
+      if (!counted(object)) continue;
       for (const [id, ev] of byEditor) {
         if (!hasAnswer(object, ev)) continue;
         const at = String(ev.at);
@@ -1421,16 +1716,42 @@ body.has-downloads .export { display: grid; }
       ? closeOrder.map((id, i) => `<li>
           <span class="rank">${i + 1}</span><span class="who">${esc(who(id))}</span>
           <span class="moves"><button class="link-btn" data-move="-1" data-index="${i}" aria-label="${esc(t('moveUp'))}"${i === 0 ? ' disabled' : ''}>↑</button><button class="link-btn" data-move="1" data-index="${i}" aria-label="${esc(t('moveDown'))}"${i === last ? ' disabled' : ''}>↓</button></span>
-          <span class="small muted stats">${esc(t('closeStats', editorStats(id)))}</span>
+          ${orderLang === null ? `<span class="small muted stats">${esc(t('closeStats', editorStats(id)))}</span>` : ''}
         </li>`).join('')
       : `<li class="muted">${esc(t('closeNoEditors'))}</li>`;
   }
 
-  function openClosePanel() {
-    closeOrder = roundEditors();
+  function openOrderPanel(lang) {
+    orderLang = lang;
+    closeOrder = lang === null ? roundEditors() : exportEditors();
+    const closing = lang === null;
+    document.getElementById('close-title').textContent = t(closing ? 'closeTitle' : 'exportOrderTitle', { lang });
+    document.getElementById('close-intro').textContent = t(closing ? 'closeIntro' : 'exportOrderIntro');
+    document.getElementById('close-confirm').textContent = t(closing ? 'closeConfirm' : 'exportOrderConfirm');
     document.getElementById('close-note').textContent = '';
-    document.getElementById('close-panel').hidden = false;
+    const panel = document.getElementById('close-panel');
+    panel.hidden = false;
     renderCloseOrder();
+    if (!closing) panel.scrollIntoView({ block: 'center' });
+  }
+
+  const setsText = (object) => isKey(object) || isSourceDoc(object) || object.startsWith('review.');
+
+  function exportEditors() {
+    const ids = roundEditors(setsText);
+    return ids.includes(viewerId) ? [viewerId, ...ids.filter((id) => id !== viewerId)] : ids;
+  }
+
+  function exportLangFile(lang) {
+    flushPendingText();
+    const ids = exportEditors();
+    if (ids.length > 1) { openOrderPanel(lang); return; }
+    saveLangFile(lang, ids);
+  }
+
+  function exportInOrder() {
+    document.getElementById('close-panel').hidden = true;
+    saveLangFile(orderLang, closeOrder);
   }
 
   async function closeRound() {
@@ -1472,13 +1793,14 @@ body.has-downloads .export { display: grid; }
     return JSON.stringify({ round: selectedRound, exportedAt: new Date().toISOString(), closed, editors: editorList, current, events }, null, 2);
   }
 
-  function langFile(lang) {
+  function langFile(lang, order) {
     const out = {};
-    for (const k of R.keys) out[k.key] = valueOf(k, lang);
+    for (const k of R.keys) out[k.key] = slotText(k, lang, order);
     return `${JSON.stringify(out, null, 2)}\n`;
   }
 
   const fileName = (suffix) => `${DATA.slug}-r${selectedRound}-${suffix}`;
+  const saveLangFile = (lang, order) => saveFile(fileName(`${lang}.json`), langFile(lang, order));
 
   function exportNote(text) {
     const note = document.getElementById('export-note');
@@ -1551,8 +1873,9 @@ body.has-downloads .export { display: grid; }
     return [head, ...rows];
   }
 
-  const SECTION_ORDER = ['q.', 'note.', 'term.', 'review.', 'key.'];
-  const sectionLabel = (object) => t({ q: 'tabQuestions', note: 'notesSection', term: 'tabTerms', review: 'tabReview', key: 'tabKeys' }[object.slice(0, object.indexOf('.'))]);
+  const SECTION_ORDER = ['q.', 'note.', 'term.', 'review.', 'key.', 'source.', 'comment.'];
+  const SECTION_LABELS = { q: 'tabQuestions', note: 'notesSection', term: 'tabTerms', review: 'tabReview', key: 'tabKeys', source: 'sectionSource', comment: 'sectionKeyComments' };
+  const sectionLabel = (object) => t(SECTION_LABELS[object.slice(0, object.indexOf('.'))]);
   const sectionRank = (object) => SECTION_ORDER.findIndex((p) => object.startsWith(p));
 
   function answerRow(object, id, ev) {
@@ -1591,8 +1914,8 @@ body.has-downloads .export { display: grid; }
 
   const exportActions = {
     'export-brief': () => saveFile(fileName('brief.md'), String(R.brief || '')),
-    'export-source': () => saveFile(fileName(`${SRC}.json`), langFile(SRC)),
-    'export-target': () => saveFile(fileName(`${TGT}.json`), langFile(TGT)),
+    'export-source': () => exportLangFile(SRC),
+    'export-target': () => exportLangFile(TGT),
     'export-answers': () => saveFile(fileName('answers.json'), historyJson()),
     'export-xlsx': () => exportXlsx(),
   };
@@ -1609,9 +1932,9 @@ body.has-downloads .export { display: grid; }
     if (b) selectRound(Number(b.dataset.round));
   });
 
-  document.getElementById('close-open').addEventListener('click', openClosePanel);
+  document.getElementById('close-open').addEventListener('click', () => openOrderPanel(null));
   document.getElementById('close-cancel').addEventListener('click', () => { document.getElementById('close-panel').hidden = true; });
-  document.getElementById('close-confirm').addEventListener('click', closeRound);
+  document.getElementById('close-confirm').addEventListener('click', () => (orderLang === null ? closeRound() : exportInOrder()));
   document.getElementById('close-order').addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-move]');
     if (!b) return;
@@ -1640,11 +1963,12 @@ body.has-downloads .export { display: grid; }
     if (name === 'note-cancel') { closeNoteForm(); return; }
     if (name === 'note-delete') { save(act.dataset.object, { pick: null, text: null }); return; }
     if (name === 'clear') { confirmClear(act); return; }
+    if (name === 'toggle') { togglePanel(act); return; }
     const card = act.closest('[data-doc]');
     if (!card || !writable) return;
     if (name === 'custom') { const field = card.querySelector('textarea[data-form]'); if (field) field.focus(); return; }
     if (name === 'unpick') { onUnpick(card.dataset.doc); return; }
-    if (name === 'restore') onRestore(card.dataset.doc);
+    if (name === 'restore') onRestore(card.dataset.doc, act.closest('[data-slot]').dataset.slot);
   });
   main.addEventListener('input', (ev) => {
     const area = ev.target;
@@ -1658,16 +1982,24 @@ body.has-downloads .export { display: grid; }
   });
   main.addEventListener('change', (ev) => {
     const target = ev.target;
+    if (target.dataset.field === 'reviewed') { save(target.dataset.object, { reviewed: target.checked }); return; }
     const el = target.closest('[data-doc]');
     if (!el) return;
-    if (target.tagName === 'TEXTAREA') { if (textTimers.has(el.dataset.doc)) flushCard(el.dataset.doc); return; }
-    if (target.dataset.field === 'reviewed') save(el.dataset.doc, { reviewed: target.checked });
+    if (target.tagName === 'TEXTAREA' && textTimers.has(el.dataset.doc)) flushCard(el.dataset.doc);
   });
 
+  document.getElementById('keys-list').addEventListener('focusout', () => {
+    if (keysRenderPending) setTimeout(renderKeysUnlessTyping);
+  });
   document.getElementById('keys-search').addEventListener('input', (ev) => {
     keyFilter.query = ev.target.value.trim().toLowerCase();
     keyFilter.shown = PAGE_SIZE;
     renderKeys();
+  });
+  document.getElementById('review-search').addEventListener('input', (ev) => {
+    reviewQuery = ev.target.value.trim().toLowerCase();
+    renderReview();
+    document.querySelectorAll('#review-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
   });
   document.getElementById('keys-batch').addEventListener('change', (ev) => {
     keyFilter.batch = ev.target.value;
@@ -1712,10 +2044,40 @@ body.has-downloads .export { display: grid; }
     indexRound();
     approvedTerms.filter((id) => wasCollapsed.get(id) !== isCollapsedTerm(termsById.get(id))).forEach(replaceTermCard);
     for (const object of touched) applyDoc(object);
+    new Set([...touched].map(textKeyOf).filter(Boolean)).forEach(applyKeyTexts);
     if ([...touched].some((object) => object.startsWith('note.'))) renderNotes();
-    if (keyFilter.unreviewed && [...touched].some(isKey)) renderKeys();
+    if ([...touched].some((object) => object.startsWith('comment.'))) refreshCommentFilter();
+    if (keyFilter.unreviewed && [...touched].some(isKey)) renderKeysUnlessTyping();
     refreshCounts();
     resolvePeople();
+  }
+
+  function textKeyOf(object) {
+    if (object.startsWith('review.')) return (reviewById.get(object.slice(7)) || {}).key;
+    return keyEntryOf(object) ? object.slice(object.indexOf('.') + 1) : null;
+  }
+
+  function applyKeyTexts(key) {
+    applyDoc(`key.${key}`);
+    applyDoc(`source.${key}`);
+    (reviewByKey.get(key) || []).forEach((r) => applyDoc(`review.${r.id}`));
+  }
+
+  function refreshCommentFilter() {
+    const filtered = keyFilter.flag === 'commented';
+    renderKeyFilters();
+    if (filtered) renderKeysUnlessTyping();
+  }
+
+  function renderKeysUnlessTyping() {
+    if (isTypingInKeys()) { keysRenderPending = true; return; }
+    keysRenderPending = false;
+    renderKeys();
+  }
+
+  function isTypingInKeys() {
+    const el = document.activeElement;
+    return textTimers.size > 0 || (Boolean(el) && el.tagName === 'TEXTAREA' && Boolean(el.closest('#keys-list')));
   }
 
   function isApprovedTermObject(object) {

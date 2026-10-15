@@ -1,0 +1,63 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            2
+          ],
+          {
+            "lang": "en",
+            "key": "homeTitle",
+            "severity": "minor",
+            "reason": "term",
+            "was": "My plants",
+            "proposal": "Plants",
+            "why": "shorter title"
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/uk.json"
+    },
+    {
+      "read": "{tmp}/out/en.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "\"homeEmpty\": \"Додайте рослину\"",
+    "\"plantWaterDone\": \"{name} полито\"",
+    "\"homeTitle\": \"My plants\"",
+    "disputes 0"
+  ],
+  "absent": [
+    "\"homeEmpty\": \"Додайте свою першу рослину\"",
+    "\"plantWaterDone\": \"Готово: {name}\"",
+    "\"homeTitle\": \"My garden\"",
+    "skipped, unknown object"
+  ]
+}

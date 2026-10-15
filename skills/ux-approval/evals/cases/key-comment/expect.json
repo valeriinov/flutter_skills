@@ -1,0 +1,42 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{case}/editors.json",
+      "{case}/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/free-text.md"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "- `comment.homeTitle` (Editor A): Is this the home screen header?",
+    "- `comment.homeTitle` (Editor B): Keep it short for the tab bar",
+    "withdrawn comment.homeEmpty by Editor A",
+    "disputes 0"
+  ],
+  "absent": [
+    "Draft",
+    "skipped, unknown object"
+  ]
+}

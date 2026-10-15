@@ -45,7 +45,7 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   "questions": [{"id": "Q1", "title": "Formal or informal address?", "gist": "…",
                  "options": [{"key": "A", "text": "Formal", "consequence": "…"},
                              {"key": "B", "text": "Informal", "consequence": "…"}],
-                 "recommendation": {"key": "A", "why": "…"}, "terms": []}],
+                 "recommendation": {"key": "A", "why": "…"}, "terms": [], "keys": []}],
   "review": [{"lang": "uk", "key": "card.title", "severity": "significant", "reason": "term",
               "was": "Банківська картка", "proposal": "Картка", "why": "…"}],
   "projectChanges": [], "invalid": [], "rejected": [],
@@ -68,6 +68,8 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   item by it. Options come only from the brief and the review — for a question raised by an
   editor's comment, also from that comment and the language pack; `recommendation` is omitted when
   none of them gives one.
+- A question's `keys` — the locale keys it is about; `check` refuses an unknown key, and each
+  named key's card lists the question.
 - Batches: a key falls into the first batch whose prefix matches, in spec order; the last batch
   has no prefixes and takes the rest; `expected` is its key count.
 - `projectChanges` (`{lang, key, kind, value}`), `invalid` (`{lang, key, reason}`) and `rejected`
@@ -76,7 +78,7 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   folds approved terms until someone opens or answers them.
 - Round n+1 carries no `review` rows of the target language: its changes show as `changed`.
 - Page ids are fixed by this shape and survive rounds: `key.<localeKey>`,
-  `review.<lang>.<localeKey>`, `term.<id>`, `q.<id>`.
+  `source.<localeKey>`, `comment.<localeKey>`, `review.<lang>.<localeKey>`, `term.<id>`, `q.<id>`.
 
 Round 1 from ux-translate outputs:
 
@@ -88,6 +90,31 @@ Round 1 from ux-translate outputs:
 | skips caused by the code | `codeDefects` |
 | "needs a human" | `risk` |
 
+### UI strings
+
+Strings of the key card's fields, toggles and comment, the summary sections, the comment and review
+filters and the export order panel; `{n}`, `{lang}` and `{text}` stay as written.
+
+| key | uk | en |
+|---|---|---|
+| `reviewOverridden` | Перекрито правкою на вкладці «Ключі». | Overridden by an edit on the Keys tab. |
+| `commentToggle` | Коментар | Comment |
+| `divergeHint` | Відповідь іншого редактора відрізняється від вашої | Another editor's answer differs from yours |
+| `divergeLine` | інша відповідь | different answer |
+| `editedMark` | ваша правка | your edit |
+| `conflictHint` | Текст змінено і тут, і в проєкті — оберіть, який залишити | The text changed both here and in the project — pick which one to keep |
+| `restoreTo` | Повернути «{text}» | Restore “{text}” |
+| `sectionSource` | Тексти джерела | Source texts |
+| `sectionKeyComments` | Коментарі до ключів | Key comments |
+| `filterCommented` | з коментарями | with comments |
+| `filterReviewRows` | з пропозицією ревʼю | with a review proposal |
+| `exportOrderTitle` | Порядок редакторів для {lang}.json | Editor order for {lang}.json |
+| `exportOrderIntro` | Кілька редакторів змінили тексти. Кожен текст береться від першого в списку, хто його змінив. Закриття раунду це не зачіпає. | Several editors changed texts. Each text comes from the first editor in the list who changed it. Closing the round is not affected. |
+| `exportOrderConfirm` | Вивантажити | Download |
+| `commentsTitle` | Коментарі редакторів | Editors' comments |
+| `roleSource` | основа | source |
+| `roleTarget` | переклад | translation |
+
 ## Database
 
 The page writes, you read:
@@ -95,6 +122,13 @@ The page writes, you read:
 - `log/<auto>` — `{object, by, at, round, pick, text, reviewed}`, one document per answer change;
   `object` is a page id, or `note.<id>` for an editor's comment (`pick: "custom"`, the comment in
   `text`; an empty pick and text withdraw it).
+  - `key.<localeKey>` sets the target text (the source text when only the source has a project
+    conflict), `source.<localeKey>` the source text (`pick: "custom"`, the text in `text`; an
+    empty pick and text restore the round's text). Each shares a slot with
+    `review.<lang>.<localeKey>` of the language it sets; `apply` takes the editor's latest
+    value-setting answer in the slot.
+  - `comment.<localeKey>` is a comment on one key, shaped like `note.<id>`; each author has their
+    own.
 - `editors/<userId>` — `{email, name, firstSeenAt}`.
 - `rounds/<n>` — `{closedAt, by, priority: [userId, …]}`, written by the owner; its presence
   closes round n.
@@ -128,9 +162,10 @@ The page writes, you read:
 1. **Read** — Artifact read of the url; the saved `page.html` is `--previous` and the rollback.
    Its latest round is n.
 2. **Answers** — `ArtifactData list` of `log` and `editors` (page with `query.limit` and
-   `next_cursor`, or `out_dir`), `get` of `rounds/<n>`. Save `log` and `editors` as one JSON file
-   each in `<scratch>` — the list of `{id, data}` documents as returned — and the `rounds/<n>`
-   document `{id, data}` as `round.json`.
+   `next_cursor`, or `out_dir`), `get` of `rounds/<n>`. An `editors` document with an empty
+   `name` gets the display name `ArtifactData profiles` returns for its id. Save `log` and
+   `editors` as one JSON file each in `<scratch>` — the list of `{id, data}` documents as
+   returned — and the `rounds/<n>` document `{id, data}` as `round.json`.
 3. **Apply** — `python3 approval.py apply <page.html> <log.json> <editors.json> <round.json>
    --project <root> -o <dir>`, `<dir>` a fresh folder in `<scratch>` (inside `<root>` → exit 2).
    It writes `spec-next.json`, `brief.md`, `<source>.json`, `<target>.json`, `named-keys.txt`,
@@ -141,15 +176,19 @@ The page writes, you read:
 5. **Brief** — fold each answer of `free-text.md` into `<dir>/brief.md` where it belongs (a term,
    a decision, a rule). Each `note.*` line is an editor's comment: a settled fact goes into the
    brief; an open point becomes a question for the next round — options, consequences and a
-   recommendation.
+   recommendation. Each `comment.<localeKey>` line is the same, and its question carries
+   `keys: [<localeKey>]`.
 6. **ux-translate** on the files in `<dir>` with `<dir>/brief.md`, only for the keys of
    `named-keys.txt` — naming them lifts its no-overwrite rule:
    - Review, source only → `review` rows of the source language;
    - Review and Translate of the target → texts written to `<dir>/<target>.json` after its exit 0.
+     A named key in `changed-<target>.jsonl` has a target an editor set this round: it gets
+     Review, not Translate.
    Its tables go to the artifact, not to the user: the next round is where editors answer them.
 7. **Merge** — into `spec-next.json`: `brief` from `<dir>/brief.md`, the new source `review`
    rows, the questions raised by comments, the named keys' target texts into
-   `files.target.values`.
+   `files.target.values`. `apply` copies `ui` from the previous page: add each key of
+   [UI strings](#ui-strings) that `ui` lacks, in the spec's `lang`.
 8. **Check and build** — `python3 approval.py check <dir>/spec-next.json --previous <page.html>`
    must print `ok`; then `python3 approval.py build <dir>/spec-next.json --previous <page.html>
    --stats`.

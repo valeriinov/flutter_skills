@@ -1,0 +1,54 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "questions",
+            1,
+            "keys"
+          ],
+          [
+            "commonOk"
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/bad/spec.json",
+      "set": [
+        [
+          [
+            "questions",
+            1,
+            "keys"
+          ],
+          [
+            "noSuchKey"
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/bad/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "low commonOk: question:Q2",
+    "spec:questions.Q2: unknown key noSuchKey"
+  ]
+}

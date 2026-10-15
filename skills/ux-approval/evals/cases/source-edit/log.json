@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "review.uk.homeEmpty",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "accept",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "source.homeEmpty",
+      "by": "ed-a",
+      "at": "2026-03-01T09:05:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Додайте рослину",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev2",
+    "data": {
+      "object": "source.plantWaterDone",
+      "by": "ed-a",
+      "at": "2026-03-01T09:10:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Готово: {name}",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev3",
+    "data": {
+      "object": "review.uk.plantWaterDone",
+      "by": "ed-a",
+      "at": "2026-03-01T09:15:00Z",
+      "round": 1,
+      "pick": "accept",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev4",
+    "data": {
+      "object": "key.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:20:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "My garden",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev5",
+    "data": {
+      "object": "review.en.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:25:00Z",
+      "round": 1,
+      "pick": "keep",
+      "text": null,
+      "reviewed": false
+    }
+  }
+]

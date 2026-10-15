@@ -1,0 +1,50 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "comment.homeTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Is this the home screen header?",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "comment.homeTitle",
+      "by": "ed-b",
+      "at": "2026-03-01T09:05:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Keep it short for the tab bar",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev2",
+    "data": {
+      "object": "comment.homeEmpty",
+      "by": "ed-a",
+      "at": "2026-03-01T09:10:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Draft",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev3",
+    "data": {
+      "object": "comment.homeEmpty",
+      "by": "ed-a",
+      "at": "2026-03-01T09:15:00Z",
+      "round": 1,
+      "pick": null,
+      "text": null,
+      "reviewed": false
+    }
+  }
+]
