@@ -32,6 +32,11 @@ HEX_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 UI_KEYS = ('new', 'changed', 'same', 'context', 'overview', 'files')
 QUESTION_UI_KEYS = ('decide', 'question', 'recommend')
 CYRILLIC_LANGS = ('ru', 'uk', 'be', 'bg', 'sr', 'mk', 'kk')
+WIDE_LABELS = {
+    'ru': {'swipe': 'Листайте вбок', 'full': 'Целиком'},
+    'uk': {'swipe': 'Гортайте вбік', 'full': 'Повністю'},
+    'en': {'swipe': 'Scroll sideways', 'full': 'Full screen'},
+}
 
 
 def main():
@@ -513,7 +518,7 @@ def overview(doc):
         source = mermaid_source(doc, node_ids, doc.get('links', []), 'TD')
     ui = doc['ui']
     return (f'<section class="overview"><h2>{html.escape(ui["overview"])}</h2>'
-            f'{diagram(source)}{legend(ui, has_branch(doc))}</section>'
+            f'{diagram(source, wide_labels(doc))}{legend(ui, has_branch(doc))}</section>'
             '<div class="zoom" hidden><button type="button" class="zoom-close" aria-label="close">×</button>'
             '<div class="zoom-body"></div></div>')
 
@@ -523,10 +528,10 @@ def section_html(doc, index, section):
     parts = []
     top = []
     if section.get('flow'):
-        top.append(diagram(flow_source(doc, section['flow'])))
+        top.append(diagram(flow_source(doc, section['flow']), wide_labels(doc)))
     elif own:
         nodes, links = section_graph(doc, own)
-        top.append(diagram(mermaid_source(doc, nodes, links, 'TD', own=set(own), with_files=True)))
+        top.append(diagram(mermaid_source(doc, nodes, links, 'TD', own=set(own), with_files=True), wide_labels(doc)))
     if section.get('lines'):
         top.append(lines_html(section['lines']))
     parts.append(''.join(top))
@@ -539,8 +544,14 @@ def section_html(doc, index, section):
     return f'<details class="sec" id="s-{index}">{summary}<div class="sec-body">{"".join(parts)}</div></details>'
 
 
-def diagram(source):
-    return f'<div class="diagram"><pre class="mermaid-src">{html.escape(source)}</pre></div>'
+def diagram(source, labels):
+    wide = (f'<div class="diagram-wide" hidden><span>{html.escape(labels["swipe"])}</span>'
+            f'<button type="button" class="diagram-full">{html.escape(labels["full"])}</button></div>')
+    return f'<div class="diagram"><pre class="mermaid-src">{html.escape(source)}</pre></div>{wide}'
+
+
+def wide_labels(doc):
+    return WIDE_LABELS.get(doc.get('lang', 'ru'), WIDE_LABELS['en'])
 
 
 def lines_html(lines):
@@ -651,6 +662,9 @@ VISUAL_CSS = """.eyebrow { font-size: 12px; font-weight: 700; text-transform: up
 .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; text-align: center; }
 .h2-block .diagram { background: var(--blue-bg2); border-color: var(--line); padding: 12px; margin: 4px 0 12px; }
 .diagram svg { max-width: 100%; height: auto; }
+.diagram-wide { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
+.diagram-wide[hidden] { display: none; }
+.diagram-full { min-height: 32px; padding: 2px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--card); font: inherit; font-weight: 600; color: var(--ink-3); cursor: pointer; }
 section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }
 .diagram .node rect { rx: 10px; ry: 10px; }
 .mermaid-src { display: none; }
@@ -759,9 +773,11 @@ function renderVisual(root, options = {}) {
       primaryBorderColor: cssVar('--line-2'), lineColor: cssVar('--ink-2'), textColor: cssVar('--ink'),
       edgeLabelBackground: cssVar('--card'), fontFamily: cssVar('--f-body'), fontSize: '17px',
     },
-    flowchart: { curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: true },
+    flowchart: { curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: false },
   };
   const LABEL_STOPS = [0.5, 0.62, 0.38, 0.72, 0.28, 0.8, 0.2];
+  const LABEL_FLOOR = 12 / 13;
+  const narrow = matchMedia('(max-width: 560px)');
   const LABEL_GAP = 6;
   const boxesOverlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
   const pointInBox = (point, box) => point.x > box.left && point.x < box.right && point.y > box.top && point.y < box.bottom;
@@ -816,8 +832,33 @@ function renderVisual(root, options = {}) {
     closeZoom();
     openSections((options.sectionsByNode || {})[id] || []);
   });
-  root.querySelectorAll('details.sec').forEach(card => card.addEventListener('toggle', () => {
-    if (card.open) card.querySelectorAll('.diagram svg').forEach(placeLabelsOnCurves);
+  const fitDiagram = svg => {
+    const box = svg.parentElement;
+    const wide = box.nextElementSibling;
+    if (!narrow.matches) {
+      svg.style.width = '';
+      svg.style.maxWidth = '';
+      wide.hidden = true;
+      return;
+    }
+    const style = getComputedStyle(box);
+    const room = box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const natural = svg.viewBox.baseVal.width;
+    svg.style.maxWidth = 'none';
+    svg.style.width = `${Math.round(Math.min(natural, Math.max(room, natural * LABEL_FLOOR)))}px`;
+    wide.hidden = box.scrollWidth <= box.clientWidth;
+    box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2;
+  };
+  const fittedWidths = new WeakMap();
+  const placedLabels = new WeakSet();
+  const fitOnResize = new ResizeObserver(entries => entries.forEach(({ target, contentRect }) => {
+    const svg = target.querySelector('svg');
+    if (!svg || !contentRect.width || fittedWidths.get(target) === contentRect.width) return;
+    fittedWidths.set(target, contentRect.width);
+    fitDiagram(svg);
+    if (placedLabels.has(svg)) return;
+    placedLabels.add(svg);
+    placeLabelsOnCurves(svg);
   }));
   return (async () => {
     await document.fonts.ready;
@@ -827,7 +868,7 @@ function renderVisual(root, options = {}) {
       mermaid.initialize(config);
       const { svg } = await mermaid.render(`visual-${renderVisual.count}`, source);
       pre.insertAdjacentHTML('afterend', svg);
-      placeLabelsOnCurves(pre.nextElementSibling);
+      fitOnResize.observe(pre.parentElement);
     }
     const overview = root.querySelector('section.overview > .diagram svg');
     if (!overview) return;
@@ -851,6 +892,9 @@ function renderVisual(root, options = {}) {
       zoom.hidden = false;
     };
     bindNodes(overview);
+    root.querySelectorAll('.diagram-full').forEach(button => {
+      button.addEventListener('click', () => openZoom(button.parentElement.previousElementSibling.querySelector('svg')));
+    });
     overview.parentElement.addEventListener('click', event => {
       if (event.target.closest('g.node, g.edgeLabel')) return;
       openZoom(overview);

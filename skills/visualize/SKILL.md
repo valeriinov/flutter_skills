@@ -51,8 +51,11 @@ merges into the point it serves.
    review again in a new fresh context and correct once more. Stop after the second correction
    even if findings remain: they go to the report, a remaining Blocking or Significant first.
 8. **Render** — `python3 visualize.py render <json>` writes `<json stem>.html` beside it.
-9. **Look** — open the page in a browser; a mermaid error shows as an error box, not a failed
-   command. Then hand the page to the user.
+9. **Look** — open the page in a browser at 375px and 1280px; a mermaid error shows as an error
+   box, not a failed command. At 375px diagram labels are no smaller than 12px and a wider diagram
+   scrolls sideways under a "full screen" button; at 1280px every diagram fits its card. The
+   button labels come from the script by `lang` (ru, uk, en; English otherwise), not from `ui`.
+   Then hand the page to the user.
 
 ## Document shape
 
