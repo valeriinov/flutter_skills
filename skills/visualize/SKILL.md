@@ -166,7 +166,7 @@ merges into the point it serves.
   in `files`. Individual test cases are not listed.
 - Question — `gist` says what is undecided, why it matters and what it affects, with an example;
   every option names its consequence; `recommendation` picks one and says why.
-- Text fields accept `` `code` `` and `**bold**`.
+- Text fields accept `` `code` ``, `**bold**`, `~~struck~~` and `[text](https://…)` links.
 
 ## What `check` enforces
 

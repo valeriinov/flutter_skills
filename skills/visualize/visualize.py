@@ -630,6 +630,9 @@ def value_html(value):
 def inline(text):
     escaped = html.escape(text)
     escaped = re.sub(r'`([^`]+)`', r'<code>\1</code>', escaped)
+    escaped = re.sub(r'\[([^\]]+)\]\((https?://[^)\s]+)\)',
+                     r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', escaped)
+    escaped = re.sub(r'~~([^~]+)~~', r'<s>\1</s>', escaped)
     return re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', escaped)
 
 
@@ -756,6 +759,7 @@ tbody tr:last-child td { border-bottom: none; }
 .steps { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
 .steps .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .tag { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--blue-bg); color: var(--blue-d); }
+a { color: var(--blue); }
 """
 
 RUNTIME_JS = r"""
