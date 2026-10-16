@@ -682,8 +682,7 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .legend .same::before, .mark.same, li.same .dot { background: var(--node-same-bg); border-color: var(--node-same-border); }
 .legend .branch::before { background: var(--node-branch-bg); border-color: var(--node-branch-border); }
 :is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:has(.n-branch) {
-  background: var(--node-branch-bg) !important; border: 1.5px solid var(--node-branch-border); border-radius: 999px;
-  padding: 1px 10px; font-style: normal; font-weight: 700; color: var(--node-branch-fg);
+  background: var(--node-branch-bg) !important; border-color: var(--node-branch-border); color: var(--node-branch-fg);
 }
 :is(.diagram, .zoom-body) .edgeLabel .n-branch, :is(.diagram, .zoom-body) .edgeLabel .n-branch .n-code { color: var(--node-branch-fg); }
 .legend .context::before { background: var(--node-context-bg); border-color: var(--node-context-border); border-style: dashed; }
@@ -712,15 +711,12 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .sec-body > .diagram g.node { cursor: zoom-in; }
 :is(.diagram, .zoom-body) .edgeLabel { background: transparent !important; }
 :is(.diagram, .zoom-body) .edgeLabel rect { fill: transparent !important; }
-:is(.diagram, .zoom-body) .edgeLabel .labelBkg { background: transparent !important; max-width: none !important; display: flex !important; justify-content: center; width: 100%; }
+:is(.diagram, .zoom-body) .edgeLabel .labelBkg { background: transparent !important; display: flex !important; justify-content: center; width: 100%; }
 :is(.diagram, .zoom-body) .edgeLabel foreignObject { overflow: visible; }
 :is(.diagram, .zoom-body) .edgeLabel p { margin: 0; display: inline; background: transparent !important; }
-:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel {
-  display: inline-block; background: var(--card) !important; padding: 0 4px; font-size: 13px; font-weight: 500;
-  font-style: italic; color: var(--ink-2); line-height: 1.5; white-space: nowrap;
-}
+:is(.diagram, .zoom-body) .edgeLabel span.edgeLabel { background: var(--card) !important; color: var(--ink-2); }
 :is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:empty { display: none; }
-:is(.diagram, .zoom-body) .edgeLabel .n-code { font-family: var(--f-body); font-size: 13px; opacity: 1; color: var(--blue-d); }
+:is(.diagram, .zoom-body) .edgeLabel .n-code { opacity: 1; color: var(--blue-d); }
 .zoom { position: fixed; inset: 0; z-index: 20; background: var(--section); overflow: auto; padding: 56px 24px 24px; }
 .zoom[hidden] { display: none; }
 .zoom-body { width: max-content; min-width: 100%; display: flex; justify-content: center; }
@@ -763,6 +759,15 @@ tbody tr:last-child td { border-bottom: none; }
 """
 
 RUNTIME_JS = r"""
+// Mermaid measures an edge label inside the rendered svg before it reaches the page, so only
+// the svg's own themeCSS shapes the box the layout reserves for it.
+const EDGE_LABEL_SIZE_CSS = `
+  .labelBkg { max-width: none !important; }
+  span.edgeLabel { display: inline-block; padding: 0 4px; font-size: 13px; font-weight: 500; font-style: italic; line-height: 1.5; white-space: nowrap; }
+  span.edgeLabel:has(.n-branch) { border-width: 1.5px; border-style: solid; border-radius: 999px; padding: 1px 10px; font-style: normal; font-weight: 700; }
+  span.edgeLabel .n-code { font-family: var(--f-body); font-size: 13px; }
+`;
+
 function renderVisual(root, options = {}) {
   const cssVar = name => getComputedStyle(root).getPropertyValue(name).trim();
   const classDefs = () => ['new', 'changed', 'same', 'context', 'branch'].map(name =>
@@ -778,6 +783,7 @@ function renderVisual(root, options = {}) {
       edgeLabelBackground: cssVar('--card'), fontFamily: cssVar('--f-body'), fontSize: '17px',
     },
     flowchart: { curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: false },
+    themeCSS: EDGE_LABEL_SIZE_CSS,
   };
   const LABEL_STOPS = [0.5, 0.62, 0.38, 0.72, 0.28, 0.8, 0.2];
   const LABEL_FLOOR = 12 / 13;
@@ -785,16 +791,21 @@ function renderVisual(root, options = {}) {
   const LABEL_GAP = 6;
   const boxesOverlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
   const pointInBox = (point, box) => point.x > box.left && point.x < box.right && point.y > box.top && point.y < box.bottom;
-  const labelShape = (svg, label) => {
-    const rect = (label.querySelector('span.edgeLabel') || label).getBoundingClientRect();
-    if (!rect.width) return null;
+  const svgBox = (svg, element) => {
+    const rect = element.getBoundingClientRect();
     const toSvg = svg.getScreenCTM().inverse();
     const topLeft = new DOMPoint(rect.left, rect.top).matrixTransform(toSvg);
     const bottomRight = new DOMPoint(rect.right, rect.bottom).matrixTransform(toSvg);
+    return { left: topLeft.x, right: bottomRight.x, top: topLeft.y, bottom: bottomRight.y };
+  };
+  const labelShape = (svg, label) => {
+    const box = svgBox(svg, label.querySelector('span.edgeLabel') || label);
+    if (box.right <= box.left) return null;
     const anchor = label.transform.baseVal.consolidate().matrix;
     return {
-      dx: (topLeft.x + bottomRight.x) / 2 - anchor.e, dy: (topLeft.y + bottomRight.y) / 2 - anchor.f,
-      width: bottomRight.x - topLeft.x + LABEL_GAP, height: bottomRight.y - topLeft.y + LABEL_GAP,
+      anchor: { x: anchor.e, y: anchor.f },
+      dx: (box.left + box.right) / 2 - anchor.e, dy: (box.top + box.bottom) / 2 - anchor.f,
+      width: box.right - box.left + LABEL_GAP, height: box.bottom - box.top + LABEL_GAP,
     };
   };
   const labelBox = (shape, point) => {
@@ -808,6 +819,7 @@ function renderVisual(root, options = {}) {
   };
   const placeLabelsOnCurves = svg => {
     const paths = [...svg.querySelectorAll('.edgePaths path')];
+    const nodes = [...svg.querySelectorAll('g.node')].map(node => svgBox(svg, node));
     const placed = [];
     [...svg.querySelectorAll('g.edgeLabel')].forEach((label, index) => {
       const path = paths[index];
@@ -818,9 +830,11 @@ function renderVisual(root, options = {}) {
       const candidates = LABEL_STOPS.map(stop => path.getPointAtLength(length * stop));
       const others = paths.filter(other => other !== path).flatMap(pathSamples);
       const clearOfLabels = candidate => !placed.some(box => boxesOverlap(box, labelBox(shape, candidate)));
+      const clearOfNodes = candidate => !nodes.some(box => boxesOverlap(box, labelBox(shape, candidate)));
       const clearOfPaths = candidate => !others.some(sample => pointInBox(sample, labelBox(shape, candidate)));
-      const point = candidates.find(candidate => clearOfLabels(candidate) && clearOfPaths(candidate))
-        || candidates.find(clearOfLabels) || candidates[0];
+      const clearOfBoxes = candidate => clearOfLabels(candidate) && clearOfNodes(candidate);
+      const point = candidates.find(candidate => clearOfBoxes(candidate) && clearOfPaths(candidate))
+        || candidates.find(clearOfBoxes) || shape.anchor;
       placed.push(labelBox(shape, point));
       label.setAttribute('transform', `translate(${point.x}, ${point.y})`);
     });
