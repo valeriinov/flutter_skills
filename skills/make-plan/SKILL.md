@@ -1,6 +1,6 @@
 ---
 name: make-plan
-description: Draft a plan from plan/<name>/inputs/ with gate, review and plan.html; revise mode answers comments. Use for "составь план", "make a plan", "доработай план".
+description: Create or revise a plan: draft, gate, review, plan.html. Use for "создай/составь план", "давай составим план", "нужно создать план", "спланируй", "добавь/заложим в план", "доработай план".
 argument-hint: "[ task description (optionally: plan name) | plan path + revise ]"
 ---
 
@@ -24,7 +24,14 @@ Models are pinned by the role definitions; pick the role, never a model.
 Longest agent path: extractor → scout → reviewer (3 of the 5-agent cap; the reviewers run in
 parallel, so all sit on its last node); never add a node to it.
 
-1. **Intake** — list `plan/<name>/inputs/`. No folder → the task text is the only input.
+1. **Intake** — The project root is the folder that holds `plan/` of the project the user named.
+   Under Claude Desktop (the `change_directory` tool exists), when this session's working
+   directory is not that root, call `change_directory` with it first and use absolute paths
+   until the turn ends. No project named →
+   stay here. A refusal (the app does not move a session into its own config folder
+   `~/.claude`) → continue here; step 8 then starts the implementation session on the user's
+   «запусти». Elsewhere → stay in the current folder and use absolute paths. Then list
+   `<root>/plan/<name>/inputs/`. No folder → the task text is the only input.
 2. **Extract** — only if inputs hold non-code (screenshots, text, links): one extractor agent
    returns distilled requirements → `## Requirements`, ≤10 lines.
 3. **Scout ∥ Contract**, in parallel:
@@ -65,7 +72,10 @@ parallel, so all sit on its last node); never add a node to it.
        one-line `background` naming the plan, and stop.
        The app refuses "user_asked" on a turn a background task started, and a card carries no
        folder, so the card session opens in this session's folder: when that differs from
-       `folder:`, tell the user instead to start `implement-plan` there themselves.
+       `folder:`, propose no card; ask the user to reply «запусти»; on that reply call
+       `start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the `folder:`
+       line, `use_worktree` false, `permission_mode` "auto", the `prompt:` line as the prompt, a
+       one-line `background` naming the plan.
      - Elsewhere the first available of: Ghostty 1.3+ (a new tab in the front window, a new
        window only when none is open) → Terminal.app (a new window). `serve` exits with
        `implementation started: terminal` → stop and report that the session runs in the
@@ -157,4 +167,13 @@ running `serve` waits for the next submit as in step 8.
 In Russian, one line each: URL открытой страницы, путь к open-plan.command и пути к brief.json и plan.md, вердикт ревьюера, применённые правки,
 открытые вопросы (unverified assumptions, rejected Minor findings). If a comment class repeats
 across 2+ plans, propose it as an instruction rule — never write a rule directly. Не
-пересказывать план прозой. Do not implement — that is `implement-plan`'s job.
+пересказывать план прозой.
+
+Never implement here. A request in this session to implement (имплементируй, примени план,
+внеси правки в код, запусти этап) starts a new session instead:
+`start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the folder that
+holds the plan's `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt
+`имплементируй план <plan path> используй субагентов` plus the step or stage the user named, a
+`background` naming the plan; then report the session and stop. A refused start → an
+own_initiative card when that folder is this session's, otherwise the prompt and the folder for
+the user. Without session tools → the prompt and the folder for the user.

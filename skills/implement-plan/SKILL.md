@@ -1,8 +1,18 @@
 ---
 name: implement-plan
-description: Implement a plan file step by step, verify, then review the diff. Use for "имплементируй план plan/X.md", "implement the plan".
+description: Implement a plan file step by step, verify, then review the diff. Use for "имплементируй план plan/X.md", "implement the plan"; always in a new session.
 ---
 
+0. A new session only. If make-plan ran in this conversation, or this
+   conversation wrote the plan, do not implement here, whatever the request
+   says: start a new session instead: `start_session` with `initiation`
+   "user_asked", `context` "fresh", `cwd` = the folder that holds the plan's
+   `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt
+   `имплементируй план <plan path> используй субагентов` plus the step or stage
+   the user named, a `background` naming the plan; then report the session and
+   stop. A refused start → an own_initiative card when that folder is this
+   session's, otherwise the prompt and the folder for the user. Without session
+   tools → the prompt and the folder for the user.
 1. Read the plan file the user names (a folder `plan/<name>/` means its
    `plan.md`); ask for the path if none is given. If the user names a step, do
    only that step. If the user names a stage and the plan has `## Stages`, do

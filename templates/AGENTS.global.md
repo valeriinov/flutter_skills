@@ -79,7 +79,7 @@ Transform tasks into verifiable goals:
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
-For multi-step tasks, state a brief plan:
+For multi-step tasks, state the steps in chat (a step list, not a plan file):
 
 ```
 1. [Step] → verify: [check]
@@ -166,8 +166,15 @@ Precedence when it collides with the rules above:
 - Name checks ("удачное ли имя", "консистентность нейминга", "чисто и консистентно с
   проектом" / "разве не консистентней" said of a name) → `naming` skill; the same words
   said of an approach or a pattern → `review-changes`.
-- "Имплементируй план" → `implement-plan` skill; "сделай ревью плана" / "проанализируй
-  план" → `review-plan` skill — also when the request adds "используй субагентов".
+- An explicit request for a plan ("создай / составь / давай составим / нужно создать /
+  подготовь план", "спланируй / спланировать / запланируй", "добавь / заложим в план",
+  "доработай план") → `make-plan` skill, also right after another skill or a compaction;
+  such a plan is drafted by make-plan, never written by hand or through the built-in plan
+  mode; other files in `plan/` are edited as usual. The agent's own step list for a task
+  it was asked to do is not a plan and needs no skill.
+- "Имплементируй план" / "примени план" / "запусти этап N" → `implement-plan` skill, which
+  runs only in a new session (its step 0); "сделай ревью плана" / "проанализируй план" →
+  `review-plan` skill — also when the request adds "используй субагентов".
 
 ### Skills and agents
 

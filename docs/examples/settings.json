@@ -18,6 +18,15 @@
             "command": "bash \"$HOME/.claude/hooks/edit-confirm-pre.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/skills/make-plan/plan_session_gate.sh\""
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -37,6 +46,10 @@
             "type": "command",
             "command": "echo 'Ответ всегда по-русски. ADHD-режим: первая строка — действие; без преамбул, рекапов и закрывашек.'",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/skills/make-plan/plan_session_gate.sh\""
           }
         ]
       }

@@ -26,5 +26,5 @@ new skill for a rarely-performed operation.
 - "Ревью PR #N" / "просмотри PR" / "сверь правки по PR" → the `review-pr` skill
   (branch diff + document the user pastes back as comments). `review-changes`
   stays for the working tree.
-- "Имплементируй план" / "сделай ревью плана" go to the same skills also when the
-  request adds "ultracode".
+- "Составь план" / "имплементируй план" / "сделай ревью плана" go to the same skills also
+  when the request adds "ultracode".
