@@ -1,0 +1,110 @@
+{
+  "steps": [
+    {
+      "copy": "{case}/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "read": "{tmp}/r1/page.html"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{cases}/source-edit/editors.json",
+      "{cases}/source-edit/round.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/changed-fr.jsonl"
+    },
+    {
+      "read": "{tmp}/out/changed-en.jsonl"
+    },
+    {
+      "read": "{tmp}/out/fr.json"
+    },
+    {
+      "read": "{tmp}/out/spec-next.json"
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/out/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    {
+      "copy": "{tmp}/out/spec-next.json",
+      "to": "{tmp}/swap/spec.json",
+      "set": [
+        [
+          [
+            "files",
+            "targets"
+          ],
+          [
+            {
+              "lang": "fr",
+              "path": "l10n/fr.json",
+              "values": {},
+              "base": {}
+            }
+          ]
+        ],
+        [
+          [
+            "review"
+          ],
+          []
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/swap/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "ok",
+    "\"targetLangs\":[\"en\",\"fr\"]",
+    "\"targets\":[{\"lang\":\"en\",\"path\":\"l10n/en.json\"},{\"lang\":\"fr\",\"path\":\"l10n/fr.json\"}]",
+    "dispute fr.homeTitle: Editor A over Editor B",
+    "answer review.fr.settingsTitle: proposal accepted (Editor B)",
+    "\"file\": \"l10n/fr.json\", \"key\": \"homeTitle\", \"source\": \"Мої рослини\", \"target\": \"Plantes\", \"previous\": \"Mes plantes\"",
+    "\"file\": \"l10n/en.json\", \"key\": \"homeTitle\", \"source\": \"Мої рослини\", \"target\": \"Plants\", \"previous\": \"My plants\"",
+    "\"settingsTitle\": \"Paramètres\"",
+    "\"targets\": [",
+    "\"path\": \"l10n/fr.json\"",
+    "\"lang\": \"fr\",\n      \"key\": \"homeTitle\",\n      \"severity\": \"minor\",\n      \"was\": \"Plantes\"",
+    "reconcile: artifact 8, project 0, conflict 0, added 0, removed 0",
+    "spec:files.targets[0]: fr, the previous page translates first to en"
+  ],
+  "absent": [
+    "skipped, unknown object",
+    "\"target\": {",
+    "Mes plantes vertes\"\n"
+  ]
+}

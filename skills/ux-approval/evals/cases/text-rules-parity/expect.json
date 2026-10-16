@@ -1,0 +1,6 @@
+{
+  "steps": [["{case}/parity.py", "{skills}/ux-approval"]],
+  "exit": 0,
+  "fragments": ["parity ok", "python ['foreignScript']", "python ['placeholders:{name}']", "python ['emptyForm:other']"],
+  "absent": ["parity FAIL"]
+}

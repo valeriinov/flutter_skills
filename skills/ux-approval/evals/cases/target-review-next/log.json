@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "key.settingsTitle",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "Preferences",
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "review.en.homeEmpty",
+      "by": "ed-b",
+      "at": "2026-03-01T09:01:00Z",
+      "round": 1,
+      "pick": "keep",
+      "text": null,
+      "reviewed": false
+    }
+  }
+]

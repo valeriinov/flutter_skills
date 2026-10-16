@@ -1,0 +1,43 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "codeDefects"
+          ],
+          [
+            {
+              "key": "settingsReminder",
+              "text": "x",
+              "why": 3,
+              "uses": [
+                {
+                  "question": "Remind me?"
+                }
+              ]
+            },
+            {
+              "key": "homeTitle",
+              "text": "y",
+              "uses": "Settings"
+            }
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r1/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "codeDefects.settingsReminder.why: must be a string",
+    "codeDefects.settingsReminder.uses: each use needs \"where\"",
+    "codeDefects.homeTitle.uses: must be a list of objects"
+  ]
+}

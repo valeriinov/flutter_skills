@@ -31,7 +31,8 @@
         [
           [
             "files",
-            "target",
+            "targets",
+            0,
             "values",
             "plantWaterButton"
           ],

@@ -1,0 +1,54 @@
+[
+ {
+  "lang": "en",
+  "text": "Parcel (для однини), parcels (для множини)",
+  "round": "Parcels"
+ },
+ {
+  "lang": "en",
+  "text": "Watered: {plant}",
+  "round": "Watered: {name}"
+ },
+ {
+  "lang": "en",
+  "text": "Watered: {name}!",
+  "round": "Watered: {name}"
+ },
+ {
+  "lang": "uk",
+  "text": "Полито: {name} (Plant)",
+  "round": "Полито: {name}"
+ },
+ {
+  "lang": "en",
+  "text": {
+   "one": "{count} day",
+   "other": ""
+  },
+  "round": {
+   "one": "{count} day",
+   "other": "{count} days"
+  }
+ },
+ {
+  "lang": "en",
+  "text": {
+   "one": "{count} day",
+   "other": "days"
+  },
+  "round": {
+   "one": "{count} day",
+   "other": "{count} days"
+  }
+ },
+ {
+  "lang": "en",
+  "text": "Settings",
+  "round": "Налаштування"
+ },
+ {
+  "lang": "en",
+  "text": "Київ",
+  "round": "Київ"
+ }
+]

@@ -1,0 +1,8 @@
+[
+  {"id": "ev0", "data": {"object": "key.homeTitle", "by": "ed-a", "at": "2026-03-01T09:00:00Z", "round": 1,
+                         "pick": "custom", "text": "Plants (для однини plant)", "reviewed": false}},
+  {"id": "ev1", "data": {"object": "key.plantWaterDone", "by": "ed-a", "at": "2026-03-01T09:01:00Z", "round": 1,
+                         "pick": "custom", "text": "Watered: {plant}", "reviewed": false}},
+  {"id": "ev2", "data": {"object": "key.settingsTitle", "by": "ed-a", "at": "2026-03-01T09:02:00Z", "round": 1,
+                         "pick": "custom", "text": "Preferences", "reviewed": false}}
+]

@@ -62,7 +62,8 @@
     "\"settingsReminder\": \"Reminders\"",
     "answer term.рослина: kept, unknown pick a (Editor C)",
     "\"approved\": 1",
-    "- `note.k1x9` (Editor C): Should reminders use relative times?"
+    "- `note.k1x9` (Editor C): Should reminders use relative times?",
+    "\"why\": \"the action leads the line\""
   ],
   "absent": [
     "Preferences",
@@ -70,6 +71,8 @@
     "- Як перекладати «полив»",
     "\"round\": 1,",
     "Late water",
-    "Withdrawn remark"
+    "Withdrawn remark",
+    "\"why\": \"the empty state speaks to the owner of the list\"",
+    "\"why\": \"the toast names the plant first\""
   ]
 }

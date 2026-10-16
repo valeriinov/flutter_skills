@@ -1,0 +1,17 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [["review", 2], {"lang": "en", "key": "homeTitle", "severity": "minor", "reason": "term",
+                         "was": "My plants", "proposal": "Plants", "why": "shorter title"}]
+      ]
+    },
+    ["{approval}", "check", "{tmp}/r1/spec.json"],
+    ["{approval}", "build", "{tmp}/r1/spec.json", "--template", "{template}", "--stats"]
+  ],
+  "exit": 0,
+  "fragments": ["ok", "split homeTitle: uk high, en medium"],
+  "absent": ["split plantWaterDone"]
+}

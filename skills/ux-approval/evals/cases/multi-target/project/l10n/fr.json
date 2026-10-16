@@ -1,0 +1,13 @@
+{
+  "homeTitle": "Mes plantes",
+  "homeEmpty": "Ajoutez votre première plante",
+  "plantWaterButton": "Arroser",
+  "plantWaterDone": "Arrosée : {name}",
+  "plantDaysLeft": {
+    "one": "{count} jour avant l’arrosage",
+    "other": "{count} jours avant l’arrosage"
+  },
+  "settingsTitle": "Réglages",
+  "settingsReminder": "Rappels d’arrosage",
+  "commonOk": "OK"
+}

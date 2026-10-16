@@ -1,0 +1,93 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "review",
+            1
+          ],
+          {
+            "lang": "en",
+            "key": "settingsReminder",
+            "severity": "minor",
+            "reason": "term",
+            "was": "Watering reminders",
+            "proposal": "Reminders",
+            "why": "shorter"
+          }
+        ],
+        [
+          [
+            "review",
+            2
+          ],
+          {
+            "lang": "en",
+            "key": "homeEmpty",
+            "severity": "minor",
+            "reason": "term",
+            "was": "Add your first plant",
+            "proposal": "Add a plant",
+            "why": "shorter"
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{cases}/source-edit/editors.json",
+      "{cases}/source-edit/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/spec-next.json"
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/out/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/out/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "read": "{tmp}/out/page.html"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "ok",
+    "\"lang\": \"en\",\n      \"key\": \"settingsTitle\",\n      \"severity\": \"minor\",\n      \"was\": \"Preferences\",\n      \"proposal\": \"\",\n      \"why\": \"Editor A changed this text in round 1; check it\"",
+    "\"lang\": \"en\",\n      \"key\": \"settingsReminder\"",
+    "\"id\":\"en.settingsTitle\"",
+    "changed settingsTitle: en"
+  ],
+  "absent": [
+    "\"key\": \"homeEmpty\",\n      \"severity\": \"minor\",\n      \"reason\": \"term\""
+  ]
+}

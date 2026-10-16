@@ -1,0 +1,20 @@
+{
+  "steps": [
+    {"copy": "{cases}/spec-r1/spec.json", "to": "{tmp}/r1/spec.json", "set": []},
+    ["{approval}", "build", "{tmp}/r1/spec.json", "--template", "{template}"],
+    ["{approval}", "apply", "{tmp}/r1/page.html", "{case}/log.json", "{cases}/source-edit/editors.json",
+     "{cases}/source-edit/round.json", "--project", "{cases}/project", "-o", "{tmp}/out"],
+    {"read": "{tmp}/out/suspect.jsonl"},
+    {"copy": "{tmp}/out/spec-next.json", "to": "{tmp}/r2/spec.json",
+     "set": [[["files", "targets", 0, "values", "homeTitle"], "Plants"],
+             [["interpreted"], [{"lang": "en", "key": "homeTitle", "text": "Plants (для однини plant)", "by": "Editor A"}]],
+             [["review"], [{"lang": "en", "key": "plantWaterDone", "severity": "minor", "was": "Watered: {plant}", "proposal": "",
+                            "why": "Editor A changed this text in round 1; check it"}]]]},
+    ["{approval}", "check", "{tmp}/r2/spec.json", "--previous", "{tmp}/r1/page.html"],
+    ["{approval}", "build", "{tmp}/r2/spec.json", "--previous", "{tmp}/r1/page.html", "--template", "{template}", "--stats"]
+  ],
+  "exit": 0,
+  "fragments": ["suspect homeTitle en: foreignScript", "suspect plantWaterDone en: placeholders:{name}",
+                "\"by\": \"Editor A\"", "low homeTitle: interpreted:en", "split homeTitle: uk high, en low"],
+  "absent": ["suspect settingsTitle"]
+}

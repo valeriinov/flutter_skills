@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [[["risk", 0], {"keys": ["plantWaterDone"], "class": "placeholder", "why": "A wrong placeholder shows a raw brace"}]]
+    },
+    ["{approval}", "check", "{tmp}/r1/spec.json"],
+    ["{approval}", "build", "{tmp}/r1/spec.json", "--template", "{template}"],
+    ["{approval}", "apply", "{tmp}/r1/page.html", "{cases}/source-edit/log.json", "{cases}/source-edit/editors.json",
+     "{cases}/source-edit/round.json", "--project", "{cases}/project", "-o", "{tmp}/out"],
+    {"read": "{tmp}/out/spec-next.json"},
+    {"copy": "{cases}/spec-r1/spec.json", "to": "{tmp}/bad/spec.json",
+     "set": [[["risk", 0], {"keys": ["plantWaterDone"], "class": "placeholder", "why": 7}]]},
+    ["{approval}", "check", "{tmp}/bad/spec.json"]
+  ],
+  "exit": 1,
+  "fragments": ["\"why\": \"A wrong placeholder shows a raw brace\"", "risk.placeholder.why: must be a string"]
+}

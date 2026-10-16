@@ -1,0 +1,315 @@
+{
+  "title": "Garden notes: texts approval",
+  "lang": "uk",
+  "ui": {
+    "pageTitle": "Затвердження текстів",
+    "tabQuestions": "Питання",
+    "tabTerms": "Терміни",
+    "tabReview": "Ревʼю",
+    "tabKeys": "Ключі",
+    "tabSummary": "Підсумок",
+    "closeRound": "Завершити раунд",
+    "custom": "Свій варіант"
+  },
+  "product": "Garden notes",
+  "slug": "garden-notes",
+  "round": 1,
+  "final": false,
+  "origin": {
+    "branch": "main",
+    "commit": "0000000"
+  },
+  "brief": "# Localization brief: Garden notes\n\n## Product\nA mobile app that reminds people to water their house plants. Voice: calm, short, second person.\n\n## Terms\n| uk | en | meaning |\n|---|---|---|\n| рослина | plant | a plant the user tracks |\n| нагадування | reminder | a scheduled notice |\n\n## Decisions\nTerm and register decisions approved after translation runs.\n\n| decision | language | date |\n|---|---|---|\n\n## Open questions\n- Як перекладати «полив»: watering чи water?\n- Нагадування чи сповіщення: reminder чи notification?\n",
+  "files": {
+    "source": {
+      "lang": "uk",
+      "path": "l10n/uk.json",
+      "values": {
+        "homeTitle": "Мої рослини",
+        "homeEmpty": "Додайте першу рослину",
+        "plantWaterButton": "Полити",
+        "plantWaterDone": "Полито: {name}",
+        "plantDaysLeft": {
+          "one": "{count} день до поливу",
+          "few": "{count} дні до поливу",
+          "many": "{count} днів до поливу",
+          "other": "{count} дня до поливу"
+        },
+        "settingsTitle": "Налаштування",
+        "settingsReminder": "Нагадування про полив",
+        "commonOk": "OK"
+      },
+      "base": {
+        "homeTitle": "Мої рослини",
+        "homeEmpty": "Додайте першу рослину",
+        "plantWaterButton": "Полити",
+        "plantWaterDone": "Полито: {name}",
+        "plantDaysLeft": {
+          "one": "{count} день до поливу",
+          "few": "{count} дні до поливу",
+          "many": "{count} днів до поливу",
+          "other": "{count} дня до поливу"
+        },
+        "settingsTitle": "Налаштування",
+        "settingsReminder": "Нагадування про полив",
+        "commonOk": "OK"
+      }
+    },
+    "targets": [
+      {
+        "lang": "en",
+        "path": "l10n/en.json",
+        "values": {
+          "homeTitle": "My plants",
+          "homeEmpty": "Add your first plant",
+          "plantWaterButton": "Water",
+          "plantWaterDone": "Watered: {name}",
+          "plantDaysLeft": {
+            "one": "{count} day until watering",
+            "other": "{count} days until watering"
+          },
+          "settingsTitle": "Settings",
+          "settingsReminder": "Watering reminders",
+          "commonOk": "OK"
+        },
+        "base": {
+          "homeTitle": "My plants",
+          "homeEmpty": "Add your first plant",
+          "plantWaterButton": "Water",
+          "plantWaterDone": "Watered: {name}",
+          "plantDaysLeft": {
+            "one": "{count} day until watering",
+            "other": "{count} days until watering"
+          },
+          "settingsTitle": "Settings",
+          "settingsReminder": "Watering reminders",
+          "commonOk": "OK"
+        }
+      },
+      {
+        "lang": "fr",
+        "path": "l10n/fr.json",
+        "values": {
+          "homeTitle": "Mes plantes",
+          "homeEmpty": "Ajoutez votre première plante",
+          "plantWaterButton": "Arroser",
+          "plantWaterDone": "Arrosée : {name}",
+          "plantDaysLeft": {
+            "one": "{count} jour avant l’arrosage",
+            "other": "{count} jours avant l’arrosage"
+          },
+          "settingsTitle": "Réglages",
+          "settingsReminder": "Rappels d’arrosage",
+          "commonOk": "OK"
+        },
+        "base": {
+          "homeTitle": "Mes plantes",
+          "homeEmpty": "Ajoutez votre première plante",
+          "plantWaterButton": "Arroser",
+          "plantWaterDone": "Arrosée : {name}",
+          "plantDaysLeft": {
+            "one": "{count} jour avant l’arrosage",
+            "other": "{count} jours avant l’arrosage"
+          },
+          "settingsTitle": "Réglages",
+          "settingsReminder": "Rappels d’arrosage",
+          "commonOk": "OK"
+        }
+      }
+    ]
+  },
+  "terms": [
+    {
+      "id": "рослина",
+      "source": "рослина",
+      "target": "plant",
+      "meaning": "a plant the user tracks",
+      "variants": [],
+      "match": {
+        "stems": [
+          "рослин"
+        ],
+        "keys": []
+      }
+    },
+    {
+      "id": "полив",
+      "source": "полив",
+      "target": "",
+      "meaning": "giving a plant water",
+      "variants": [
+        "watering",
+        "water"
+      ],
+      "match": {
+        "stems": [
+          "полив",
+          "полит"
+        ],
+        "keys": []
+      }
+    },
+    {
+      "id": "нагадування",
+      "source": "нагадування",
+      "target": "reminder",
+      "meaning": "a scheduled notice",
+      "variants": [],
+      "match": {
+        "stems": [
+          "нагадуван"
+        ],
+        "keys": []
+      }
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "title": "Як перекладати «полив»",
+      "gist": "The noun and the button need one English word.",
+      "options": [
+        {
+          "key": "a",
+          "text": "watering",
+          "consequence": "the button says Water, the noun says watering"
+        },
+        {
+          "key": "b",
+          "text": "water",
+          "consequence": "one word everywhere, the noun reads terse"
+        }
+      ],
+      "recommendation": {
+        "key": "a",
+        "why": "matches the verb on the water button"
+      },
+      "terms": [
+        "полив"
+      ]
+    },
+    {
+      "id": "Q2",
+      "title": "Нагадування чи сповіщення",
+      "gist": "Settings call the same notice two ways.",
+      "options": [
+        {
+          "key": "a",
+          "text": "reminder",
+          "consequence": "matches the settings label"
+        },
+        {
+          "key": "b",
+          "text": "notification",
+          "consequence": "matches the system settings wording"
+        }
+      ],
+      "terms": [
+        "нагадування"
+      ]
+    }
+  ],
+  "review": [
+    {
+      "lang": "uk",
+      "key": "homeEmpty",
+      "severity": "significant",
+      "reason": "tone",
+      "was": "`Додайте першу рослину`",
+      "proposal": "Додайте свою першу рослину",
+      "why": "the empty state speaks to the owner of the list"
+    },
+    {
+      "lang": "uk",
+      "key": "plantWaterDone",
+      "severity": "blocking",
+      "reason": "meaning",
+      "was": "`Полито: {name}`",
+      "proposal": "{name} полито",
+      "why": "the toast names the plant first"
+    },
+    {
+      "lang": "uk",
+      "key": "plantDaysLeft",
+      "severity": "minor",
+      "reason": "tone",
+      "was": {
+        "one": "`{count} день до поливу`",
+        "few": "`{count} дні до поливу`",
+        "many": "`{count} днів до поливу`",
+        "other": "`{count} дня до поливу`"
+      },
+      "proposal": {
+        "one": "Полив через {count} день",
+        "few": "Полив через {count} дні",
+        "many": "Полив через {count} днів",
+        "other": "Полив через {count} дня"
+      },
+      "why": "the action leads the line"
+    },
+    {
+      "lang": "fr",
+      "key": "settingsTitle",
+      "severity": "minor",
+      "reason": "term",
+      "was": "Réglages",
+      "proposal": "Paramètres",
+      "why": "the platform word"
+    }
+  ],
+  "projectChanges": [],
+  "invalid": [],
+  "rejected": [],
+  "codeDefects": [
+    {
+      "key": "settingsReminder",
+      "text": "the label is joined with a time in code"
+    }
+  ],
+  "risk": [
+    {
+      "keys": [
+        "plantWaterDone"
+      ],
+      "class": "placeholder"
+    }
+  ],
+  "identical": [
+    {
+      "key": "commonOk",
+      "why": "OK reads the same in both languages"
+    }
+  ],
+  "batches": [
+    {
+      "id": "home",
+      "label": "Головна",
+      "prefixes": [
+        "home"
+      ],
+      "expected": 2
+    },
+    {
+      "id": "plant",
+      "label": "Рослина",
+      "prefixes": [
+        "plant"
+      ],
+      "expected": 3
+    },
+    {
+      "id": "settings",
+      "label": "Налаштування",
+      "prefixes": [
+        "settings"
+      ],
+      "expected": 2
+    },
+    {
+      "id": "common",
+      "label": "Загальне",
+      "prefixes": [],
+      "expected": 1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [["compositions"], [{"id": "a", "keys": ["settingsReminder", "missingKey"], "pattern": "{settingsReminder} {time} {plantDaysLeft#n}",
+                             "sample": {"n": "three"}},
+                            {"id": "a", "keys": ["homeTitle"], "pattern": "{homeTitle}"}]]
+      ]
+    },
+    ["{approval}", "check", "{tmp}/r1/spec.json"]
+  ],
+  "exit": 1,
+  "fragments": ["compositions.a: key missingKey not in source values", "compositions.a: pattern lacks {missingKey}",
+                "compositions.a: pattern token {time} is neither a key nor a sample value",
+                "compositions.a: pattern token {plantDaysLeft} is neither a key nor a sample value",
+                "compositions.a: plural count n is not a number in sample", "compositions.a: duplicate id"]
+}

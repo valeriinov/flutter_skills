@@ -36,6 +36,7 @@ nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; bac
 .segmented button { font: 700 14px/1 var(--font-body); padding: 9px 12px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .segmented button[aria-selected="true"], .segmented button[aria-pressed="true"] { background: var(--seg-on); color: var(--ink); box-shadow: var(--seg-shadow); }
 .segmented .n { font: 500 12px/1 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.lang-pairs { justify-self: start; margin-bottom: 10px; }
 button { font-family: inherit; }
 :focus-visible { outline: 3px solid var(--brand-l); outline-offset: 2px; }
 .panel { display: grid; gap: 14px; }
@@ -50,6 +51,32 @@ button { font-family: inherit; }
 .chip.low, .chip.blocking { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-color: transparent; }
 .chip.medium, .chip.significant { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: transparent; }
 .chip.high { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); border-color: transparent; }
+.defect { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+.defect-head { display: flex; gap: 10px; align-items: flex-start; }
+.defect-head .sign { flex: none; color: var(--warn); font-weight: 700; }
+.defect-head .summary { flex: 1 1 auto; min-width: 0; }
+.defect-head .toggle-btn { flex: none; }
+.toggle-btn[aria-expanded="true"] .when-closed, .toggle-btn[aria-expanded="false"] .when-open { display: none; }
+.decide-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.decide-list li { display: flex; gap: 8px; align-items: flex-start; }
+.decide-list .sign { flex: none; color: var(--warn); font-weight: 700; }
+.decide-review .line { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+.decide-review .line > span:first-child { font-size: 12px; color: var(--muted); padding-top: 2px; }
+.decide-review del { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border-radius: 4px; padding: 0 2px; }
+.decide-review ins { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); text-decoration: none; border-radius: 4px; padding: 0 2px; }
+.decide-review .opts { margin-top: 4px; }
+@media (max-width: 560px) { .decide-review .line { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.defect-details { display: grid; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface); font-size: 14px; }
+.defect-details h4 { margin: 0 0 4px; font: 600 12px/1.3 var(--font-body); color: var(--muted); }
+.defect-details .task { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--brand-soft); color: var(--brand); font-size: 11px; }
+.uses { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.use { display: grid; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.use .q { color: var(--muted); font-size: 13px; }
+.phrase { display: grid; gap: 3px; padding: 8px 12px; border-radius: 10px; background: var(--brand-bg2); border: 1px solid var(--brand-line); font-size: 14px; }
+.phrase .line b { display: inline-block; min-width: 2.4em; font: 500 12px/1 var(--font-mono); color: var(--muted); }
+.phrase mark { background: none; color: var(--brand-strong); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.issues { flex-basis: 100%; color: var(--warn); font-size: 13px; }
+.chip.lang-level { display: inline-block; margin-top: 4px; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
 .chip.changed { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-line); }
 .chip.diverge { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
 .muted { color: var(--muted); }
@@ -301,10 +328,12 @@ body.has-downloads .export { display: grid; }
     <section class="panel" id="panel-questions" role="tabpanel"></section>
     <section class="panel" id="panel-terms" role="tabpanel" hidden></section>
     <section class="panel" id="panel-review" role="tabpanel" hidden>
+      <div class="segmented lang-pairs" id="review-pairs" role="group" hidden></div>
       <div class="filters single"><input type="search" id="review-search"></div>
       <div class="panel" id="review-list"></div>
     </section>
     <section class="panel" id="panel-keys" role="tabpanel" hidden>
+      <div class="segmented lang-pairs" id="keys-pairs" role="group" hidden></div>
       <p class="intro" id="keys-intro"></p>
       <p class="intro" id="keys-legend"></p>
       <div class="filters">
@@ -330,10 +359,12 @@ body.has-downloads .export { display: grid; }
   const DATA = JSON.parse(document.getElementById('page-data').textContent);
   const UI = DATA.ui || {};
   const SRC = DATA.sourceLang;
-  const TGT = DATA.targetLang;
+  const TARGETS = DATA.targetLangs;
+  const PAIR_SWITCHES = ['review-pairs', 'keys-pairs'];
   const PAGE_SIZE = 40;
   const TEXT_DELAY_MS = 900;
   const CONFIDENCE_ORDER = ['low', 'medium', 'high'];
+  const PATTERN_TOKEN_RE = /\{([^{}#]+)(?:#([^{}]+))?\}/g;
   const FLAGS = ['conflict', 'invalid', 'project', 'added', 'changed', 'commented', 'review'];
   const LIST_IDS = { keys: 'key', terms: 'id', questions: 'id', review: 'id', batches: 'id' };
   const TABS = ['brief', 'questions', 'terms', 'review', 'keys', 'summary'];
@@ -411,6 +442,7 @@ body.has-downloads .export { display: grid; }
   let downloads = null;
   let xlsxReady = null;
   let activeTab = 'questions';
+  let activeTarget = TARGETS[0];
   let selectedRound = LAST_ROUND;
   let closeOrder = [];
   let orderLang = null;
@@ -466,32 +498,47 @@ body.has-downloads .export { display: grid; }
   }
 
   const conflictsOf = (e) => (e.projectChange || []).filter((p) => p.kind === 'conflict');
-  const isConflict = (e) => conflictsOf(e).length > 0;
   const valueOf = (e, lang) => (e.values || {})[lang];
+  const keyDocOf = (e, lang) => (lang === TARGETS[0] ? `key.${e.key}` : `key.${lang}.${e.key}`);
 
-  function editLangOf(e) {
-    const c = conflictsOf(e);
-    return c.length === 1 && c[0].lang === SRC ? SRC : TGT;
+  function objectConflicts(e, lang) {
+    const langs = lang === TARGETS[0] ? [SRC, lang] : [lang];
+    return conflictsOf(e).filter((c) => langs.includes(c.lang));
+  }
+
+  function editLangOf(e, lang = TARGETS[0]) {
+    const c = objectConflicts(e, lang);
+    return c.length === 1 && c[0].lang === SRC ? SRC : lang;
   }
 
   const isSourceDoc = (object) => object.startsWith('source.');
   const isNoteLike = (object) => object.startsWith('note.') || object.startsWith('comment.');
-  const rowLangOf = (docId) => (isSourceDoc(docId) ? SRC : TGT);
 
-  function keyEntryOf(docId) {
-    if (!isKey(docId) && !isSourceDoc(docId)) return null;
-    return keysById.get(docId.slice(docId.indexOf('.') + 1)) || null;
+  function keyObjectOf(docId) {
+    const rest = docId.slice(docId.indexOf('.') + 1);
+    if (isSourceDoc(docId)) return keysById.has(rest) ? [keysById.get(rest), SRC] : null;
+    if (!isKey(docId)) return null;
+    if (keysById.has(rest)) return [keysById.get(rest), TARGETS[0]];
+    const dot = rest.indexOf('.');
+    const lang = rest.slice(0, dot);
+    const e = keysById.get(rest.slice(dot + 1));
+    return e && TARGETS.slice(1).includes(lang) ? [e, lang] : null;
   }
 
+  const keyEntryOf = (docId) => (keyObjectOf(docId) || [null])[0];
+  const rowLangOf = (docId) => (keyObjectOf(docId) || [null, TARGETS[0]])[1];
+
   function plainKeyEntry(docId) {
-    const e = keyEntryOf(docId);
-    return e && !isConflict(e) ? e : null;
+    const found = keyObjectOf(docId);
+    if (!found) return null;
+    const [e, lang] = found;
+    return objectConflicts(e, lang === SRC ? TARGETS[0] : lang).length ? null : e;
   }
 
   function slotObjects(e, lang) {
     const objects = (reviewByKey.get(e.key) || []).filter((r) => r.lang === lang).map((r) => `review.${r.id}`);
     if (lang === SRC) objects.push(`source.${e.key}`);
-    if (editLangOf(e) === lang) objects.push(`key.${e.key}`);
+    for (const target of TARGETS) if (editLangOf(e, target) === lang) objects.push(keyDocOf(e, target));
     return objects;
   }
 
@@ -525,8 +572,8 @@ body.has-downloads .export { display: grid; }
 
   function projectSourceWinner(e, lang, order, skip) {
     if (lang !== SRC || editLangOf(e) === SRC) return null;
-    const winner = slotWinner(e, TGT, order, skip);
-    return winner && winner[0] === `key.${e.key}` && winner[1].pick === 'project' ? winner : null;
+    const winner = slotWinner(e, TARGETS[0], order, skip);
+    return winner && winner[0] === keyDocOf(e, TARGETS[0]) && winner[1].pick === 'project' ? winner : null;
   }
 
   function answerText(e, lang, object, ev) {
@@ -941,17 +988,53 @@ body.has-downloads .export { display: grid; }
     applyDoc(`term.${id}`);
   }
 
+  const pairReviewRows = (lang) => R.review.filter((r) => r.lang === SRC || r.lang === lang);
+
+  function renderPairs() {
+    const counts = { 'review-pairs': reviewPairCount, 'keys-pairs': keysPairCount };
+    for (const id of PAIR_SWITCHES) {
+      const el = document.getElementById(id);
+      el.hidden = TARGETS.length < 2;
+      if (el.hidden) continue;
+      el.setAttribute('aria-label', t('pairsLabel'));
+      el.innerHTML = TARGETS.map((lang) => `<button data-target="${esc(lang)}"${pressed(lang === activeTarget)}>${esc(`${SRC} → ${lang}`)} <span class="n">${esc(counts[id](lang))}</span></button>`).join('');
+    }
+  }
+
+  function reviewPairCount(lang) {
+    const ids = pairReviewRows(lang).map((r) => `review.${r.id}`);
+    return `${ids.filter(answeredByAnyone).length}/${ids.length}`;
+  }
+
+  function keysPairCount(lang) {
+    const done = R.keys.filter((k) => answeredByAnyone(keyDocOf(k, lang)) || answeredByAnyone(`source.${k.key}`)).length;
+    return `${done}/${R.keys.length}`;
+  }
+
+  function selectTarget(lang) {
+    if (lang === activeTarget || !TARGETS.includes(lang)) return;
+    flushPendingText();
+    activeTarget = lang;
+    keyFilter.shown = PAGE_SIZE;
+    renderReview();
+    document.querySelectorAll('#review-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
+    renderKeyFilters();
+    renderKeys();
+    refreshCounts();
+  }
+
   function renderReview() {
     const groups = new Map();
-    for (const r of R.review.filter(matchesReview)) {
+    for (const r of pairReviewRows(activeTarget).filter(matchesReview)) {
       if (!groups.has(r.lang)) groups.set(r.lang, []);
       groups.get(r.lang).push(r);
     }
     const html = [...groups.entries()].map(([lang, rows]) =>
       `<div class="part"><h2>${esc(t('reviewGroup', { lang }))} <span class="count">${rows.length}</span></h2>${rows.map(reviewCard).join('')}</div>`);
+    const rows = pairReviewRows(activeTarget);
     document.getElementById('review-list').innerHTML = html.length
-      ? `<p class="intro">${fmt(t('reviewIntro', { n: R.review.length }))}</p>${html.join('')}`
-      : `<div class="empty">${esc(t(R.review.length ? 'keysEmpty' : 'reviewEmpty'))}</div>`;
+      ? `<p class="intro">${fmt(t('reviewIntro', { n: rows.length }))}</p>${html.join('')}`
+      : `<div class="empty">${esc(t(rows.length ? 'keysEmpty' : 'reviewEmpty'))}</div>`;
   }
 
   function matchesReview(r) {
@@ -1004,10 +1087,10 @@ body.has-downloads .export { display: grid; }
     if (f.confidence !== 'all' && e.confidence !== f.confidence) return false;
     if (f.batch !== 'all' && e.batch !== f.batch) return false;
     if (f.flag !== 'all' && !hasFlag(e, f.flag)) return false;
-    if (f.unreviewed && reviewedByAnyone(`key.${e.key}`)) return false;
+    if (f.unreviewed && reviewedByAnyone(keyDocOf(e, activeTarget))) return false;
     if (!f.query) return true;
     const comments = [...latest(`comment.${e.key}`).values()].map((ev) => textOf(ev.text));
-    const texts = [valueOf(e, SRC), valueOf(e, TGT), slotText(e, SRC, [viewerId]), slotText(e, TGT, [viewerId])].map(textOf);
+    const texts = [valueOf(e, SRC), valueOf(e, activeTarget), slotText(e, SRC, [viewerId]), slotText(e, activeTarget, [viewerId])].map(textOf);
     const hay = [e.key, ...texts, ...comments].join(' ').toLowerCase();
     return hay.includes(f.query);
   }
@@ -1022,7 +1105,7 @@ body.has-downloads .export { display: grid; }
     const flags = keyFlags(e);
     const chip = (flag, text) => `<span class="chip flag-${flag}">${esc(text)}</span>`;
     return [
-      e.confidence ? confidenceChip(e.confidence) : '',
+      overallChip(e),
       flags.has('conflict') ? chip('conflict', t('badgeConflict')) : '',
       flags.has('invalid') ? chip('invalid', t('badgeInvalid')) : '',
       flags.has('project') ? chip('project', t('badgeProject')) : '',
@@ -1032,23 +1115,48 @@ body.has-downloads .export { display: grid; }
     ].join('');
   }
 
+  function overallChip(e) {
+    if (!e.confidence) return '';
+    if (!e.langs) return confidenceChip(e.confidence);
+    return `<span class="chip ${esc(e.confidence)}" title="${esc(t('confidenceOverall'))}">${esc(tMap('confidenceHint', e.confidence))}</span>`;
+  }
+
+  function langChip(e, lang) {
+    const item = (e.langs || {})[lang];
+    if (!item) return '';
+    return `<span class="chip lang-level ${esc(item.confidence)}" title="${esc(tMap('confidenceHint', item.confidence))}">${esc(tMap('confidence', item.confidence))}</span>`;
+  }
+
+  function langWhy(e, lang) {
+    const item = (e.langs || {})[lang];
+    if (!item || !item.reasons.length) return '';
+    return `<span class="small muted">${esc(t('langWhy', { reasons: item.reasons.map((code) => reasonText(code, e)).join(', ') }))}</span>`;
+  }
+
+  function reasonText(code, e) {
+    const [kind, ...rest] = code.split(':');
+    const detail = rest.join(':');
+    const label = tMap('reasonCode', kind);
+    if (kind === 'codeDefect' && (e.compositions || []).length) return t('reasonComposed');
+    if (kind === 'review') return `${label} (${tMap('severity', detail)})`;
+    if (kind === 'risk') return `${label} (${tMap('risk', detail)})`;
+    if (kind === 'term') return `${label} «${(termsById.get(detail) || { source: detail }).source}»`;
+    if (kind === 'question') return `${label} ${detail}`;
+    return label;
+  }
+
   function keyReasons(e) {
     const rejected = (R.rejected || []).filter((x) => x.key === e.key);
     const terms = (e.terms || []).map((id) => (termsById.get(id) || { source: id }).source);
     return [
-      ...(e.invalid || []).map((x) => fmt(t('invalidReason', { lang: x.lang, reason: x.reason }))),
-      e.codeDefect ? fmt(t('codeDefect', { text: e.codeDefect })) : '',
-      e.risk ? fmt(t('riskNote', { risk: tMap('risk', e.risk) })) : '',
       terms.length ? fmt(t('keyTerms', { terms: terms.join(', ') })) : '',
-      (e.questions || []).length ? fmt(t('keyQuestions', { ids: e.questions.join(', ') })) : '',
-      (e.reviewRows || []).length ? fmt(t('keyReviewRows', { n: e.reviewRows.length })) : '',
       ...rejected.map((x) => fmt(t('rejectedNote', { lang: x.lang, text: textOf(x.proposal) }))),
       e.identicalWhy ? fmt(e.identicalWhy) : '',
     ].filter(Boolean);
   }
 
-  function conflictOptions(e) {
-    const conflicts = conflictsOf(e);
+  function conflictOptions(e, lang) {
+    const conflicts = objectConflicts(e, lang);
     const vals = (pick) => `<span class="vals">${conflicts.map((c) => `<span><b>${esc(c.lang)}</b>${esc(textOf(pick(c)))}</span>`).join('')}</span>`;
     return [
       { key: 'artifact', html: `<span class="tag">${esc(t('pickArtifact'))}</span>${vals((c) => valueOf(e, c.lang))}` },
@@ -1063,12 +1171,152 @@ body.has-downloads .export { display: grid; }
       <div class="head"><div class="left"><span class="key">${esc(e.key)}</span><span class="small muted">${esc(batch ? batch.label : e.batch || '')}</span></div>
         <div class="left">${keyBadges(e)}</div></div>
       ${reasons.length ? `<ul class="reasons">${reasons.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
+      ${decideBlock(e)}
       ${sourceBlock(e)}
       ${targetBlock(e)}
       <div class="others" data-panel-body="others" hidden></div>
       ${commentBlock(e)}
-      <label class="check"><input type="checkbox" class="ctl" data-field="reviewed" data-object="${esc(`key.${e.key}`)}" id="rev-${esc(e.key)}"${mine(`key.${e.key}`).reviewed === true ? ' checked' : ''}${dis()}> ${esc(t('reviewedLabel'))}</label>
+      <label class="check"><input type="checkbox" class="ctl" data-field="reviewed" data-object="${esc(keyDocOf(e, activeTarget))}" id="rev-${esc(e.key)}"${mine(keyDocOf(e, activeTarget)).reviewed === true ? ' checked' : ''}${dis()}> ${esc(t('reviewedLabel'))}</label>
     </article>`;
+  }
+
+  function decideBlock(e) {
+    const items = decideItems(e);
+    if (!items.length) return '';
+    const details = items.filter((x) => x.details).map((x) => x.details).join('');
+    const toggle = details ? `<button class="toggle-btn" data-act="toggle" data-panel="decide" aria-expanded="false"><span class="when-closed">${esc(t('defectMore'))}</span><span class="when-open">${esc(t('defectLess'))}</span></button>` : '';
+    const lines = items.map((x) => `<li><span class="sign" aria-hidden="true">!</span><div>${x.summary}</div></li>`).join('');
+    const phrases = (e.compositions || []).map((c) => `<div class="phrase" data-phrase="${esc(c.id)}" data-current="${esc(e.key)}">${phraseInner(c, e.key)}</div>`).join('');
+    return `<div class="defect"><div class="defect-head"><b class="summary">${esc(t('decideTitle'))}</b>${toggle}</div><ul class="decide-list">${lines}</ul>${phrases}${details ? `<div class="defect-details" data-panel-body="decide" hidden>${details}</div>` : ''}</div>`;
+  }
+
+  function decideItems(e) {
+    const langs = [SRC, activeTarget];
+    const shown = (x) => langs.includes(x.lang);
+    const section = (label, body) => `<div><h4>${label}</h4>${body}</div>`;
+    const items = [];
+    for (const r of (reviewByKey.get(e.key) || []).filter(shown)) {
+      items.push({ summary: `${esc(t('decideReview', { lang: r.lang, severity: tMap('severity', r.severity) }))}${r.why ? ` — <span class="muted">${fmt(r.why)}</span>` : ''}`, details: reviewDetails(e, r) });
+    }
+    if (e.codeDefect || (e.compositions || []).length) {
+      const body = defectDetails(e.defect);
+      items.push({ summary: e.codeDefect ? fmt(e.codeDefect) : esc(t('defectComposed')), details: body ? section(esc(t('decideDefect')), `<div class="defect-details">${body}</div>`) : '' });
+    }
+    if (e.risk) {
+      items.push({ summary: esc(t('decideRisk', { risk: tMap('risk', e.risk) })), details: e.riskWhy ? section(esc(t('decideRisk', { risk: tMap('risk', e.risk) })), fmt(e.riskWhy)) : '' });
+    }
+    for (const x of (e.invalid || []).filter(shown)) items.push({ summary: fmt(t('invalidReason', { lang: x.lang, reason: x.reason })) });
+    for (const x of (e.interpreted || []).filter(shown)) items.push({ summary: fmt(t('interpretedNote', { lang: x.lang, who: x.by, text: textOf(x.text) })) });
+    for (const id of e.questions || []) {
+      const q = questionsById.get(id);
+      items.push({ summary: `${esc(t('decideQuestion', { id, title: q ? q.title : '' }))} <button class="link-btn" data-act="goto" data-object="${esc(`q.${id}`)}">${esc(t('goto'))}</button>` });
+    }
+    for (const change of (e.projectChange || []).filter(shown)) {
+      const key = change.kind === 'conflict' ? 'conflictHint' : change.kind === 'added' ? 'badgeAdded' : 'badgeProject';
+      items.push({ summary: esc(`${change.lang}: ${t(key)}`) });
+    }
+    for (const lang of (e.changed || []).filter((x) => langs.includes(x))) items.push({ summary: esc(t('decideChanged', { lang, n: previousRound })) });
+    for (const reason of new Set(langs.flatMap((lang) => ((e.langs || {})[lang] || { reasons: [] }).reasons))) {
+      if (reason.startsWith('term:')) items.push({ summary: esc(t('decideTerm', { term: (termsById.get(reason.slice(5)) || { source: reason.slice(5) }).source })) });
+    }
+    return items;
+  }
+
+  function reviewDetails(e, r) {
+    const object = `review.${r.id}`;
+    const now = typeof r.was === 'string' ? r.was.replace(/`/g, '') : r.was;
+    const proposal = r.proposal;
+    const both = typeof now === 'string' && typeof proposal === 'string' && textPresent(proposal);
+    const [nowHtml, proposalHtml] = both ? wordDiff(now, proposal) : [formsView(now), textPresent(proposal) ? formsView(proposal) : `<span class="muted">${esc(t('noProposal'))}</span>`];
+    const head = [t('reviewGroup', { lang: r.lang }), tMap('severity', r.severity), r.reason ? tMap('reason', r.reason) : ''].filter(Boolean).join(' · ');
+    const a = base(object);
+    const fieldDoc = r.lang === SRC ? `source.${e.key}` : keyDocOf(e, r.lang);
+    const accept = `<button class="opt ctl" data-proxy-pick="accept"${pressed(a.pick === 'accept')}${textPresent(proposal) ? dis() : ' disabled data-locked="1"'}>${esc(t('pickAccept'))}</button>`;
+    const keep = `<button class="opt ctl" data-proxy-pick="keep"${pressed(a.pick === 'keep')}${dis()}>${esc(t('pickKeep'))}</button>`;
+    const custom = `<button class="opt ctl" data-act="focus-field" data-object="${esc(fieldDoc)}"${dis()}>${esc(t('pickCustom'))}</button>`;
+    return `<div class="decide-review"><h4>${esc(head)}</h4>
+      <div class="line"><span>${esc(t('reviewNow'))}</span><div>${nowHtml}</div></div>
+      <div class="line"><span>${esc(t('reviewProposes'))}</span><div>${proposalHtml}</div></div>
+      ${r.why ? `<div class="line"><span>${esc(t('reviewWhy'))}</span><div class="muted">${fmt(r.why)}</div></div>` : ''}
+      <div class="opts" data-review-proxy="${esc(object)}">${accept}${keep}${custom}</div>
+      <p class="small muted flat">${esc(t('decideSameAnswer'))}</p></div>`;
+  }
+
+  function wordDiff(before, after) {
+    const a = before.split(/(\s+)/);
+    const b = after.split(/(\s+)/);
+    const lcs = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+    for (let i = a.length - 1; i >= 0; i -= 1) {
+      for (let j = b.length - 1; j >= 0; j -= 1) lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+    }
+    let i = 0;
+    let j = 0;
+    let left = '';
+    let right = '';
+    while (i < a.length || j < b.length) {
+      if (i < a.length && j < b.length && a[i] === b[j]) { left += esc(a[i]); right += esc(b[j]); i += 1; j += 1; }
+      else if (j < b.length && (i >= a.length || lcs[i][j + 1] >= lcs[i + 1][j])) { right += /^\s+$/.test(b[j]) ? esc(b[j]) : `<ins>${esc(b[j])}</ins>`; j += 1; }
+      else { left += /^\s+$/.test(a[i]) ? esc(a[i]) : `<del>${esc(a[i])}</del>`; i += 1; }
+    }
+    return [left, right];
+  }
+
+  function applyReviewProxies(object) {
+    const a = base(object);
+    document.querySelectorAll(`[data-review-proxy="${CSS.escape(object)}"]`).forEach((box) => {
+      box.querySelectorAll('[data-proxy-pick]').forEach((b) => b.setAttribute('aria-pressed', String(a.pick === b.dataset.proxyPick)));
+    });
+  }
+
+  function defectDetails(d) {
+    if (!d) return '';
+    const section = (label, body) => `<div><h4>${label}</h4>${body}</div>`;
+    const uses = (d.uses || []).map((u) => `<div class="use"><div>${fmt(u.where)}</div>${u.question ? `<div class="q">${fmt(t('useQuestion', { text: u.question }))}</div>` : ''}${u.action ? `<div class="q">${fmt(t('useAction', { text: u.action }))}</div>` : ''}${u.needed ? `<div>${esc(t('useNeeded'))} <b>${esc(u.needed)}</b></div>` : ''}</div>`).join('');
+    return [
+      uses ? section(esc(t('defectUses')), `<div class="uses">${uses}</div>`) : '',
+      d.why ? section(esc(t('defectWhy')), fmt(d.why)) : '',
+      d.now ? section(esc(t('defectNow')), fmt(d.now)) : '',
+      d.devTask ? section(`${esc(t('defectDevTask'))}<span class="task">${esc(t('defectTaskTag'))}</span>`, fmt(d.devTask)) : '',
+    ].join('');
+  }
+
+  function phraseInner(c, current) {
+    const shape = c.pattern.replace(PATTERN_TOKEN_RE, (m, name) => `{${name}}`);
+    const lines = [SRC, activeTarget].map((lang) => `<div class="line"><b>${esc(lang)}</b>${assembledPhrase(c, lang, current)}</div>`).join('');
+    const site = c.site ? `<span class="small muted">${esc(t('phraseSite', { site: c.site }))}</span>` : '';
+    return `<span class="small muted">${fmt(t('phraseTitle', { pattern: `\`${shape}\`` }))}</span>${lines}${site}`;
+  }
+
+  function assembledPhrase(c, lang, current) {
+    let html = '';
+    let at = 0;
+    for (const m of c.pattern.matchAll(PATTERN_TOKEN_RE)) {
+      html += esc(c.pattern.slice(at, m.index)) + phrasePart(c, lang, m[1], m[2], current);
+      at = m.index + m[0].length;
+    }
+    return html + esc(c.pattern.slice(at));
+  }
+
+  function phrasePart(c, lang, name, count, current) {
+    if (!c.keys.includes(name)) return esc(String(c.sample[name] ?? ''));
+    const e = keysById.get(name);
+    const value = e ? slotText(e, lang, [viewerId]) : null;
+    const form = value && typeof value === 'object' ? value[pluralForm(lang, c.sample[count])] ?? value.other : value;
+    const text = String(form ?? '—').replace(/\{(\w*)\}/g, (m, k) => (k in c.sample ? String(c.sample[k]) : m));
+    return name === current ? `<mark>${esc(text)}</mark>` : esc(text);
+  }
+
+  function pluralForm(lang, n) {
+    try { return new Intl.PluralRules(lang).select(Number(n)); } catch (err) { return 'other'; }
+  }
+
+  function applyPhrases(key) {
+    const ids = new Set(((keysById.get(key) || {}).compositions || []).map((c) => c.id));
+    document.querySelectorAll('[data-phrase]').forEach((el) => {
+      if (!ids.has(el.dataset.phrase)) return;
+      const c = ((keysById.get(el.dataset.current) || {}).compositions || []).find((x) => x.id === el.dataset.phrase);
+      if (c) el.innerHTML = phraseInner(c, el.dataset.current);
+    });
   }
 
   function textRow(docId, e, lang, editable) {
@@ -1077,21 +1325,22 @@ body.has-downloads .export { display: grid; }
     const note = editable && typeof shape !== 'object' ? '<span class="edited-note" data-edited="" hidden></span>' : '';
     const base = lang === SRC;
     const conflict = conflictsOf(e).some((c) => c.lang === lang);
-    return `<div class="pair with-role${base ? ' base' : ''}${editable ? '' : ' readonly'}${conflict ? ' conflict' : ''}"><b>${esc(lang)}<span class="role">${esc(t(base ? 'roleSource' : 'roleTarget'))}</span></b>${body}${wasLine(e, lang)}
-      <div class="field-note">${note}<span class="small muted" data-meta></span></div></div>`;
+    return `<div class="pair with-role${base ? ' base' : ''}${editable ? '' : ' readonly'}${conflict ? ' conflict' : ''}"><b>${esc(lang)}<span class="role">${esc(t(base ? 'roleSource' : 'roleTarget'))}</span>${langChip(e, lang)}</b>${body}${wasLine(e, lang)}
+      <div class="field-note">${note}<span class="issues" data-issues hidden></span><span class="small muted" data-meta></span>${langWhy(e, lang)}</div></div>`;
   }
 
   function sourceBlock(e) {
     const docId = `source.${e.key}`;
-    return `<div class="key-block" data-doc="${esc(docId)}">${textRow(docId, e, SRC, !isConflict(e))}</div>`;
+    return `<div class="key-block" data-doc="${esc(docId)}">${textRow(docId, e, SRC, !objectConflicts(e, TARGETS[0]).length)}</div>`;
   }
 
   function targetBlock(e) {
-    const docId = `key.${e.key}`;
-    const conflict = isConflict(e);
-    const choice = conflict ? `<p class="small muted flat">${esc(t('conflictHint'))}</p>${pickBlock(docId, conflictOptions(e), valueOf(e, editLangOf(e)), e.key)}` : '';
+    const lang = activeTarget;
+    const docId = keyDocOf(e, lang);
+    const conflict = objectConflicts(e, lang).length > 0;
+    const choice = conflict ? `<p class="small muted flat">${esc(t('conflictHint'))}</p>${pickBlock(docId, conflictOptions(e, lang), valueOf(e, editLangOf(e, lang)), e.key)}` : '';
     return `<div class="key-block" data-doc="${esc(docId)}">
-      ${textRow(docId, e, TGT, !conflict)}
+      ${textRow(docId, e, lang, !conflict)}
       ${choice}
       <div class="foot">
         <span class="foot-actions">
@@ -1169,7 +1418,7 @@ body.has-downloads .export { display: grid; }
       ['notesSection', noteObjects().map((object) => [object, esc(t('notesSection')), false])],
       ['tabTerms', R.terms.map((x) => [`term.${x.id}`, fmt(`${x.source} · ${x.target || '—'}`), false])],
       ['tabReview', R.review.map((r) => [`review.${r.id}`, esc(`${r.lang} · ${r.key}`), true])],
-      ['tabKeys', R.keys.map((k) => [`key.${k.key}`, esc(k.key), true])],
+      ['tabKeys', TARGETS.flatMap((lang) => R.keys.map((k) => [keyDocOf(k, lang), esc(TARGETS.length > 1 ? `${lang} · ${k.key}` : k.key), true]))],
       ['sectionSource', R.keys.map((k) => [`source.${k.key}`, esc(k.key), true])],
       ['sectionKeyComments', R.keys.map((k) => [`comment.${k.key}`, esc(k.key), true])],
     ];
@@ -1177,15 +1426,16 @@ body.has-downloads .export { display: grid; }
 
   function exportBlock() {
     const n = selectedRound;
-    const button = (act, label) => `<button class="more" data-act="${act}">${esc(label)}</button>`;
+    const button = (act, label, lang = '') => `<button class="more" data-act="${act}" data-lang="${esc(lang)}">${esc(label)}</button>`;
     return `<div class="export">
         <h3>${esc(t('exportTitle', { n }))}</h3>
         <div class="export-row">
           ${button('export-brief', t('exportBrief'))}
           ${button('export-source', t('exportLangFile', { lang: SRC }))}
-          ${button('export-target', t('exportLangFile', { lang: TGT }))}
+          ${TARGETS.map((lang) => button('export-target', t('exportLangFile', { lang }), lang)).join('')}
           ${button('export-answers', t('exportAnswersJson'))}
           ${button('export-xlsx', t('exportAnswersXlsx'))}
+          ${R.terms.length ? button('export-terms', t('exportTerms')) : ''}
         </div>
         <span class="small muted" id="export-note"></span>
       </div>`;
@@ -1199,7 +1449,7 @@ body.has-downloads .export { display: grid; }
       if (!items.length) return '';
       return `<h2>${esc(t(title))} <span class="count">${items.length}</span></h2><ul class="sum-list">${items.map(sumItem).join('')}</ul>`;
     }).join('');
-    const reviewed = R.keys.filter((k) => reviewedByAnyone(`key.${k.key}`)).length;
+    const reviewed = R.keys.filter((k) => TARGETS.some((lang) => reviewedByAnyone(keyDocOf(k, lang)))).length;
     document.getElementById('panel-summary').innerHTML =
       `<p class="intro">${fmt(t('summaryIntro', { reviewed, total: R.keys.length }))}</p>
       ${exportBlock()}
@@ -1212,7 +1462,7 @@ body.has-downloads .export { display: grid; }
       .sort((a, b) => String(b[1].at).localeCompare(String(a[1].at)))
       .map(([id, ev]) => `<li>${editorLine(item.object, id, ev)}${id === viewerId && writable ? ownActions(item.object) : ''}</li>`).join('');
     const key = keyEntryOf(item.object);
-    const lang = key && isKey(item.object) ? editLangOf(key) : rowLangOf(item.object);
+    const lang = key && isKey(item.object) ? editLangOf(key, rowLangOf(item.object)) : rowLangOf(item.object);
     const original = key ? `<span class="small muted">${esc(`${lang}: ${textOf(valueOf(key, lang))}`)}</span>` : '';
     const chip = item.diverged ? `<span class="chip diverge">${esc(t('badgeDiverge'))}</span>` : '';
     return `<li class="${item.diverged ? 'diverged' : ''}"><div class="sum-head"><span class="${item.mono ? 'key' : ''}">${item.label}</span><span class="own-actions">${chip}<button class="link-btn" data-act="goto" data-object="${esc(item.object)}">${esc(t('goto'))}</button></span></div>
@@ -1229,9 +1479,9 @@ body.has-downloads .export { display: grid; }
     document.getElementById('n-questions').textContent = `${done(R.questions.map((q) => `q.${q.id}`))}/${R.questions.length}`;
     const pendingTerms = R.terms.filter((x) => !x.approved).map((x) => `term.${x.id}`);
     document.getElementById('n-terms').textContent = pendingTerms.length ? `${done(pendingTerms)}/${pendingTerms.length}` : '✓';
-    document.getElementById('n-review').textContent = `${done(R.review.map((r) => `review.${r.id}`))}/${R.review.length}`;
-    const keysDone = R.keys.filter((k) => answeredByAnyone(`key.${k.key}`) || answeredByAnyone(`source.${k.key}`)).length;
-    document.getElementById('n-keys').textContent = `${keysDone}/${R.keys.length}`;
+    document.getElementById('n-review').textContent = reviewPairCount(activeTarget);
+    document.getElementById('n-keys').textContent = keysPairCount(activeTarget);
+    renderPairs();
     let answered = 0;
     for (const object of latestByObject.keys()) if (summaryTouched(object)) answered += 1;
     document.getElementById('n-summary').textContent = String(answered);
@@ -1258,10 +1508,10 @@ body.has-downloads .export { display: grid; }
   }
 
   function applyKeyOthers(e) {
-    const block = cardEl(`key.${e.key}`);
+    const block = cardEl(keyDocOf(e, activeTarget));
     if (!block) return;
     const card = block.closest('.card');
-    const objects = [[`source.${e.key}`, SRC], [`key.${e.key}`, editLangOf(e)]];
+    const objects = [[`source.${e.key}`, SRC], [keyDocOf(e, activeTarget), editLangOf(e, activeTarget)]];
     const panel = card.querySelector('[data-panel-body="others"]');
     fillOthers(panel, objects, true);
     const button = card.querySelector('[data-panel="others"]');
@@ -1352,6 +1602,7 @@ body.has-downloads .export { display: grid; }
   }
 
   function applyDoc(docId) {
+    if (docId.startsWith('review.')) applyReviewProxies(docId);
     const el = cardEl(docId);
     if (!el) return;
     const a = base(docId);
@@ -1368,11 +1619,52 @@ body.has-downloads .export { display: grid; }
     }
     const plain = plainKeyEntry(docId);
     if (plain) applyEdited(el, docId, plain, a);
+    if (plain) applyIssues(el, docId);
     const rev = isKey(docId) ? el.closest('.card').querySelector('[data-field="reviewed"]') : null;
     if (rev && !sent) rev.checked = a.reviewed === true;
     if (docId.startsWith('review.')) applyOverridden(el, docId);
     if (docId.startsWith('comment.')) applyComments(el, docId);
     applyEditors(el, docId);
+  }
+
+  function applyIssues(el, docId) {
+    const e = plainKeyEntry(docId);
+    const box = el.querySelector('[data-issues]');
+    if (!e || !box) return;
+    const lang = rowLangOf(docId);
+    const issues = textIssues(lang, typedValue(el), valueOf(e, lang));
+    box.hidden = !issues.length;
+    box.textContent = issues.length ? t('issuesNote', { issues: issues.map(issueText).join('; ') }) : '';
+  }
+
+  function typedValue(el) {
+    const areas = [...el.querySelectorAll('textarea[data-form]')];
+    if (!areas.length || !areas[0].dataset.form) return areas.length ? areas[0].value : '';
+    return Object.fromEntries(areas.map((area) => [area.dataset.form, area.value]));
+  }
+
+  function textIssues(lang, text, roundValue) {
+    if (!textPresent(text) || matchesSlot(text, roundValue)) return [];
+    const script = ((DATA.textRules || {}).foreignScript || {})[lang];
+    const found = script && new RegExp(script).test(textOf(text)) ? ['foreignScript'] : [];
+    if (typeof text !== 'object') return found.concat(placeholderIssues(text, typeof roundValue === 'string' ? roundValue : null));
+    const reference = roundValue && typeof roundValue === 'object' ? roundValue : {};
+    for (const [form, value] of Object.entries(text)) {
+      if (!String(value ?? '').trim()) found.push(`emptyForm:${form}`);
+      else found.push(...placeholderIssues(value, reference[form] ?? reference.other ?? null));
+    }
+    return found;
+  }
+
+  function placeholderIssues(text, roundText) {
+    if (roundText == null) return [];
+    const marks = (s) => (String(s).match(/\{[^{}]*\}/g) || []).sort().join(' ');
+    return marks(text) === marks(roundText) ? [] : [`placeholders:${(String(roundText).match(/\{[^{}]*\}/g) || []).join(' ')}`];
+  }
+
+  function issueText(code) {
+    const [kind, ...rest] = code.split(':');
+    return t(`issue_${kind}`, { detail: rest.join(':') });
   }
 
   function applyEdited(el, docId, e, a) {
@@ -1580,7 +1872,7 @@ body.has-downloads .export { display: grid; }
   }
 
   function showKey(object) {
-    const key = object.slice(object.indexOf('.') + 1);
+    const key = (keyEntryOf(object) || { key: object.slice(object.indexOf('.') + 1) }).key;
     Object.assign(keyFilter, { confidence: 'all', batch: 'all', flag: 'all', query: key.toLowerCase(), unreviewed: false, shown: PAGE_SIZE });
     document.getElementById('keys-search').value = key;
     document.getElementById('keys-unreviewed').checked = false;
@@ -1588,8 +1880,21 @@ body.has-downloads .export { display: grid; }
     renderKeys();
   }
 
+  function objectTarget(object) {
+    if (object.startsWith('review.')) return (reviewById.get(object.slice(7)) || {}).lang;
+    return isKey(object) ? rowLangOf(object) : null;
+  }
+
+  function focusCardField(button) {
+    const field = button.closest('.card').querySelector(`[data-doc="${CSS.escape(button.dataset.object)}"] textarea:not(:disabled)`);
+    if (!field) return;
+    field.scrollIntoView({ block: 'center' });
+    field.focus({ preventScroll: true });
+  }
+
   function goToObject(object, focus) {
     const tab = tabFor(object);
+    if (TARGETS.includes(objectTarget(object))) selectTarget(objectTarget(object));
     if (tab === 'keys') showKey(object);
     selectTab(tab);
     const el = cardEl(object);
@@ -1845,22 +2150,25 @@ body.has-downloads .export { display: grid; }
 
   function keysSheet() {
     const ids = answeringEditors();
-    const head = [t('colKey'), t('colBatch'), t('colConfidence'), SRC, TGT, ...ids.flatMap((id) => [t('colEditorAnswer', { editor: who(id) }), t('colEditorReviewed', { editor: who(id) })])];
+    const pairs = ids.flatMap((id) => TARGETS.map((lang) => [id, lang]));
+    const suffix = (lang) => (TARGETS.length > 1 ? ` · ${lang}` : '');
+    const head = [t('colKey'), t('colBatch'), t('colConfidence'), SRC, ...TARGETS,
+      ...pairs.flatMap(([id, lang]) => [t('colEditorAnswer', { editor: who(id) }) + suffix(lang), t('colEditorReviewed', { editor: who(id) }) + suffix(lang)])];
     const rows = R.keys.map((k) => {
-      const byEditor = latest(`key.${k.key}`);
-      const answers = ids.flatMap((id) => {
-        const ev = byEditor.get(id);
-        return [ev && hasAnswer(`key.${k.key}`, ev) ? valueLabel(`key.${k.key}`, ev) : '', ev && ev.reviewed === true ? t('yes') : ''];
+      const answers = pairs.flatMap(([id, lang]) => {
+        const object = keyDocOf(k, lang);
+        const ev = latest(object).get(id);
+        return [ev && hasAnswer(object, ev) ? valueLabel(object, ev) : '', ev && ev.reviewed === true ? t('yes') : ''];
       });
       const batch = batchById.get(k.batch);
-      return [k.key, batch ? batch.label : k.batch || '', tMap('confidence', k.confidence), cellText(valueOf(k, SRC)), cellText(valueOf(k, TGT)), ...answers];
+      return [k.key, batch ? batch.label : k.batch || '', tMap('confidence', k.confidence), cellText(valueOf(k, SRC)), ...TARGETS.map((lang) => cellText(valueOf(k, lang))), ...answers];
     });
     return [head, ...rows];
   }
 
   function termsSheet() {
     const ids = answeringEditors();
-    const head = [t('colTerm'), TGT, t('colMeaning'), t('colConfidence'), t('colVariants'), ...ids.map((id) => t('colEditorAnswer', { editor: who(id) }))];
+    const head = [t('colTerm'), TARGETS[0], t('colMeaning'), t('colConfidence'), t('colVariants'), ...ids.map((id) => t('colEditorAnswer', { editor: who(id) }))];
     const rows = R.terms.map((x) => {
       const object = `term.${x.id}`;
       const byEditor = latest(object);
@@ -1871,6 +2179,14 @@ body.has-downloads .export { display: grid; }
       return [x.source, x.target || '', x.meaning || '', tMap('confidence', x.confidence), termOptions(x).filter((o) => !o.current).map((o) => o.text).join('\n'), ...picks];
     });
     return [head, ...rows];
+  }
+
+  const mdCell = (v) => String(v).replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+
+  function termsMarkdown() {
+    const [head, ...rows] = termsSheet();
+    const line = (cells) => `| ${cells.map(mdCell).join(' | ')} |`;
+    return [line(head), line(head.map(() => '---')), ...rows.map(line)].join('\n') + '\n';
   }
 
   const SECTION_ORDER = ['q.', 'note.', 'term.', 'review.', 'key.', 'source.', 'comment.'];
@@ -1915,9 +2231,10 @@ body.has-downloads .export { display: grid; }
   const exportActions = {
     'export-brief': () => saveFile(fileName('brief.md'), String(R.brief || '')),
     'export-source': () => exportLangFile(SRC),
-    'export-target': () => exportLangFile(TGT),
+    'export-target': (lang) => exportLangFile(lang),
     'export-answers': () => saveFile(fileName('answers.json'), historyJson()),
     'export-xlsx': () => exportXlsx(),
+    'export-terms': () => saveFile(fileName('terms.md'), termsMarkdown()),
   };
 
   document.querySelector('nav.tabs').addEventListener('click', (ev) => {
@@ -1947,13 +2264,16 @@ body.has-downloads .export { display: grid; }
 
   const main = document.getElementById('main');
   main.addEventListener('click', (ev) => {
+    const proxy = ev.target.closest('[data-proxy-pick]');
+    if (proxy && !proxy.disabled) { onPick(proxy.closest('[data-review-proxy]').dataset.reviewProxy, proxy.dataset.proxyPick); return; }
     const pick = ev.target.closest('[data-pick]');
     if (pick && !pick.disabled) { onPick(pick.closest('[data-doc]').dataset.doc, pick.dataset.pick); return; }
     const act = ev.target.closest('[data-act]');
     if (!act) return;
     const name = act.dataset.act;
-    if (exportActions[name]) { exportActions[name](); return; }
+    if (exportActions[name]) { exportActions[name](act.dataset.lang); return; }
     if (name === 'goto') { goToObject(act.dataset.object, false); return; }
+    if (name === 'focus-field') { focusCardField(act); return; }
     if (name === 'edit') { goToObject(act.dataset.object, true); return; }
     if (name === 'open-term') { openedTerms.add(act.dataset.term); replaceTermCard(act.dataset.term); return; }
     if (name === 'close-term') { openedTerms.delete(act.dataset.term); replaceTermCard(act.dataset.term); return; }
@@ -1979,6 +2299,7 @@ body.has-downloads .export { display: grid; }
     clearTimeout(textTimers.get(docId));
     textTimers.set(docId, setTimeout(() => flushCard(docId), TEXT_DELAY_MS));
     applyPressed(el, docId);
+    applyIssues(el, docId);
   });
   main.addEventListener('change', (ev) => {
     const target = ev.target;
@@ -2024,6 +2345,12 @@ body.has-downloads .export { display: grid; }
     document.querySelectorAll('#keys-confidence [data-confidence]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     renderKeys();
   });
+  for (const id of PAIR_SWITCHES) {
+    document.getElementById(id).addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-target]');
+      if (b) selectTarget(b.dataset.target);
+    });
+  }
   document.getElementById('keys-more').addEventListener('click', () => {
     keyFilter.shown += PAGE_SIZE;
     renderKeys();
@@ -2054,13 +2381,15 @@ body.has-downloads .export { display: grid; }
 
   function textKeyOf(object) {
     if (object.startsWith('review.')) return (reviewById.get(object.slice(7)) || {}).key;
-    return keyEntryOf(object) ? object.slice(object.indexOf('.') + 1) : null;
+    return (keyEntryOf(object) || { key: null }).key;
   }
 
   function applyKeyTexts(key) {
-    applyDoc(`key.${key}`);
+    const e = keysById.get(key);
+    if (e) TARGETS.forEach((lang) => applyDoc(keyDocOf(e, lang)));
     applyDoc(`source.${key}`);
     (reviewByKey.get(key) || []).forEach((r) => applyDoc(`review.${r.id}`));
+    applyPhrases(key);
   }
 
   function refreshCommentFilter() {

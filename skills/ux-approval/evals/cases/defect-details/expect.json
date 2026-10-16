@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [["codeDefects", 0], {"key": "settingsReminder", "text": "One label for two screens",
+                              "uses": [{"where": "Settings", "question": "Remind me?", "action": "turns reminders on", "needed": "Remind me"},
+                                       {"where": "Plant card", "needed": "Reminder"}],
+                              "why": "No text fits both screens", "now": "Leave a neutral text", "devTask": "Split the key"}]
+      ]
+    },
+    ["{approval}", "check", "{tmp}/r1/spec.json"],
+    ["{approval}", "build", "{tmp}/r1/spec.json", "--template", "{template}"],
+    ["{approval}", "apply", "{tmp}/r1/page.html", "{cases}/source-edit/log.json", "{cases}/source-edit/editors.json",
+     "{cases}/source-edit/round.json", "--project", "{cases}/project", "-o", "{tmp}/out"],
+    {"read": "{tmp}/out/spec-next.json"}
+  ],
+  "exit": 0,
+  "fragments": ["ok", "\"devTask\": \"Split the key\"", "\"where\": \"Plant card\"", "\"now\": \"Leave a neutral text\""]
+}

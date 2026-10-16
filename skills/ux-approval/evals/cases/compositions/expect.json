@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [["compositions"], [{"id": "reminder-time", "keys": ["settingsReminder", "plantDaysLeft"],
+                             "pattern": "{settingsReminder}: {plantDaysLeft#count}", "sample": {"count": 3},
+                             "site": "lib/settings.dart:12"}]]
+      ]
+    },
+    ["{approval}", "check", "{tmp}/r1/spec.json"],
+    ["{approval}", "build", "{tmp}/r1/spec.json", "--template", "{template}", "--stats"],
+    ["{approval}", "apply", "{tmp}/r1/page.html", "{cases}/source-edit/log.json", "{cases}/source-edit/editors.json",
+     "{cases}/source-edit/round.json", "--project", "{cases}/project", "-o", "{tmp}/out"],
+    {"read": "{tmp}/out/spec-next.json"}
+  ],
+  "exit": 0,
+  "fragments": ["ok", "composed settingsReminder: reminder-time", "composed plantDaysLeft: reminder-time",
+                "\"pattern\": \"{settingsReminder}: {plantDaysLeft#count}\""],
+  "absent": ["composed homeTitle"]
+}

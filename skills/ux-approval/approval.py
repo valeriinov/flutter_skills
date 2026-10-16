@@ -24,17 +24,22 @@ from pathlib import Path
 DATA_SLOT = '/*__DATA__*/'
 PAGE_DATA_RE = re.compile(r'<script[^>]*\bid="page-data"[^>]*>(.*?)</script>', re.S)
 TEMPLATE = Path(__file__).resolve().parent / 'page_template.html'
+TEXT_RULES = Path(__file__).resolve().parent / 'text_rules.json'
+PLACEHOLDER_RE = re.compile(r'\{[^{}]*\}')
 SPEC_KEYS = ('title', 'lang', 'ui', 'product', 'slug', 'round', 'files')
-SIDES = ('source', 'target')
 SEVERITIES = ('blocking', 'significant', 'minor')
 CHANGE_KINDS = ('project', 'conflict', 'added')
-KEYED_SECTIONS = ('review', 'projectChanges', 'invalid')
+KEYED_SECTIONS = ('review', 'projectChanges', 'invalid', 'interpreted')
 SOURCE_SECTIONS = ('identical', 'codeDefects')
 COLLECTIONS = {'keys': 'key', 'terms': 'id', 'questions': 'id', 'review': 'id', 'batches': 'id'}
 ROUND_SCALARS = ('brief', 'origin')
 STATS_LIST_LIMIT = 20
 DECISIONS_HEADING = '## Decisions'
 OPEN_QUESTIONS_HEADING = '## Open questions'
+DEFECT_TEXT_FIELDS = ('why', 'now', 'devTask')
+USE_FIELDS = ('where', 'question', 'action', 'needed')
+PATTERN_TOKEN_RE = re.compile(r'\{([^{}#]+)(?:#([^{}]+))?\}')
+EDITED_REVIEW_WHY = '{who} changed this text in round {n}; check it'
 
 
 class InputError(Exception):
@@ -96,7 +101,26 @@ def read_page(path):
         raise InputError(f'{path}: page-data is not JSON: {error}') from None
     if not isinstance(data, dict) or not data.get('rounds'):
         raise InputError(f'{path}: page-data has no rounds')
+    data['files'] = with_targets(data['files'])
+    data['targetLangs'] = [entry['lang'] for entry in data['files']['targets']]
+    data.pop('targetLang', None)
     return data
+
+
+def with_targets(files):
+    if not isinstance(files, dict) or 'target' not in files:
+        return files
+    shaped = {name: value for name, value in files.items() if name != 'target'}
+    shaped.setdefault('targets', [files['target']])
+    return shaped
+
+
+def file_entries(files):
+    return [files['source']] + files['targets']
+
+
+def first_target(files):
+    return files['targets'][0]['lang']
 
 
 def documents(raw):
@@ -121,8 +145,15 @@ def write_json(path, value):
 
 # ---------------------------------------------------------------- check
 
+def load_spec(path):
+    spec = load_json(path)
+    if isinstance(spec, dict):
+        spec['files'] = with_targets(spec.get('files'))
+    return spec
+
+
 def run_check(args):
-    spec = load_json(args.spec)
+    spec = load_spec(args.spec)
     previous = read_page(args.previous) if args.previous else None
     if report_problems(spec, previous):
         return 1
@@ -149,6 +180,9 @@ def problems(spec, previous):
     found += term_problems(spec)
     found += question_problems(spec)
     found += batch_problems(spec)
+    found += composition_problems(spec)
+    found += defect_problems(spec)
+    found += risk_problems(spec)
     found += round_problems(spec, previous)
     return found
 
@@ -160,21 +194,29 @@ def head_problems(spec):
     if not isinstance(spec.get('round'), int) or spec.get('round', 0) < 1:
         found.append('round: must be a positive integer')
     files = spec.get('files') if isinstance(spec.get('files'), dict) else {}
-    for side in SIDES:
-        found += side_problems(side, files.get(side))
-    return found
+    found += side_problems('files.source', files.get('source'))
+    targets = files.get('targets')
+    if not isinstance(targets, list) or not targets:
+        return found + ['files.targets: must be a non-empty list']
+    for index, entry in enumerate(targets):
+        found += side_problems(f'files.targets[{index}]', entry)
+    if found:
+        return found
+    langs = [entry['lang'] for entry in file_entries(files)]
+    return [f'files.targets: lang {lang} appears more than once' for lang in dict.fromkeys(langs)
+            if langs.count(lang) > 1]
 
 
-def side_problems(side, entry):
+def side_problems(where, entry):
     if not isinstance(entry, dict):
-        return [f'files.{side}: missing']
-    found = [f'files.{side}.{key}: missing' for key in ('lang', 'path') if not entry.get(key)]
-    return found + [f'files.{side}.{key}: must be an object' for key in ('values', 'base')
+        return [f'{where}: missing']
+    found = [f'{where}.{key}: missing' for key in ('lang', 'path') if not entry.get(key)]
+    return found + [f'{where}.{key}: must be an object' for key in ('values', 'base')
                     if not isinstance(entry.get(key), dict)]
 
 
 def values_by_lang(spec):
-    return {spec['files'][side]['lang']: spec['files'][side]['values'] for side in SIDES}
+    return {entry['lang']: entry['values'] for entry in file_entries(spec['files'])}
 
 
 def source_values(spec):
@@ -183,8 +225,11 @@ def source_values(spec):
 
 def target_problems(spec):
     source = source_values(spec)
-    return [f'files.target.values.{key}: not in source values'
-            for key in spec['files']['target']['values'] if key not in source]
+    found = [f'files.targets.{entry["lang"]}.values.{key}: not in source values'
+             for entry in spec['files']['targets'] for key in entry['values'] if key not in source]
+    extra = [entry['lang'] for entry in spec['files']['targets'][1:]]
+    return found + [f'files.source.values.{key}: starts with "{lang}.", the id prefix of the {lang} translation'
+                    for key in source for lang in extra if key.startswith(f'{lang}.')]
 
 
 def reference_problems(spec, values):
@@ -256,6 +301,7 @@ def id_problems(spec):
     found = duplicate_problems('terms', [term.get('id') for term in spec.get('terms', [])])
     found += duplicate_problems('questions', [question.get('id') for question in spec.get('questions', [])])
     found += duplicate_problems('review', [f'{row.get("lang")}.{row.get("key")}' for row in spec.get('review', [])])
+    found += duplicate_problems('compositions', [item.get('id') for item in spec.get('compositions', [])])
     return found + duplicate_problems('batches', [batch.get('id') for batch in spec.get('batches', [])])
 
 
@@ -263,6 +309,45 @@ def duplicate_problems(section, ids):
     seen = set()
     duplicates = [name for name in ids if name in seen or seen.add(name)]
     return [f'{section}.{name}: duplicate id' for name in dict.fromkeys(duplicates)]
+
+
+def risk_problems(spec):
+    return [f'risk.{item.get("class")}.why: must be a string' for item in spec.get('risk', [])
+            if 'why' in item and not isinstance(item['why'], str)]
+
+
+def defect_problems(spec):
+    found = []
+    for item in spec.get('codeDefects', []):
+        where = f'codeDefects.{item.get("key")}'
+        found += [f'{where}.{name}: must be a string' for name in DEFECT_TEXT_FIELDS
+                  if name in item and not isinstance(item[name], str)]
+        uses = item.get('uses', [])
+        if not isinstance(uses, list) or not all(isinstance(use, dict) for use in uses):
+            found.append(f'{where}.uses: must be a list of objects')
+            continue
+        found += [f'{where}.uses: each use needs "where"' for use in uses if not use.get('where')]
+        found += [f'{where}.uses.{name}: must be a string' for use in uses for name in USE_FIELDS
+                  if name in use and not isinstance(use[name], str)]
+    return found
+
+
+def composition_problems(spec):
+    source = source_values(spec)
+    found = []
+    for item in spec.get('compositions', []):
+        where = f'compositions.{item.get("id")}'
+        keys = item.get('keys') if isinstance(item.get('keys'), list) else []
+        sample = item.get('sample') if isinstance(item.get('sample'), dict) else {}
+        tokens = PATTERN_TOKEN_RE.findall(item.get('pattern') or '')
+        found += [] if keys else [f'{where}: keys must be a non-empty list']
+        found += [f'{where}: key {key} not in source values' for key in keys if key not in source]
+        found += [f'{where}: pattern lacks {{{key}}}' for key in keys if key not in {name for name, _ in tokens}]
+        found += [f'{where}: pattern token {{{name}}} is neither a key nor a sample value'
+                  for name, _ in tokens if name not in keys and name not in sample]
+        found += [f'{where}: plural count {count} is not a number in sample'
+                  for _, count in tokens if count and not isinstance(sample.get(count), (int, float))]
+    return found
 
 
 def term_problems(spec):
@@ -347,6 +432,9 @@ def round_problems(spec, previous):
     history = full_rounds(previous['rounds'])
     last = history[-1]
     found = [f'round: previous page round {last["round"]} is final'] if last.get('final') else []
+    if first_target(spec['files']) != first_target(previous['files']):
+        found.append(f'files.targets[0]: {first_target(spec["files"])}, the previous page translates first '
+                     f'to {first_target(previous["files"])}; key.<localeKey> ids belong to the first translation')
     if spec['round'] != last['round'] + 1:
         found.append(f'round: {spec["round"]}, expected {last["round"] + 1} after the previous page')
     titles = {question['id']: question.get('title') for entry in history for question in entry['questions']}
@@ -374,7 +462,7 @@ def canonical(value):
 # ---------------------------------------------------------------- build
 
 def run_build(args):
-    spec = load_json(args.spec)
+    spec = load_spec(args.spec)
     previous = read_page(args.previous) if args.previous else None
     if report_problems(spec, previous):
         return 1
@@ -406,8 +494,10 @@ def page_data(spec, previous):
         'slug': spec['slug'],
         'ui': spec['ui'],
         'sourceLang': files['source']['lang'],
-        'targetLang': files['target']['lang'],
-        'files': {side: {'lang': files[side]['lang'], 'path': files[side]['path']} for side in SIDES},
+        'targetLangs': [entry['lang'] for entry in files['targets']],
+        'files': {'source': {'lang': files['source']['lang'], 'path': files['source']['path']},
+                  'targets': [{'lang': entry['lang'], 'path': entry['path']} for entry in files['targets']]},
+        'textRules': text_rules(),
         'rounds': rounds + [current if last is None else delta(last, current)],
     }
 
@@ -497,17 +587,32 @@ def key_entries(spec, previous_values):
 def key_index(spec):
     terms = spec.get('terms', [])
     return {
-        'langs': [spec['files'][side]['lang'] for side in SIDES],
+        'langs': [entry['lang'] for entry in file_entries(spec['files'])],
         'patterns': [(term, [re.compile(stem, re.I) for stem in term.get('match', {}).get('stems', [])])
                      for term in terms],
         'emptyTerms': {term['id'] for term in terms if not term.get('target')},
         'review': group_by_key(spec.get('review', [])),
         'projectChanges': group_by_key(spec.get('projectChanges', [])),
         'invalid': group_by_key(spec.get('invalid', [])),
+        'interpreted': group_by_key(spec.get('interpreted', [])),
         'risk': {key: item['class'] for item in reversed(spec.get('risk', [])) for key in item.get('keys', [])},
+        'riskWhy': {key: item['why'] for item in reversed(spec.get('risk', [])) if item.get('why') for key in item.get('keys', [])},
         'codeDefects': {item['key']: item.get('text', '') for item in spec.get('codeDefects', [])},
+        'defects': {item['key']: defect_details(item) for item in spec.get('codeDefects', [])},
         'identical': {item['key']: item.get('why') for item in spec.get('identical', [])},
+        'compositions': [composition_entry(item) for item in spec.get('compositions', [])],
     }
+
+
+def defect_details(item):
+    details = {name: item[name] for name in DEFECT_TEXT_FIELDS if item.get(name)}
+    uses = [{name: use[name] for name in USE_FIELDS if use.get(name)} for use in item.get('uses', [])]
+    return dict(details, uses=uses) if uses else details or None
+
+
+def composition_entry(item):
+    return {'id': item['id'], 'keys': item['keys'], 'pattern': item['pattern'],
+            'sample': item.get('sample', {}), 'site': item.get('site', '')}
 
 
 def group_by_key(items):
@@ -518,10 +623,10 @@ def group_by_key(items):
 
 
 def key_entry(key, spec, index, previous_values):
-    files = spec['files']
+    entries = file_entries(spec['files'])
     langs = index['langs']
-    values = {files[side]['lang']: files[side]['values'][key] for side in SIDES if key in files[side]['values']}
-    base = {files[side]['lang']: files[side]['base'][key] for side in SIDES if key in files[side]['base']}
+    values = {entry['lang']: entry['values'][key] for entry in entries if key in entry['values']}
+    base = {entry['lang']: entry['base'][key] for entry in entries if key in entry['base']}
     terms = key_terms(key, text_of(values.get(langs[0])), index['patterns'])
     rows = index['review'].get(key, [])
     entry = {
@@ -533,16 +638,23 @@ def key_entry(key, spec, index, previous_values):
         'questions': [question['id'] for question in spec.get('questions', [])
                       if set(question.get('terms', [])) & set(terms) or key in question.get('keys', [])],
         'risk': index['risk'].get(key),
+        'riskWhy': index['riskWhy'].get(key),
         'reviewRows': [f'{row["lang"]}.{key}' for row in rows],
         'codeDefect': index['codeDefects'].get(key),
+        'defect': index['defects'].get(key),
         'identical': key in index['identical'],
         'identicalWhy': index['identical'].get(key),
+        'compositions': [item for item in index['compositions'] if key in item['keys']],
         'projectChange': [{'lang': item['lang'], 'kind': item['kind'], 'value': item.get('value')}
                           for item in index['projectChanges'].get(key, [])],
         'invalid': [{'lang': item['lang'], 'reason': item.get('reason', '')} for item in index['invalid'].get(key, [])],
+        'interpreted': [{'lang': item['lang'], 'text': item.get('text', ''), 'by': item.get('by', '')}
+                        for item in index['interpreted'].get(key, [])],
         'changed': changed_langs(key, values, previous_values, langs),
     }
     entry['confidence'], entry['reasons'] = confidence(entry, rows, index['emptyTerms'])
+    entry['langs'] = {lang: lang_confidence(entry, rows, index['emptyTerms'], lang, lang != langs[0])
+                      for lang in langs if lang in values}
     return entry
 
 
@@ -572,12 +684,55 @@ def confidence(entry, rows, empty_terms):
     low += ['review:blocking' for severity in severities if severity == 'blocking']
     low += [f'conflict:{change["lang"]}' for change in changes if change['kind'] == 'conflict']
     low += [f'invalid:{item["lang"]}' for item in entry['invalid']]
+    low += [f'interpreted:{item["lang"]}' for item in entry['interpreted']]
     medium = [f'review:{severity}' for severity in severities if severity != 'blocking']
     medium += [f'term:{term}' for term in entry['terms'] if term in empty_terms]
     medium += [f'changed:{lang}' for lang in entry['changed']]
     medium += [f'{change["kind"]}:{change["lang"]}' for change in changes if change['kind'] != 'conflict']
     level = 'low' if low else 'medium' if medium else 'high'
     return level, low + medium
+
+
+def lang_confidence(entry, rows, empty_terms, lang, is_target):
+    severities = [str(row.get('severity', '')).lower() for row in rows if row['lang'] == lang]
+    changes = [change for change in entry['projectChange'] if change['lang'] == lang]
+    low = [f'question:{question}' for question in entry['questions']]
+    low += [f'risk:{entry["risk"]}'] if entry['risk'] else []
+    low += ['codeDefect'] if entry['codeDefect'] else []
+    low += ['review:blocking' for severity in severities if severity == 'blocking']
+    low += [f'conflict:{lang}' for change in changes if change['kind'] == 'conflict']
+    low += [f'invalid:{lang}' for item in entry['invalid'] if item['lang'] == lang]
+    low += [f'interpreted:{lang}' for item in entry['interpreted'] if item['lang'] == lang]
+    medium = [f'review:{severity}' for severity in severities if severity != 'blocking']
+    medium += [f'term:{term}' for term in entry['terms'] if is_target and term in empty_terms]
+    medium += [f'changed:{lang}'] if lang in entry['changed'] else []
+    medium += [f'{change["kind"]}:{lang}' for change in changes if change['kind'] != 'conflict']
+    return {'confidence': 'low' if low else 'medium' if medium else 'high', 'reasons': low + medium}
+
+
+def text_rules():
+    return json.loads(TEXT_RULES.read_text(encoding='utf-8'))
+
+
+def text_issues(lang, text, round_value, rules):
+    if text == round_value:
+        return []
+    script = rules.get('foreignScript', {}).get(lang)
+    found = ['foreignScript'] if script and re.search(script, text_of(text)) else []
+    if isinstance(text, dict):
+        found += [f'emptyForm:{form}' for form, value in text.items() if is_blank(value)]
+        reference = round_value if isinstance(round_value, dict) else {}
+        return found + [issue for form, value in text.items() if not is_blank(value)
+                        for issue in placeholder_issues(value, reference.get(form, reference.get('other')))]
+    return found + placeholder_issues(text, round_value if isinstance(round_value, str) else None)
+
+
+def placeholder_issues(text, round_text):
+    if round_text is None:
+        return []
+    if sorted(PLACEHOLDER_RE.findall(text or '')) == sorted(PLACEHOLDER_RE.findall(round_text)):
+        return []
+    return ['placeholders:' + ' '.join(PLACEHOLDER_RE.findall(round_text))]
 
 
 def print_stats(data):
@@ -590,6 +745,17 @@ def print_stats(data):
     print_key_list('low', [(entry['key'], ', '.join(entry['reasons'])) for entry in last['keys']
                            if entry['confidence'] == 'low'])
     print_key_list('changed', [(entry['key'], ', '.join(entry['changed'])) for entry in last['keys'] if entry['changed']])
+    print_key_list('split', [(entry['key'], lang_levels(entry)) for entry in last['keys'] if is_split(entry)])
+    print_key_list('composed', [(entry['key'], ', '.join(item['id'] for item in entry['compositions']))
+                                for entry in last['keys'] if entry.get('compositions')])
+
+
+def is_split(entry):
+    return len({item['confidence'] for item in entry.get('langs', {}).values()}) > 1
+
+
+def lang_levels(entry):
+    return ', '.join(f'{lang} {item["confidence"]}' for lang, item in entry['langs'].items())
 
 
 def round_stats(entry, full):
@@ -668,8 +834,7 @@ def is_round_event(doc, number, closed_at):
 
 def project_values(data, root):
     values = {}
-    for side in SIDES:
-        entry = data['files'][side]
+    for entry in file_entries(data['files']):
         path = root / entry['path']
         loaded = load_json(path)
         if not isinstance(loaded, dict):
@@ -685,8 +850,9 @@ class Draft:
         self.closing = closing
         self.editors = editors
         self.source = data['files']['source']['lang']
-        self.target = data['files']['target']['lang']
-        self.langs = (self.source, self.target)
+        self.targets = [entry['lang'] for entry in data['files']['targets']]
+        self.langs = (self.source, *self.targets)
+        self.paths = {entry['lang']: entry['path'] for entry in file_entries(data['files'])}
         self.keys = {entry['key']: entry for entry in last['keys']}
         self.values = {lang: {key: entry['values'][lang] for key, entry in self.keys.items() if lang in entry['values']}
                        for lang in self.langs}
@@ -697,9 +863,12 @@ class Draft:
         self.decisions = []
         self.free_text = []
         self.ledger = []
+        self.suspects = []
+        self.rules = text_rules()
         self.disputes = []
         self.touched_terms = set()
         self.answered = set()
+        self.answered_slots = set()
         self.order = list(self.keys)
         self.base = {}
         self.changes = []
@@ -713,11 +882,18 @@ class Draft:
         seen = sorted(self.editors, key=lambda other: (str(self.editors[other].get('firstSeenAt') or ''), other))
         return seen.index(editor) + 1 if editor in seen else len(seen) + 1
 
-    def set_value(self, lang, key, value):
+    def set_value(self, lang, key, value, editor):
         previous = self.values[lang].get(key)
         self.values[lang][key] = value
-        if lang == self.target and value != previous:
-            self.ledger.append({'key': key, 'target': value, 'previous': previous})
+        if lang in self.targets and value != previous:
+            self.ledger.append({'lang': lang, 'key': key, 'target': value, 'previous': previous, 'by': editor})
+
+    def set_edit(self, lang, key, text, editor):
+        issues = text_issues(lang, text, self.values[lang].get(key), self.rules)
+        if issues:
+            self.suspects.append({'lang': lang, 'key': key, 'by': self.name(editor), 'text': text,
+                                  'previous': self.values[lang].get(key), 'issues': issues})
+        self.set_value(lang, key, text, editor)
 
     def reconcile(self, project):
         order = list(project[self.source])
@@ -753,7 +929,7 @@ class Draft:
         return 'conflict'
 
     def is_open_conflict(self, key, lang):
-        return key not in self.answered and lang in [change['lang'] for change in conflict_changes(self.keys[key])]
+        return (key, lang) not in self.answered and lang in [change['lang'] for change in conflict_changes(self.keys[key])]
 
     def add_key(self, key, project):
         for lang in self.langs:
@@ -783,6 +959,7 @@ def apply_answers(draft, events):
         print(f'withdrawn {object_id} by {draft.name(editor)}')
     for slot, events_by_editor in answer_slots(draft, answers).items():
         by_editor = {editor: main_answer(events) for editor, events in events_by_editor.items()}
+        draft.answered_slots.add(slot)
         winner, losers = resolve(by_editor, rank)
         if losers:
             record_dispute(draft, slot, by_editor, winner, losers)
@@ -833,8 +1010,9 @@ def apply_displaced_keeps(draft, events, applied):
 
 def slot_of(draft, object_id, editor):
     kind, _, rest = object_id.partition('.')
-    if kind == 'key' and rest in draft.keys:
-        return f'{edit_lang(draft, rest)}.{rest}'
+    key, lang = key_object(draft, rest) if kind == 'key' else (None, None)
+    if key is not None:
+        return f'{edit_lang(draft, key, lang)}.{key}'
     if kind == 'source':
         return f'{draft.source}.{rest}'
     if kind == 'comment':
@@ -879,19 +1057,35 @@ def apply_answer(draft, object_id, event):
     print(f'answer {object_id}: {outcome or "skipped, unknown object"} ({draft.name(event["by"])})')
 
 
-def apply_key(draft, key, event):
-    if key not in draft.keys:
+def apply_key(draft, rest, event):
+    key, lang = key_object(draft, rest)
+    if key is None:
         return None
-    draft.answered.add(key)
+    conflicts = object_conflicts(draft, key, lang)
+    draft.answered.update((key, change['lang']) for change in conflicts)
     pick = event.get('pick')
     if pick == 'project':
-        for change in conflict_changes(draft.keys[key]):
+        for change in conflicts:
             draft.put(change['lang'], key, change['value'])
         return 'project value'
     if pick != 'custom' or is_blank(event.get('text')):
         return 'kept'
-    draft.set_value(edit_lang(draft, key), key, event['text'])
+    draft.set_edit(edit_lang(draft, key, lang), key, event['text'], event['by'])
     return 'new value'
+
+
+def key_object(draft, rest):
+    if rest in draft.keys:
+        return rest, draft.targets[0]
+    lang, _, key = rest.partition('.')
+    if lang in draft.targets[1:] and key in draft.keys:
+        return key, lang
+    return None, None
+
+
+def object_conflicts(draft, key, lang):
+    langs = (draft.source, lang) if lang == draft.targets[0] else (lang,)
+    return [change for change in conflict_changes(draft.keys[key]) if change['lang'] in langs]
 
 
 def apply_source(draft, key, event):
@@ -899,13 +1093,13 @@ def apply_source(draft, key, event):
         return None
     if event.get('pick') != 'custom' or is_blank(event.get('text')):
         return 'kept'
-    draft.set_value(draft.source, key, event['text'])
+    draft.set_edit(draft.source, key, event['text'], event['by'])
     return 'new value'
 
 
-def edit_lang(draft, key):
-    conflicts = [change['lang'] for change in conflict_changes(draft.keys[key])]
-    return draft.source if conflicts == [draft.source] else draft.target
+def edit_lang(draft, key, lang):
+    conflicts = [change['lang'] for change in object_conflicts(draft, key, lang)]
+    return draft.source if conflicts == [draft.source] else lang
 
 
 def conflict_changes(entry):
@@ -917,15 +1111,17 @@ def apply_review(draft, row_id, event):
     if row is None or row['key'] not in draft.keys:
         return None
     pick = choice(event)[0]
+    if pick == 'keep' and is_blank(row.get('proposal')):
+        return 'kept'
     if pick == 'keep':
         draft.rejected.append({'lang': row['lang'], 'key': row['key'], 'proposal': row.get('proposal')})
         return 'keep, rejected'
     if pick == 'custom':
-        draft.set_value(row['lang'], row['key'], event['text'])
+        draft.set_edit(row['lang'], row['key'], event['text'], event['by'])
         draft.free_text.append((f'review.{row_id}', event['by'], event['text']))
         return 'custom value'
     if pick == 'accept' and not is_blank(row.get('proposal')):
-        draft.set_value(row['lang'], row['key'], row['proposal'])
+        draft.set_value(row['lang'], row['key'], row['proposal'], event['by'])
         return 'proposal accepted'
     return 'kept, nothing to accept'
 
@@ -987,21 +1183,27 @@ def write_outputs(draft, output, root):
     spec = next_spec(draft, root)
     write_json(output / 'spec-next.json', spec)
     (output / 'brief.md').write_text(spec['brief'], encoding='utf-8')
-    for side in SIDES:
-        write_json(output / f'{spec["files"][side]["lang"]}.json', spec['files'][side]['values'])
+    for entry in file_entries(spec['files']):
+        write_json(output / f'{entry["lang"]}.json', entry['values'])
     named = named_keys(draft)
     (output / 'named-keys.txt').write_text(''.join(f'{key}\n' for key in named), encoding='utf-8')
-    ledger = ''.join(json.dumps(line, ensure_ascii=False) + '\n' for line in ledger_lines(draft))
-    (output / f'changed-{draft.target}.jsonl').write_text(ledger, encoding='utf-8')
+    for lang in draft.targets:
+        ledger = ''.join(json.dumps(line, ensure_ascii=False) + '\n' for line in ledger_lines(draft, lang))
+        (output / f'changed-{lang}.jsonl').write_text(ledger, encoding='utf-8')
     (output / 'conflicts.md').write_text(conflicts_markdown(draft), encoding='utf-8')
     (output / 'free-text.md').write_text(free_text_markdown(draft), encoding='utf-8')
+    suspects = [line for line in draft.suspects if line['key'] in draft.order]
+    (output / 'suspect.jsonl').write_text(''.join(json.dumps(line, ensure_ascii=False) + '\n' for line in suspects),
+                                          encoding='utf-8')
+    for line in suspects:
+        print(f'suspect {line["key"]} {line["lang"]}: {", ".join(line["issues"])}')
     print(f'named {len(named)}: {", ".join(named)}')
 
 
-def ledger_lines(draft):
-    path = draft.data['files']['target']['path']
-    return [{'file': path, 'key': line['key'], 'source': draft.values[draft.source].get(line['key']), **line}
-            for line in draft.ledger if line['key'] in draft.order]
+def ledger_lines(draft, lang):
+    return [{'file': draft.paths[lang], 'key': line['key'], 'source': draft.values[draft.source].get(line['key']),
+             'target': line['target'], 'previous': line['previous']}
+            for line in draft.ledger if line['lang'] == lang and line['key'] in draft.order]
 
 
 def next_spec(draft, root):
@@ -1024,21 +1226,32 @@ def next_spec(draft, root):
         'final': False,
         'origin': project_origin(root),
         'brief': updated_brief(last.get('brief') or '', draft),
-        'files': {side: {'lang': lang, 'path': data['files'][side]['path'], 'values': values[lang], 'base': base[lang]}
-                  for side, lang in zip(SIDES, draft.langs)},
+        'files': {'source': file_spec(draft, draft.source, values, base),
+                  'targets': [file_spec(draft, lang, values, base) for lang in draft.targets]},
         'terms': [next_term(term, kept) for term in draft.terms.values()],
         'questions': [question for question_id, question in draft.questions.items() if question_id not in decided],
-        'review': [],
+        'review': next_review(draft, kept),
         'projectChanges': draft.changes,
         'invalid': [],
+        'interpreted': [],
         'rejected': [item for item in draft.rejected if item['key'] in kept],
-        'codeDefects': [{'key': entry['key'], 'text': entry['codeDefect']}
+        'codeDefects': [dict({'key': entry['key'], 'text': entry['codeDefect']}, **(entry.get('defect') or {}))
                         for entry in last['keys'] if entry['codeDefect'] and entry['key'] in kept],
         'risk': risk_groups(last['keys'], kept),
         'identical': [{'key': entry['key'], 'why': entry['identicalWhy']}
                       for entry in last['keys'] if entry['identical'] and entry['key'] in kept],
+        'compositions': kept_compositions(last['keys'], kept),
         'batches': [dict(batch, expected=counts.get(batch['id'], 0)) for batch in batches],
     }
+
+
+def file_spec(draft, lang, values, base):
+    return {'lang': lang, 'path': draft.paths[lang], 'values': values[lang], 'base': base[lang]}
+
+
+def kept_compositions(entries, kept):
+    items = {item['id']: item for entry in entries for item in entry.get('compositions', [])}
+    return [item for item in items.values() if set(item['keys']) <= kept]
 
 
 def next_term(term, kept):
@@ -1051,8 +1264,11 @@ def risk_groups(entries, kept):
     groups = {}
     for entry in entries:
         if entry['risk'] and entry['key'] in kept:
-            groups.setdefault(entry['risk'], []).append(entry['key'])
-    return [{'keys': keys, 'class': risk} for risk, keys in groups.items()]
+            group = groups.setdefault((entry['risk'], entry.get('riskWhy')), {'keys': [], 'class': entry['risk']})
+            group['keys'].append(entry['key'])
+            if entry.get('riskWhy'):
+                group['why'] = entry['riskWhy']
+    return list(groups.values())
 
 
 def project_origin(root):
@@ -1077,7 +1293,7 @@ def updated_brief(brief, draft):
             continue
         lines.append(line)
     when = str(draft.closing.get('closedAt') or date.today().isoformat())[:10]
-    rows = [f'| {question["id"]} {question.get("title", "")}: {decision} | {draft.target} | {when} |'.replace('\n', ' ')
+    rows = [f'| {question["id"]} {question.get("title", "")}: {decision} | {draft.targets[0]} | {when} |'.replace('\n', ' ')
             for question, decision in draft.decisions]
     return '\n'.join(insert_rows(lines, rows)) + '\n'
 
@@ -1104,6 +1320,32 @@ def table_end(rows):
             break
         end += 1
     return end
+
+
+def next_review(draft, kept):
+    rows = {row['id']: {name: value for name, value in row.items() if name != 'id'}
+            for row in draft.review.values() if is_open_row(draft, row, kept)}
+    rows.update({f'{row["lang"]}.{row["key"]}': row for row in edited_target_rows(draft, kept)})
+    return list(rows.values())
+
+
+def is_open_row(draft, row, kept):
+    if row['key'] not in kept or row['id'] in draft.answered_slots:
+        return False
+    return not was_problems(row['id'], row['was'], draft.values[row['lang']].get(row['key']))
+
+
+def edited_target_rows(draft, kept):
+    editors = {(line['lang'], line['key']): line['by'] for line in draft.ledger}
+    rows = []
+    for (lang, key), editor in editors.items():
+        value = draft.values[lang].get(key)
+        if key not in kept or value == draft.keys[key]['values'].get(lang):
+            continue
+        why = draft.data['ui'].get('editedReviewWhy', EDITED_REVIEW_WHY)
+        rows.append({'lang': lang, 'key': key, 'severity': 'minor', 'was': value, 'proposal': '',
+                     'why': why.replace('{who}', draft.name(editor)).replace('{n}', str(draft.last['round']))})
+    return rows
 
 
 def named_keys(draft):
