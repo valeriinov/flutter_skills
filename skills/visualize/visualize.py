@@ -347,7 +347,7 @@ def mermaid_source(doc, node_ids, links, direction, own=None, with_files=False):
         label = node_label(entity, is_context, with_files)
         lines.append(f'  {node_id(entity["id"])}["{label}"]:::{css_class}')
     for link in links:
-        lines.append(f'  {node_id(link["from"])} -->|{mermaid_text(link["label"])}| {node_id(link["to"])}')
+        lines.append(f'  {node_id(link["from"])} -->|{edge_text(mermaid_text(link["label"]))}| {node_id(link["to"])}')
     return '\n'.join(lines)
 
 
@@ -392,7 +392,7 @@ def flow_source(doc, flow):
         from_branch = edge['from'] in branches
         if from_branch:
             branch_edges.append(str(index))
-        text = flow_text(edge.get('label', ''))
+        text = edge_text(flow_text(edge.get('label', '')))
         if text and from_branch:
             text = f"<span class='n-branch'>{text}</span>"
         label = f'|{text}|' if text else ''
@@ -412,6 +412,10 @@ def flow_text(value):
 
 def code_text(value):
     return re.sub(r'([./])', '\\1\u200b', mermaid_text(value))
+
+
+def edge_text(value):
+    return re.sub(r'[()\[\]{}|]', lambda match: f'#{ord(match.group())};', value)
 
 
 def mermaid_text(value):

@@ -1,0 +1,154 @@
+{
+  "title": "Edge labels with brackets",
+  "summary": "One sentence: what the document makes different.",
+  "lang": "en",
+  "ui": {
+    "new": "new",
+    "changed": "changes",
+    "same": "unchanged",
+    "context": "nearby, unchanged",
+    "overview": "Whole picture",
+    "files": "Files",
+    "branch": "branch by condition",
+    "decide": "To decide",
+    "question": "Question",
+    "recommend": "Recommend"
+  },
+  "questions": [
+    {
+      "title": "Export cancelled orders too?",
+      "gist": "The source does not say; a cancelled order has no total, so its row would be half empty.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Skip them",
+          "consequence": "the file holds only paid orders"
+        },
+        {
+          "key": "B",
+          "text": "Export them",
+          "consequence": "accounting sees every order"
+        }
+      ],
+      "recommendation": {
+        "key": "A",
+        "why": "the export is for accounting"
+      }
+    }
+  ],
+  "entities": [
+    {
+      "id": "screen",
+      "name": "Orders screen",
+      "code": "OrdersScreen",
+      "status": "changed",
+      "change": "export button",
+      "files": [
+        {
+          "path": "lib/orders/orders_screen.dart",
+          "status": "changed"
+        }
+      ]
+    },
+    {
+      "id": "export",
+      "name": "Order export",
+      "code": "OrderExport",
+      "status": "new",
+      "change": "orders to CSV rows",
+      "files": [
+        {
+          "path": "lib/export/order_export.dart",
+          "status": "new"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": "screen",
+      "to": "export",
+      "label": "starts (on tap)"
+    }
+  ],
+  "sections": [
+    {
+      "title": "The orders screen gets an export button",
+      "takeaway": "One button on the orders screen saves every order as a CSV file.",
+      "entities": [
+        "screen"
+      ],
+      "lines": [
+        {
+          "label": "Now",
+          "text": "Orders can only be viewed."
+        }
+      ]
+    },
+    {
+      "title": "Rows follow the order list",
+      "takeaway": "Each order becomes one row; cancelled orders are left out.",
+      "flow": {
+        "nodes": [
+          {
+            "id": "o",
+            "label": "Each order",
+            "entity": "export"
+          },
+          {
+            "id": "st",
+            "label": "Order status?",
+            "kind": "check"
+          },
+          {
+            "id": "row",
+            "label": "Row in the file",
+            "kind": "result"
+          },
+          {
+            "id": "skip",
+            "label": "Skipped",
+            "kind": "result"
+          }
+        ],
+        "edges": [
+          {
+            "from": "o",
+            "to": "st",
+            "label": "checks (each row)"
+          },
+          {
+            "from": "st",
+            "to": "row",
+            "label": "`paid` (source, date)"
+          },
+          {
+            "from": "st",
+            "to": "skip",
+            "label": "`cancelled` [or {void} | lost]"
+          }
+        ]
+      },
+      "views": [
+        {
+          "type": "table",
+          "title": "Columns",
+          "columns": [
+            "Column",
+            "From"
+          ],
+          "rows": [
+            [
+              "id",
+              "`Order.id`"
+            ],
+            [
+              "total",
+              "`Order.total`"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
