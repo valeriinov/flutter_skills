@@ -1024,12 +1024,11 @@ body.has-downloads .export { display: grid; }
   }
 
   function renderReview() {
-    const groups = new Map();
+    const groups = new Map([[activeTarget, []], [SRC, []]]);
     for (const r of pairReviewRows(activeTarget).filter(matchesReview)) {
-      if (!groups.has(r.lang)) groups.set(r.lang, []);
       groups.get(r.lang).push(r);
     }
-    const html = [...groups.entries()].map(([lang, rows]) =>
+    const html = [...groups.entries()].filter(([, rows]) => rows.length).map(([lang, rows]) =>
       `<div class="part"><h2>${esc(t('reviewGroup', { lang }))} <span class="count">${rows.length}</span></h2>${rows.map(reviewCard).join('')}</div>`);
     const rows = pairReviewRows(activeTarget);
     document.getElementById('review-list').innerHTML = html.length

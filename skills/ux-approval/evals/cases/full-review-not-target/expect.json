@@ -1,0 +1,32 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/spec.json",
+      "set": [
+        [
+          [
+            "fullReview"
+          ],
+          {
+            "en": 2,
+            "de": 1
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/spec.json"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "spec:fullReview.de: not a target language",
+    "spec:fullReview.en: must be a round from 1 to 1"
+  ],
+  "absent": [
+    "fullReview.en: not a target language"
+  ]
+}

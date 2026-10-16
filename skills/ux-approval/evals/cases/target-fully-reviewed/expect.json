@@ -1,0 +1,56 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "fullReview"
+          ],
+          {
+            "en": 1
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{cases}/target-review-next/log.json",
+      "{cases}/source-edit/editors.json",
+      "{cases}/source-edit/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/spec-next.json"
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/out/spec-next.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "wrote ",
+    "\"fullReview\": {\n    \"en\": 1\n  }",
+    "ok"
+  ],
+  "absent": [
+    "no full review"
+  ]
+}

@@ -31,7 +31,7 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
 {
   "title": "Approval of app texts", "lang": "en", "product": "Example app", "slug": "example-texts",
   "ui": {"…": "every interface string the page shows, in `lang`: each key page_template.html reads with t() and tMap()"},
-  "round": 1, "final": false,
+  "round": 1, "final": false, "fullReview": {"en": 1, "fr": 1},
   "origin": {"branch": "main", "commit": "3f2a9c1"},
   "brief": "# Localization brief\n…",
   "files": {
@@ -78,6 +78,9 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   row, code defect, risk, invalid or interpreted edit, question, project change, change since the
   last round, untranslated term), with "Детальніше" opening the review row with its answer buttons
   (the same answer as on the Review tab), the defect fields and the risk class's `why`.
+- `fullReview` — per target, the round whose ux-translate Review covered every key of its file;
+  `apply` carries it into the next round and prints `no full review: <lang>` for each target it
+  lacks.
 - `risk` items may carry `why`: what goes wrong for the user if a text of that class is wrong.
 - `codeDefects` — a defect only the code can fix. Its readers are analysts and designers, not
   developers: say what the user sees, never file names or identifiers. `text` is one line: what is
@@ -130,7 +133,8 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   `key.<lang>.<localeKey>` for every later one, `source.<localeKey>`, `comment.<localeKey>`,
   `review.<lang>.<localeKey>`, `term.<id>`, `q.<id>`.
 - The Review and Keys tabs show the source with one target at a time; with two or more targets a
-  switcher above the list picks the pair and counts each pair's answers.
+  switcher above the list picks the pair and counts each pair's answers. The Review tab lists the
+  target's rows first, the source's last.
 
 Round 1 from ux-translate outputs:
 
@@ -247,12 +251,16 @@ is not read, no `Approval:` line is written, and the Report says so.
 1. **Snapshot** — read every locale file in full into `files.source.values` and
    `files.targets[].values`; `origin` is the project's branch and `HEAD` commit. Locale files with uncommitted changes → ask the user first.
    Read the queue ([Approval queue](#approval-queue)).
-2. **Spec** — write `<scratch>/spec.json` by the shape and table above, `round: 1`.
-3. **Check** — `python3 approval.py check <scratch>/spec.json` must print `ok`; fix each
+2. **Review** — ux-translate Review, source only, over every source key, and ux-translate
+   Review of each target over every key of its file; their findings become `review` rows by the
+   table above.
+3. **Spec** — write `<scratch>/spec.json` by the shape and table above, `round: 1`,
+   `fullReview: {<target>: 1}` for each target.
+4. **Check** — `python3 approval.py check <scratch>/spec.json` must print `ok`; fix each
    `spec:` line and rerun. Exit 0 ok, 1 spec errors, 2 usage error.
-4. **Build** — `python3 approval.py build <scratch>/spec.json --stats` writes `page.html` beside
+5. **Build** — `python3 approval.py build <scratch>/spec.json --stats` writes `page.html` beside
    the spec.
-5. **Publish** — Artifact publish of `page.html` with an `icon`, `title` from the spec and:
+6. **Publish** — Artifact publish of `page.html` with an `icon`, `title` from the spec and:
    ```
    capabilities: {
      db: {rules: [
@@ -264,7 +272,7 @@ is not read, no `Approval:` line is written, and the Report says so.
      downloads: true}
    ```
    Then write the `Approval:` line ([Approval queue](#approval-queue)).
-6. **Verify** — `ArtifactData list` of `log`, `editors` and `rounds`, then each again with
+7. **Verify** — `ArtifactData list` of `log`, `editors` and `rounds`, then each again with
    `as_level: "view"`. `set` of `rounds/probe` with `as_level: "admin"` must be refused; a write
    that lands means the rules are wrong — delete the probe, fix the declaration, republish.
 
@@ -280,7 +288,8 @@ is not read, no `Approval:` line is written, and the Report says so.
 3. **Apply** — `python3 approval.py apply <page.html> <log.json> <editors.json> <round.json>
    --project <root> -o <dir>`, `<dir>` a fresh folder in `<scratch>` (inside `<root>` → exit 2).
    It writes `spec-next.json`, `brief.md`, `<lang>.json` per language, `named-keys.txt`,
-   `changed-<target>.jsonl` per target, `conflicts.md`, `free-text.md`, `suspect.jsonl`.
+   `changed-<target>.jsonl` per target, `conflicts.md`, `free-text.md`, `suspect.jsonl`, and on
+   stdout `no full review: <lang>` for each target the page records no full Review for.
 4. **Check editors' texts** — for each target, `python3 ../ux-translate/check_drafts.py
    <dir>/changed-<target>.jsonl --lang <target>` with `--ratio` as ux-translate runs it. Each key
    in a non-`warning:` line keeps its round-n value in `spec-next.json` and goes to `invalid` with
@@ -296,18 +305,20 @@ is not read, no `Approval:` line is written, and the Report says so.
    brief; an open point becomes a question for the next round — options, consequences and a
    recommendation. Each `comment.<localeKey>` line is the same, and its question carries
    `keys: [<localeKey>]`.
-6. **ux-translate** on the files in `<dir>` with `<dir>/brief.md`, only for the keys of
-   `named-keys.txt` — naming them lifts its no-overwrite rule:
+6. **ux-translate** on the files in `<dir>` with `<dir>/brief.md`, for the keys of
+   `named-keys.txt` unless a bullet names other keys — naming them lifts its no-overwrite rule:
    - Review, source only → `review` rows of the source language;
    - Review and Translate of each target → texts written to `<dir>/<target>.json` after its exit 0;
    - Review of each target, also for every key of `changed-<target>.jsonl` → `review` rows of that
      target. Such a key has a text an editor set this round: it gets Review, not Translate. A key
-     whose Review finds nothing keeps the row `apply` wrote.
+     whose Review finds nothing keeps the row `apply` wrote;
+   - Review of each target `apply` printed as `no full review: <target>`, over every key of
+     `<dir>/<target>.json` → `review` rows of that target.
    Its tables go to the artifact, not to the user: the next round is where editors answer them.
 7. **Merge** — into `spec-next.json`: `brief` from `<dir>/brief.md`, the new source and target
    `review` rows (a new row replaces a carried row of the same language and key), the questions
    raised by comments, the named keys' target texts into `files.targets[].values`, `interpreted`
-   from step 4, and
+   from step 4, `fullReview[<target>]` set to n+1 for each target reviewed in full in step 6, and
    `compositions` for codeDefects keys that lack one (as in the Create table). `apply` copies `ui`
    from the previous page: add each key of [UI strings](#ui-strings) that `ui` lacks, in the spec's
    `lang`, and rewrite the `why` of the rows `apply` wrote for editors' texts by `editedReviewWhy`.

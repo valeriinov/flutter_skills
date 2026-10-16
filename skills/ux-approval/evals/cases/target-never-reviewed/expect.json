@@ -1,0 +1,26 @@
+{
+  "steps": [
+    [
+      "{approval}",
+      "apply",
+      "{case}/page.html",
+      "{cases}/target-review-next/log.json",
+      "{cases}/source-edit/editors.json",
+      "{cases}/source-edit/round.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/spec-next.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "no full review: en",
+    "wrote ",
+    "\"fullReview\": {}"
+  ],
+  "absent": []
+}

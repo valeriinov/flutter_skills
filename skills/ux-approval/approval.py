@@ -32,7 +32,7 @@ CHANGE_KINDS = ('project', 'conflict', 'added')
 KEYED_SECTIONS = ('review', 'projectChanges', 'invalid', 'interpreted')
 SOURCE_SECTIONS = ('identical', 'codeDefects')
 COLLECTIONS = {'keys': 'key', 'terms': 'id', 'questions': 'id', 'review': 'id', 'batches': 'id'}
-ROUND_SCALARS = ('brief', 'origin')
+ROUND_SCALARS = ('brief', 'origin', 'fullReview')
 STATS_LIST_LIMIT = 20
 DECISIONS_HEADING = '## Decisions'
 OPEN_QUESTIONS_HEADING = '## Open questions'
@@ -184,6 +184,7 @@ def problems(spec, previous):
     found += composition_problems(spec)
     found += defect_problems(spec)
     found += risk_problems(spec)
+    found += full_review_problems(spec)
     found += round_problems(spec, previous)
     return found
 
@@ -427,6 +428,16 @@ def batch_counts(assigned):
     return counts
 
 
+def full_review_problems(spec):
+    reviewed = spec.get('fullReview', {})
+    if not isinstance(reviewed, dict):
+        return ['fullReview: must be an object']
+    targets = [entry['lang'] for entry in spec['files']['targets']]
+    found = [f'fullReview.{lang}: not a target language' for lang in reviewed if lang not in targets]
+    return found + [f'fullReview.{lang}: must be a round from 1 to {spec["round"]}'
+                    for lang, number in reviewed.items() if not isinstance(number, int) or not 1 <= number <= spec['round']]
+
+
 def round_problems(spec, previous):
     if previous is None:
         return [] if spec['round'] == 1 else [f'round: {spec["round"]} needs --previous <page.html>']
@@ -513,7 +524,7 @@ def full_rounds(rounds):
 def merge(last, entry):
     merged = dict(entry)
     for name in ROUND_SCALARS:
-        merged[name] = last[name] if entry.get(name) is None else entry[name]
+        merged[name] = last.get(name) if entry.get(name) is None else entry[name]
     removed = entry.get('removed', {})
     for name, id_field in COLLECTIONS.items():
         merged[name] = merge_items(last[name], entry.get(name, []), set(removed.get(name, [])), id_field)
@@ -528,7 +539,7 @@ def merge_items(before, changed, removed, id_field):
 
 def delta(last, current):
     entry = {'round': current['round'], 'final': current['final']}
-    entry.update({name: None if current[name] == last[name] else current[name] for name in ROUND_SCALARS})
+    entry.update({name: None if current[name] == last.get(name) else current[name] for name in ROUND_SCALARS})
     removed = {}
     for name, id_field in COLLECTIONS.items():
         before = {item[id_field]: item for item in last[name]}
@@ -551,6 +562,7 @@ def full_round(spec, last):
         'final': bool(spec.get('final')),
         'origin': spec.get('origin') or {'branch': '', 'commit': ''},
         'brief': spec.get('brief', ''),
+        'fullReview': spec.get('fullReview', {}),
         'keys': keys,
         'terms': [term_entry(term, questions) for term in spec.get('terms', [])],
         'questions': [question_entry(question) for question in questions],
@@ -803,6 +815,9 @@ def run_apply(args):
     draft.reconcile(project)
     output.mkdir(parents=True, exist_ok=True)
     write_outputs(draft, output, root)
+    reviewed = last.get('fullReview') or {}
+    for lang in [lang for lang in draft.targets if lang not in reviewed]:
+        print(f'no full review: {lang}')
     print(f'wrote {output}')
     return 0
 
@@ -1227,6 +1242,7 @@ def next_spec(draft, root):
         'final': False,
         'origin': project_origin(root),
         'brief': updated_brief(last.get('brief') or '', draft),
+        'fullReview': last.get('fullReview') or {},
         'files': {'source': file_spec(draft, draft.source, values, base),
                   'targets': [file_spec(draft, lang, values, base) for lang in draft.targets]},
         'terms': [next_term(term, kept) for term in draft.terms.values()],
