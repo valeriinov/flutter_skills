@@ -98,13 +98,13 @@
     "\"settingsTitle\": \"Paramètres\"",
     "\"targets\": [",
     "\"path\": \"l10n/fr.json\"",
-    "\"lang\": \"fr\",\n      \"key\": \"homeTitle\",\n      \"severity\": \"minor\",\n      \"was\": \"Plantes\"",
     "reconcile: artifact 8, project 0, conflict 0, added 0, removed 0",
     "spec:files.targets[0]: fr, the previous page translates first to en"
   ],
   "absent": [
     "skipped, unknown object",
     "\"target\": {",
-    "Mes plantes vertes\"\n"
+    "Mes plantes vertes\"\n",
+    "changed this text in round"
   ]
 }

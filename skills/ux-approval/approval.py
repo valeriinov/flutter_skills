@@ -40,7 +40,6 @@ TERMS_HEADING = '## Terms'
 DEFECT_TEXT_FIELDS = ('why', 'now', 'devTask')
 USE_FIELDS = ('where', 'question', 'action', 'needed')
 PATTERN_TOKEN_RE = re.compile(r'\{([^{}#]+)(?:#([^{}]+))?\}')
-EDITED_REVIEW_WHY = '{who} changed this text in round {n}; check it'
 
 
 class InputError(Exception):
@@ -1401,29 +1400,14 @@ def new_term_cells(headers, term):
 
 
 def next_review(draft, kept):
-    rows = {row['id']: {name: value for name, value in row.items() if name != 'id'}
-            for row in draft.review.values() if is_open_row(draft, row, kept)}
-    rows.update({f'{row["lang"]}.{row["key"]}': row for row in edited_target_rows(draft, kept)})
-    return list(rows.values())
+    return [{name: value for name, value in row.items() if name != 'id'}
+            for row in draft.review.values() if is_open_row(draft, row, kept)]
 
 
 def is_open_row(draft, row, kept):
     if row['key'] not in kept or row['id'] in draft.answered_slots:
         return False
     return not was_problems(row['id'], row['was'], draft.values[row['lang']].get(row['key']))
-
-
-def edited_target_rows(draft, kept):
-    editors = {(line['lang'], line['key']): line['by'] for line in draft.ledger}
-    rows = []
-    for (lang, key), editor in editors.items():
-        value = draft.values[lang].get(key)
-        if key not in kept or value == draft.keys[key]['values'].get(lang):
-            continue
-        why = draft.data['ui'].get('editedReviewWhy', EDITED_REVIEW_WHY)
-        rows.append({'lang': lang, 'key': key, 'severity': 'minor', 'was': value, 'proposal': '',
-                     'why': why.replace('{who}', draft.name(editor)).replace('{n}', str(draft.last['round']))})
-    return rows
 
 
 def named_keys(draft):

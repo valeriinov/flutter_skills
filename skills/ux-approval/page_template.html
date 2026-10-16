@@ -329,6 +329,7 @@ body.has-downloads .export { display: grid; }
     <section class="panel" id="panel-terms" role="tabpanel" hidden></section>
     <section class="panel" id="panel-review" role="tabpanel" hidden>
       <div class="segmented lang-pairs" id="review-pairs" role="group" hidden></div>
+      <div class="segmented lang-pairs" id="review-langs" role="group" hidden></div>
       <div class="filters single"><input type="search" id="review-search"></div>
       <div class="panel" id="review-list"></div>
     </section>
@@ -369,6 +370,8 @@ body.has-downloads .export { display: grid; }
   const LIST_IDS = { keys: 'key', terms: 'id', questions: 'id', review: 'id', batches: 'id' };
   const TABS = ['brief', 'questions', 'terms', 'review', 'keys', 'summary'];
   const EMPTY = Object.freeze({ pick: null, text: null, reviewed: false });
+  const REVIEW_LANGS = ['all', 'source', 'target'];
+  const REVIEW_LANG_STORE = `ux-approval:${DATA.slug}:review-lang`;
 
   const t = (key, vars) => {
     const raw = typeof UI[key] === 'string' ? UI[key] : key;
@@ -458,6 +461,7 @@ body.has-downloads .export { display: grid; }
   let keyOrder = [];
   const keyFilter = { confidence: 'all', batch: 'all', flag: 'all', query: '', unreviewed: false, shown: PAGE_SIZE };
   let reviewQuery = '';
+  let reviewLang = storedReviewLang();
   let keysRenderPending = false;
   const openedTerms = new Set();
   let noteDraft = null;
@@ -1023,7 +1027,38 @@ body.has-downloads .export { display: grid; }
     refreshCounts();
   }
 
+  function storedReviewLang() {
+    try {
+      const stored = localStorage.getItem(REVIEW_LANG_STORE);
+      return REVIEW_LANGS.includes(stored) ? stored : 'all';
+    } catch (e) {
+      return 'all';
+    }
+  }
+
+  function storeReviewLang() {
+    try { localStorage.setItem(REVIEW_LANG_STORE, reviewLang); } catch (e) { /* storage may be blocked */ }
+  }
+
+  function renderReviewLangs() {
+    const rows = pairReviewRows(activeTarget);
+    const el = document.getElementById('review-langs');
+    el.hidden = !rows.length;
+    if (el.hidden) return;
+    const labels = { all: t('filterAll'), target: activeTarget, source: SRC };
+    el.setAttribute('aria-label', t('reviewLangLabel'));
+    el.innerHTML = REVIEW_LANGS.map((side) =>
+      `<button data-review-lang="${side}"${pressed(reviewLang === side)}>${esc(labels[side])} <span class="n">${rows.filter((r) => inReviewLang(r, side)).length}</span></button>`).join('');
+  }
+
+  function inReviewLang(r, side) {
+    if (side === 'source') return r.lang === SRC;
+    if (side === 'target') return r.lang !== SRC;
+    return true;
+  }
+
   function renderReview() {
+    renderReviewLangs();
     const groups = new Map([[activeTarget, []], [SRC, []]]);
     for (const r of pairReviewRows(activeTarget).filter(matchesReview)) {
       groups.get(r.lang).push(r);
@@ -1037,6 +1072,7 @@ body.has-downloads .export { display: grid; }
   }
 
   function matchesReview(r) {
+    if (!inReviewLang(r, reviewLang)) return false;
     if (!reviewQuery) return true;
     const answers = [...latest(`review.${r.id}`).values()].map((ev) => textOf(ev.text));
     const hay = [r.key, textOf(r.was), textOf(r.proposal), r.why, r.reason ? tMap('reason', r.reason) : '', ...answers].join(' ').toLowerCase();
@@ -2318,6 +2354,14 @@ body.has-downloads .export { display: grid; }
   });
   document.getElementById('review-search').addEventListener('input', (ev) => {
     reviewQuery = ev.target.value.trim().toLowerCase();
+    renderReview();
+    document.querySelectorAll('#review-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
+  });
+  document.getElementById('review-langs').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-review-lang]');
+    if (!b) return;
+    reviewLang = b.dataset.reviewLang;
+    storeReviewLang();
     renderReview();
     document.querySelectorAll('#review-list [data-doc]').forEach((el) => applyDoc(el.dataset.doc));
   });

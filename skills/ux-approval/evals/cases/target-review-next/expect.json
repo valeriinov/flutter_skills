@@ -82,12 +82,12 @@
   "exit": 0,
   "fragments": [
     "ok",
-    "\"lang\": \"en\",\n      \"key\": \"settingsTitle\",\n      \"severity\": \"minor\",\n      \"was\": \"Preferences\",\n      \"proposal\": \"\",\n      \"why\": \"Editor A changed this text in round 1; check it\"",
     "\"lang\": \"en\",\n      \"key\": \"settingsReminder\"",
-    "\"id\":\"en.settingsTitle\"",
     "changed settingsTitle: en"
   ],
   "absent": [
-    "\"key\": \"homeEmpty\",\n      \"severity\": \"minor\",\n      \"reason\": \"term\""
+    "\"key\": \"homeEmpty\",\n      \"severity\": \"minor\",\n      \"reason\": \"term\"",
+    "\"why\": \"Editor A changed this text in round 1; check it\"",
+    "\"id\":\"en.settingsTitle\""
   ]
 }

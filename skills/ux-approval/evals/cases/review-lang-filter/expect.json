@@ -1,0 +1,18 @@
+{
+  "steps": [["{case}/filter.py", "{skills}/ux-approval"]],
+  "exit": 0,
+  "fragments": [
+    "counts all 3, source 2, target 1",
+    "shown all: uk.a,uk.b,en.a",
+    "shown source: uk.a,uk.b",
+    "shown target: en.a",
+    "target + search кошик: -",
+    "source + search кошик: uk.b",
+    "saved source: source",
+    "saved bogus: all",
+    "nothing saved: all",
+    "storage blocked: all",
+    "control present",
+    "ui string listed"
+  ]
+}

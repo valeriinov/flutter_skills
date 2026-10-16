@@ -126,15 +126,15 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
   such a row a new one gets `source`, `target`, `meaning` in the column whose header starts with
   `meaning`, `accepted` in `status`, the rest empty. The brief thus carries every approved term.
 - A row nobody answered, whose `was` still matches the text, `apply` carries into round n+1 as
-  is, in any language. A target text an editor set in round n gets a row of its own from `apply`:
-  `minor`, empty `proposal`, `why` from `editedReviewWhy` (English when `ui` lacks it); the
-  Review of step 6 replaces it.
+  is, in any language. A target text an editor set in round n shows its round-n text on the Keys
+  tab and gets Review in step 6.
 - Page ids are fixed by this shape and survive rounds: `key.<localeKey>` for the first target,
   `key.<lang>.<localeKey>` for every later one, `source.<localeKey>`, `comment.<localeKey>`,
   `review.<lang>.<localeKey>`, `term.<id>`, `q.<id>`.
 - The Review and Keys tabs show the source with one target at a time; with two or more targets a
   switcher above the list picks the pair and counts each pair's answers. The Review tab lists the
-  target's rows first, the source's last.
+  target's rows first, the source's last; a language filter above them shows all rows, the
+  source's or the target's, counts each option's rows and keeps the choice in the browser.
 
 Round 1 from ux-translate outputs:
 
@@ -148,8 +148,8 @@ Round 1 from ux-translate outputs:
 
 ### UI strings
 
-Strings of the key card's fields, toggles and comment, the summary sections, the comment and review
-filters and the export order panel; `{n}`, `{lang}` and `{text}` stay as written.
+Strings of the key card's fields, toggles and comment, the summary sections, the comment, review
+and row-language filters and the export order panel; `{n}`, `{lang}` and `{text}` stay as written.
 
 | key | uk | en |
 |---|---|---|
@@ -181,6 +181,7 @@ filters and the export order panel; `{n}`, `{lang}` and `{text}` stay as written
 | `issue_placeholders` | змінні мають бути {detail} | placeholders must be {detail} |
 | `issue_emptyForm` | порожня форма {detail} | empty form {detail} |
 | `pairsLabel` | Пара мов | Language pair |
+| `reviewLangLabel` | Мова рядків | Row language |
 | `defectMore` | Детальніше | Details |
 | `defectLess` | Згорнути | Hide |
 | `defectComposed` | Фраза складається з кількох ключів: перевіряйте її цілком | The phrase is assembled from several keys: check it whole |
@@ -204,7 +205,6 @@ filters and the export order panel; `{n}`, `{lang}` and `{text}` stay as written
 | `reviewProposes` | Ревʼю пропонує | The review proposes |
 | `reviewWhy` | Чому | Why |
 | `decideSameAnswer` | Та сама відповідь, що на вкладці «Ревʼю»: зміниться і там. | The same answer as on the Review tab: it changes there too. |
-| `editedReviewWhy` | Текст змінено в раунді {n} ({who}); перевірте | {who} changed this text in round {n}; check it |
 
 `reasonCode` is a map, one entry per reason kind: `question` питання / question, `risk` ризик /
 risk, `codeDefect` дефект коду / code defect, `review` ревʼю / review, `conflict` конфлікт з
@@ -310,8 +310,7 @@ is not read, no `Approval:` line is written, and the Report says so.
    - Review, source only → `review` rows of the source language;
    - Review and Translate of each target → texts written to `<dir>/<target>.json` after its exit 0;
    - Review of each target, also for every key of `changed-<target>.jsonl` → `review` rows of that
-     target. Such a key has a text an editor set this round: it gets Review, not Translate. A key
-     whose Review finds nothing keeps the row `apply` wrote;
+     target. Such a key has a text an editor set this round: it gets Review, not Translate;
    - Review of each target `apply` printed as `no full review: <target>`, over every key of
      `<dir>/<target>.json` → `review` rows of that target.
    Its tables go to the artifact, not to the user: the next round is where editors answer them.
@@ -321,7 +320,7 @@ is not read, no `Approval:` line is written, and the Report says so.
    from step 4, `fullReview[<target>]` set to n+1 for each target reviewed in full in step 6, and
    `compositions` for codeDefects keys that lack one (as in the Create table). `apply` copies `ui`
    from the previous page: add each key of [UI strings](#ui-strings) that `ui` lacks, in the spec's
-   `lang`, and rewrite the `why` of the rows `apply` wrote for editors' texts by `editedReviewWhy`.
+   `lang`.
 8. **Check and build** — `python3 approval.py check <dir>/spec-next.json --previous <page.html>`
    must print `ok`; then `python3 approval.py build <dir>/spec-next.json --previous <page.html>
    --stats`.
