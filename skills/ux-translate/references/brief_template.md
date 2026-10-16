@@ -1,12 +1,15 @@
 # Localization brief template
 
 The brief is the project's one place for voice, terms and limits; every translator and reviewer
-gets it whole. Fill each section from the project's documents, code and translation files. A value
-no input confirms stays empty and becomes an open question; never invent it. Keep the headings in
-this order.
+gets it whole. Write it in English. Fill each section from the project's documents, code and
+translation files. A value no input confirms stays empty and becomes an open question; never
+invent it. Keep the headings in this order. Key names are not the brief's subject: their rule
+lives in the project AGENTS.md section `## Naming Conventions`.
 
 ```markdown
 # Localization brief
+
+Status: draft | approved (<source of approval>, <date>)
 
 ## Product
 <one line: what the product is and for whom>
@@ -24,15 +27,16 @@ this order.
 - Source: <document and section>
 
 ## Terms
-The UI glossary: at most 40 product names and do-not-translate, domain words, words ambiguous
-out of context — one word per concept in each language. Authority, highest first: <the documents
-the user named as governing UI wording>. A translation comes only from those documents or
-accepted translations; otherwise the cell is empty and the term is an open question. The source
-file is never changed: a source string using a flagged variant is reported as a review
-recommendation.
+The project's only UI glossary: product names and do-not-translate, domain words, words ambiguous
+out of context — one word per concept in each language; the first brief holds at most 40, the
+maintained glossary grows. Authority, highest first: <the documents the user named as governing
+UI wording>. A translation from those documents, accepted translations or a team approval is
+`accepted`; one the skill proposes is `proposal` until an approval round settles it; with neither,
+the cell is empty and the term is an open question. The source file is never changed: a source
+string using a flagged variant is reported as a review recommendation.
 
-| term (source UI word) | <target language> | do not translate | meaning in this product | source variants to flag | source |
-|---|---|---|---|---|---|
+| term (source UI word) | <target language> | do not translate | meaning in this product | source variants to flag | source | status |
+|---|---|---|---|---|---|---|
 
 ## Do not use
 Rows for both languages, each prefixed with its code.

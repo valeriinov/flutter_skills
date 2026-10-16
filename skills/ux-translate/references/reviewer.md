@@ -1,6 +1,6 @@
 # Translation reviewer
 
-Read by the reviewer agent, in a fresh context, in the Translate and Review modes. You judge
+Read by the reviewer agent, in a fresh context, in the Translate, Review and Add key modes. You judge
 finished text; you never edit a file and never see the translator's reasoning. Every finding is
 held to `references/ux_writing.md`, the target language pack (`references/lang/<code>.md`) and
 the brief.
@@ -9,6 +9,7 @@ the brief.
 
 - **Ledger** (Translate mode) — one JSON line per key: `file`, `key`, `source`, `target` or `skip` + `reason`, `risk`, `ui` (`tight`/`loose`), `limit`, `limit_hard`.
 - **Source and target files** (Review mode) — no ledger: read each key's source and target value as the same row; take `ui`, `limit` and `risk` from the brief's component catalogue and risk keys.
+- **Add key** — two ledgers for one new key: the target ledger is judged by the pair rules like a Translate ledger; the source text is judged as Source only input; plus the user's intent for the key. The key's name is not judged.
 - **Brief** — terms, do-not-use words, voice and register, exceptions, limits, risk keys.
 - **String context** — key name, call site or component, screenshot when the brief names a screenshot source, neighbouring strings of the same screen.
 - **Source only** (Review, source only) — source strings with no translation: judge them against the brief's UI glossary, source-language do-not-use rows, the voice guide and the source language's pack. `meaning`, `calque` and `length` need a pair and do not apply; use `term`, `tone`, `CTA convention`, `risk`, and `tone` also for grammar and consistency with the other strings of the screen.
@@ -18,7 +19,7 @@ the brief.
 
 1. Meaning: the draft keeps the source's meaning, action and consequence, nothing added: `Delete` is not `Archive`.
 2. Placeholders and plural forms: same names, same count, categories of the target language: `{name}` stays `{name}`, uk gets `one`/`few`/`many`/`other`.
-3. Terms: every brief term as the brief renders it; no do-not-use word; accepted translations matched: the brief's `Order` is never `Booking`.
+3. Terms: every `accepted` brief term as the brief renders it, a `proposal` term is not binding; no do-not-use word; accepted translations matched: the brief's `Order` is never `Booking`.
 4. Element class: the rule for its class in `references/ux_writing.md` (button, title, error…): a button is a verb, `Save`, not `Saving`.
 5. Naturalness: no calque or anti-pattern from `references/ux_writing.md` or the pack's calque list: `Changes saved`, not `Changes have been successfully saved`.
 6. Length: `tight` within `limit`; ratio inside the pack's corridor for strings of ~10+ characters: a `limit: 8` tab is never `Бронювання` (10).

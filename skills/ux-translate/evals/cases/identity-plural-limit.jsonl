@@ -1,0 +1,2 @@
+{"expect": {"exit": 0, "lines": []}, "lang": "en"}
+{"file": "en.json", "key": "draftsLeft", "source": {"one": "# draft left", "other": "# drafts left"}, "target": {"one": "# draft left", "other": "# drafts left"}, "limit": 20}

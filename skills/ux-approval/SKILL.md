@@ -7,7 +7,8 @@ argument-hint: "[ ux-translate brief, review and locale files | artifact url + n
 Run from the project whose branch will receive the approved texts. The artifact is the source of
 truth until the export: each round keeps its brief, a snapshot of every key, the review and the
 answers. You publish the artifact and read its database yourself. The project is only read —
-for the reconcile and for key context; its files are never written. Working files go to the
+for the reconcile and for key context; its files are never written, except the `Approval:` line of
+its `approval-queue.md` ([Approval queue](#approval-queue)). Working files go to the
 session's scratch directory, written below as `<scratch>`. `approval.py` runs from this skill's
 folder; `check_drafts.py` is the neighbouring skill's, `../ux-translate/check_drafts.py`.
 
@@ -107,7 +108,8 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
 - Batches: a key falls into the first batch whose prefix matches, in spec order; the last batch
   has no prefixes and takes the rest; `expected` is its key count.
 - `projectChanges` (`{lang, key, kind, value}`), `invalid` (`{lang, key, reason}`) and `rejected`
-  (`{lang, key, proposal}`) are written by `apply`; round 1 has them empty, as `interpreted`.
+  (`{lang, key, proposal}`) are written by `apply`; round 1 has them empty, as `interpreted`,
+  except the `added` entries of the queued keys ([Approval queue](#approval-queue)).
 - Confidence is computed per language too: the key-wide reasons (question, risk, code defect) count
   for every language, the rest for the language they name, an untranslated term for the target.
   The card shows each language's level beside its text and the worst one in the head. An
@@ -115,7 +117,11 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
 - `text_rules.json` holds the rules both `apply` and the page run on an editor's text: a script
   foreign to the language, placeholders differing from the round's text, an empty plural form.
 - A term's `approved` is the round whose answer set its `target`, written by `apply`; the page
-  folds approved terms until someone opens or answers them.
+  folds approved terms until someone opens or answers them. `apply` also writes each approved term
+  into the Terms table of the brief: the row whose first cell is the term's `source` (any case) gets
+  `target` in its second cell and `accepted` in the `status` column, if the table has one; without
+  such a row a new one gets `source`, `target`, `meaning` in the column whose header starts with
+  `meaning`, `accepted` in `status`, the rest empty. The brief thus carries every approved term.
 - A row nobody answered, whose `was` still matches the text, `apply` carries into round n+1 as
   is, in any language. A target text an editor set in round n gets a row of its own from `apply`:
   `minor`, empty `proposal`, `why` from `editedReviewWhy` (English when `ui` lacks it); the
@@ -130,7 +136,7 @@ Round 1 from ux-translate outputs:
 
 | ux-translate output | spec field |
 |---|---|
-| brief | `brief`; Terms → `terms`; Open questions → `questions`; intentional-identity exceptions → `identical`; batch plan → `batches` |
+| brief | `brief`; Terms rows with status `proposal` and terms without a translation → `terms` (`accepted` rows stay only in the brief); Open questions → `questions`; intentional-identity exceptions → `identical`; batch plan → `batches` |
 | Review, source only, and "source defects found" | `review` rows with the source `lang` |
 | Review of a target | `review` rows with that target's `lang` |
 | skips caused by the code | `codeDefects` with `uses`, `why`, `now`, `devTask` read from the code at each call site; for each one assembled from several keys, also `compositions` — grep the code for the key and copy its assembly |
@@ -221,10 +227,26 @@ The page writes, you read:
 - `rounds/<n>` — `{closedAt, by, priority: [userId, …]}`, written by the owner; its presence
   closes round n.
 
+## Approval queue
+
+`approval-queue.md` lies beside the project's brief, whose path the `## Localization` section of
+the project's AGENTS.md names; it holds the line `Approval: <artifact url>, round <n>, <open | final
+| applied>` and the table `| key | date |` of keys awaiting approval. No such section → the queue
+is not read, no `Approval:` line is written, and the Report says so.
+
+- Create puts each queued key into `projectChanges` as `{lang, key, kind: added, value}`, one entry
+  per language whose file has the key, so editors see it.
+- Next round reads no queue: the reconcile already marks keys changed in the project `added` or
+  `project` and names them in `named-keys.txt`.
+- After each publish write one line `Approval: <url>, round <n>, open` (Finalize: `final`) into
+  the queue file in the working tree, replacing its previous `Approval:` line; no file → create it
+  with that line and the empty `| key | date |` table. Do not commit it.
+
 ## Create
 
 1. **Snapshot** — read every locale file in full into `files.source.values` and
    `files.targets[].values`; `origin` is the project's branch and `HEAD` commit. Locale files with uncommitted changes → ask the user first.
+   Read the queue ([Approval queue](#approval-queue)).
 2. **Spec** — write `<scratch>/spec.json` by the shape and table above, `round: 1`.
 3. **Check** — `python3 approval.py check <scratch>/spec.json` must print `ok`; fix each
    `spec:` line and rerun. Exit 0 ok, 1 spec errors, 2 usage error.
@@ -241,6 +263,7 @@ The page writes, you read:
      user: {scopes: ["profile"]},
      downloads: true}
    ```
+   Then write the `Approval:` line ([Approval queue](#approval-queue)).
 6. **Verify** — `ArtifactData list` of `log`, `editors` and `rounds`, then each again with
    `as_level: "view"`. `set` of `rounds/probe` with `as_level: "admin"` must be refused; a write
    that lands means the rules are wrong — delete the probe, fix the declaration, republish.
@@ -267,8 +290,9 @@ The page writes, you read:
    that language into `spec-next.json` and `<dir>/<lang>.json`, and add `{lang, key, text, by}` from
    the line to `interpreted`. Ambiguous → the key keeps its round-n value, goes to `invalid`, and the
    text becomes a question as in step 5, `keys: [<key>]`.
-5. **Brief** — fold each answer of `free-text.md` into `<dir>/brief.md` where it belongs (a term,
-   a decision, a rule). Each `note.*` line is an editor's comment: a settled fact goes into the
+5. **Brief** — `apply` has already put the `term.*` answers into `<dir>/brief.md`; fold each
+   `note.*`, `comment.*` and `q.*` answer of `free-text.md` into it where it belongs (a decision, a
+   rule). Each `note.*` line is an editor's comment: a settled fact goes into the
    brief; an open point becomes a question for the next round — options, consequences and a
    recommendation. Each `comment.<localeKey>` line is the same, and its question carries
    `keys: [<localeKey>]`.
@@ -291,15 +315,24 @@ The page writes, you read:
    must print `ok`; then `python3 approval.py build <dir>/spec-next.json --previous <page.html>
    --stats`.
 9. **Publish** the new `<dir>/page.html` to the same url with `title` from the spec, without
-   `capabilities`. Rollback: publish the saved previous `page.html` to that url.
+   `capabilities`. Rollback: publish the saved previous `page.html` to that url. Then write the
+   `Approval:` line ([Approval queue](#approval-queue)).
+10. **Duplicates** — search `--project` for a second source of truth on terms: a markdown file
+    outside `plan/`, other than the brief and `approval-queue.md`, with a table where at least two
+    rows match terms of `<dir>/brief.md` (any case; `meaning` by sense, not wording) by the first
+    Terms column, by the source-variants-to-flag column or by `meaning`, or with a heading only the
+    brief has (`Terms`, `Do not use`, `Text component catalogue`). A table whose value column holds
+    code identifiers in backticks is a code glossary and not a duplicate. The project is not written: duplicates go to the
+    Report.
 
 ## Finalize
 
 1. Steps 1–4 of Next round; no ux-translate.
 2. `spec-next.json` has a `conflict` in `projectChanges` or any `invalid`, or `named-keys.txt`
    is not empty → run Next round instead and tell the user why.
-3. Otherwise set `final: true`, then steps 8–9 of Next round. The final round's export on the
-   page is the approved set; applying it to the project is the user's own task.
+3. Otherwise set `final: true`, then steps 8–10 of Next round. The final round's export on the
+   page is the approved set; apply it from the project with ux-translate, mode Apply approved,
+   passing the export and the reconcile commit.
 
 ## Report
 
@@ -311,4 +344,9 @@ In the user's language, one line each, empty ones omitted:
 - `invalid` keys with the reason; `interpreted` keys with the editor's original; `project`, `conflict`, `added` and removed keys, counted;
 - keys passed to ux-translate, counted;
 - what Verify exercised and what it could not (Create);
-- the next action: editors answer, the owner closes the round.
+- the `Approval:` line written to `approval-queue.md` and left uncommitted, or that the project's
+  AGENTS.md has no `## Localization` section, so the queue was not read;
+- duplicates of the brief, `path | what it repeats`: remove them with ux-translate Brief, or Apply
+  approved after Finalize;
+- the next action: editors answer, the owner closes the round; after Finalize — ux-translate,
+  mode Apply approved, with the export and the reconcile commit.

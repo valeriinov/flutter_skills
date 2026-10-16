@@ -5,7 +5,7 @@
       "id": 1,
       "name": "brief-authority-and-synonyms",
       "prompt": "Составь бриф локализации uk → en для проекта в папке fixture/: документы docs/voice-guide.md, docs/code-glossary.md, docs/ba-glossary.md; источник uk.json, цель en.json (засеяна источником); код lib/. Не жди моего «да»: остановись на гейте, сохрани предложенный бриф в outputs/brief.md и сообщение гейта (вопросы мне) в outputs/gate.md.",
-      "expected_output": "A brief whose terms table is a UI glossary with a column of source variants to flag; the gate asks which documents govern UI wording; the code glossary's identifiers are not used as English UI words; both host words (адміністратор ×5, менеджер ×3) are counted and the dispute shows the voice guide's word; пошта (accessCardByPostDescr) is a term question, not settled as mail or post office; the batch plan sums to 18.",
+      "expected_output": "A brief whose terms table is a UI glossary with a column of source variants to flag; the gate asks which documents govern UI wording; the code glossary's identifiers are not used as English UI words; both host words (адміністратор ×5, менеджер ×3) are counted and the dispute shows the voice guide's word; пошта (accessCardByPostDescr) is a term question, not settled as mail or post office; the batch plan sums to 18. The gate shows, beside the brief, the text of the AGENTS.md `## Localization` section, updated in place: brief path `docs/brief.md`, queue `docs/approval-queue.md` beside it, adding a key → Add key, editing a translation → Translate or Review, editing the text of an existing key → Add key with the named key, and the line 'before a PR — ux-translate, Pending check; its warnings go into the PR description'; no other AGENTS.md line changes. The gate lists duplicate sources of truth as `path | what it repeats | links to it`: `docs/ba-glossary.md` (repeats Terms: менеджер and резерв as variants to flag, the same meanings) is proposed for deletion; `docs/code-glossary.md` is only named as a code glossary (identifiers in backticks), not proposed for deletion.",
       "files": [
         "evals/fixture-terms/"
       ]
@@ -24,6 +24,24 @@
       "name": "source-only-review",
       "prompt": "Проверь украинские тексты в fixture/uk.json на консистентность и стиль по брифу fixture/docs/brief.md и гайду fixture/docs/voice-guide.md. Перевода нет, uk.json не меняй. Результат — таблица в outputs/review.md.",
       "expected_output": "A table of uk strings to rephrase: менеджер → адміністратор (3 keys), резерв → бронювання, Обрати → Вибрати, the full stop after one sentence, обліковий запис flagged only if the brief says so; no meaning/calque/length reasons; accessCardByPostDescr not flagged; uk.json unchanged.",
+      "files": [
+        "evals/fixture-terms/"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "add-key-both-languages",
+      "prompt": "Добавь кнопку сохранения черновика на экран профиля. Проект в папке fixture/. На гейте считай мой ответ «да»; ledger-и, отчёт и сообщение гейта положи в outputs/, изменённые uk.json, en.json, docs/brief.md и docs/approval-queue.md — тоже в outputs/.",
+      "expected_output": "One new key named by AGENTS.md `## Naming Conventions`: camelCase with a role suffix (e.g. saveDraftButton), present in both uk.json and en.json next to the keys of the same screen; no other value in either file changes. The uk text is a verb per the voice guide (Зберегти чернетку), en sentence case (Save draft). The new word «чернетка» is shown at the gate and added to Terms of docs/brief.md as a row with status `proposal` (en: draft); the three `accepted` rows are unchanged. `limit` is empty (the brief has no length limits) and the key is in the 'check on screen' list. The key, written from the intent, is queued in docs/approval-queue.md without a question (`| key | date |` table; file created). check_drafts exits 0 on drafts-en.jsonl (with the en ratio) and on drafts-uk.jsonl (source == target, --lang uk, no ratio). The report names the new `proposal` row.",
+      "files": [
+        "evals/fixture-terms/"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "duplicate-source",
+      "prompt": "Обнови бриф локализации проекта в папке fixture/ (источник uk.json, цель en.json, код lib/). Не жди моего «да»: остановись на гейте, сохрани предложенный бриф в outputs/brief.md и сообщение гейта в outputs/gate.md.",
+      "expected_output": "The gate lists duplicate sources of truth as `path | what it repeats | links to it`: `docs/ba-glossary.md` (two rows match Terms: Менеджер and Резерв are variants to flag, meanings match in sense) is proposed for deletion, with no links to it; `docs/code-glossary.md` is only named in the report as a code glossary (its value column holds identifiers in backticks) and is not proposed for deletion; docs/brief.md, docs/voice-guide.md and the approval queue are not listed. The proposed brief keeps the `Status: approved` line and the three `accepted` Terms rows unchanged; any term it adds has status `proposal`. No file is deleted before «да».",
       "files": [
         "evals/fixture-terms/"
       ]

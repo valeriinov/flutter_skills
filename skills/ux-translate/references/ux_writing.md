@@ -36,7 +36,7 @@ do not say.
 ## Length budget
 
 - **`tight`** (button, tab, chip, screen title, inline label, text with `maxLines`, ellipsis or fixed width) — no longer than `limit`: `Зберегти зміни` (14) → `Save changes` (12).
-- **`limit`** — the brief's explicit limit, otherwise the source length; `limit_hard: true` only when the brief says the limit is hard: a 12-character tab with `limit_hard` fails the check at 13.
+- **`limit`** — the brief's explicit limit, otherwise the source length; a key whose source text the skill writes itself (Add key) takes only the brief's explicit limit, else none and the on-screen check list; `limit_hard: true` only when the brief says the limit is hard: a 12-character tab with `limit_hard` fails the check at 13.
 - **`loose`** (description, error body, dialog body, empty-state text) — no length limit; still no filler: `Couldn’t load the list. Pull down to retry`.
 - **Shortening order** — apply in this order until it fits, stop as soon as it fits:
   1. drop politeness: `Please enter your code` → `Enter your code`;

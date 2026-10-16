@@ -1,0 +1,53 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "terms",
+            2,
+            "variants"
+          ],
+          [
+            "notification"
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log.json",
+      "{cases}/apply/editors.json",
+      "{cases}/apply/rounds.json",
+      "--project",
+      "{cases}/project",
+      "-o",
+      "{tmp}/out"
+    ],
+    {
+      "read": "{tmp}/out/brief.md"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "| uk | en | meaning |",
+    "| рослина | plant | a plant the user tracks |",
+    "| нагадування | notification | a scheduled notice |",
+    "| полив | watering | giving a plant water |\n\n## Decisions"
+  ],
+  "absent": [
+    "| нагадування | reminder |",
+    "accepted"
+  ]
+}

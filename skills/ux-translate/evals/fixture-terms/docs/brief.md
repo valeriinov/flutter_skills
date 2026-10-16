@@ -1,5 +1,7 @@
 # Localization brief
 
+Status: approved (artifact round 2, 2026-09-30)
+
 ## Product
 A coworking app: guests book desks in spaces run by hosts.
 
@@ -14,11 +16,11 @@ A coworking app: guests book desks in spaces run by hosts.
 - Source: `docs/voice-guide.md`.
 
 ## Terms
-| term (source UI word) | en | do not translate | meaning in this product | source variants to flag | source |
-|---|---|---|---|---|---|
-| адміністратор | host | | person who runs a space | менеджер | voice guide |
-| бронювання | booking | | a guest's hold on a desk | резерв | voice guide |
-| простір | space | | a coworking location | | voice guide |
+| term (source UI word) | en | do not translate | meaning in this product | source variants to flag | source | status |
+|---|---|---|---|---|---|---|
+| адміністратор | host | | person who runs a space | менеджер | voice guide | accepted |
+| бронювання | booking | | a guest's hold on a desk | резерв | voice guide | accepted |
+| простір | space | | a coworking location | | voice guide | accepted |
 
 ## Do not use
 | word | use instead | source |

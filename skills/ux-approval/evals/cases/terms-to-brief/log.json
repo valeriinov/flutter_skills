@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ev0",
+    "data": {
+      "object": "term.нагадування",
+      "by": "ed-a",
+      "at": "2026-03-01T09:00:00Z",
+      "round": 1,
+      "pick": "notification",
+      "text": null,
+      "reviewed": false
+    }
+  },
+  {
+    "id": "ev1",
+    "data": {
+      "object": "term.полив",
+      "by": "ed-b",
+      "at": "2026-03-01T09:05:00Z",
+      "round": 1,
+      "pick": "custom",
+      "text": "watering",
+      "reviewed": false
+    }
+  }
+]

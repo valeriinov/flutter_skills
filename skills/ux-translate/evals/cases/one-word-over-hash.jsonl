@@ -1,0 +1,2 @@
+{"expect": {"exit": 1, "lines": ["draftsLeft\t# missing in form one\tsource: #\ttarget: "]}, "lang": "en"}
+{"file": "en.json", "key": "draftsLeft", "source": {"one": "# чернетка", "few": "# чернетки", "many": "# чернеток", "other": "# чернетки"}, "target": {"one": "One draft", "other": "# drafts"}}

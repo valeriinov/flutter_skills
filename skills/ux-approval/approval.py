@@ -36,6 +36,7 @@ ROUND_SCALARS = ('brief', 'origin')
 STATS_LIST_LIMIT = 20
 DECISIONS_HEADING = '## Decisions'
 OPEN_QUESTIONS_HEADING = '## Open questions'
+TERMS_HEADING = '## Terms'
 DEFECT_TEXT_FIELDS = ('why', 'now', 'devTask')
 USE_FIELDS = ('where', 'question', 'action', 'needed')
 PATTERN_TOKEN_RE = re.compile(r'\{([^{}#]+)(?:#([^{}]+))?\}')
@@ -1295,7 +1296,8 @@ def updated_brief(brief, draft):
     when = str(draft.closing.get('closedAt') or date.today().isoformat())[:10]
     rows = [f'| {question["id"]} {question.get("title", "")}: {decision} | {draft.targets[0]} | {when} |'.replace('\n', ' ')
             for question, decision in draft.decisions]
-    return '\n'.join(insert_rows(lines, rows)) + '\n'
+    approved = [term for term in draft.terms.values() if term.get('approved')]
+    return '\n'.join(with_approved_terms(insert_rows(lines, rows), approved)) + '\n'
 
 
 def is_decided_bullet(line, titles):
@@ -1320,6 +1322,66 @@ def table_end(rows):
             break
         end += 1
     return end
+
+
+def with_approved_terms(lines, terms):
+    table = terms_table(lines)
+    if not terms or table is None:
+        return lines
+    header, end = table
+    headers = [cell.lower() for cell in row_cells(lines[header])]
+    body = lines[header + 2:end]
+    for term in terms:
+        body = with_term_row(body, headers, term)
+    return lines[:header + 2] + body + lines[end:]
+
+
+def terms_table(lines):
+    stripped = [line.strip() for line in lines]
+    if TERMS_HEADING not in stripped:
+        return None
+    start = stripped.index(TERMS_HEADING)
+    later = [index for index in range(start + 1, len(lines)) if stripped[index].startswith('## ')]
+    table = [index for index in range(start + 1, later[0] if later else len(lines)) if stripped[index].startswith('|')]
+    return (table[0], table_end(table)) if len(table) >= 2 else None
+
+
+def with_term_row(body, headers, term):
+    found = [index for index, line in enumerate(body) if is_term_row(line, term['source'])]
+    if not found:
+        return body + [table_row(accepted_cells(new_term_cells(headers, term), headers, term))]
+    index = found[0]
+    cells = row_cells(body[index])
+    cells += [''] * (len(headers) - len(cells))
+    return body[:index] + [table_row(accepted_cells(cells, headers, term))] + body[index + 1:]
+
+
+def is_term_row(line, source):
+    return row_cells(line)[0].lower() == source.strip().lower()
+
+
+def row_cells(line):
+    return [cell.strip() for cell in line.strip().strip('|').split('|')]
+
+
+def table_row(cells):
+    return ('| ' + ' | '.join(cells) + ' |').replace('\n', ' ')
+
+
+def accepted_cells(cells, headers, term):
+    cells[1] = term.get('target', '')
+    if 'status' in headers:
+        cells[headers.index('status')] = 'accepted'
+    return cells
+
+
+def new_term_cells(headers, term):
+    cells = [''] * len(headers)
+    cells[0] = term['source']
+    meaning = [index for index, header in enumerate(headers) if header.startswith('meaning')]
+    if meaning:
+        cells[meaning[0]] = term.get('meaning', '')
+    return cells
 
 
 def next_review(draft, kept):
