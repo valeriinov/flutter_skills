@@ -121,6 +121,19 @@ pipeline instead of a fan-out); never raise the cap.
   файл/класс", "рядом лежащий", "однотипный", "аналогичный". English: name the
   relation itself — "the neighbouring file/class", "the other five statuses",
   "both root-level routes", "everything else in this folder".
+- Writing, every prose surface (replies, docs, Dartdoc, comments, skill and agent bodies).
+  English: ASD-STE100 — its writing rules, approved words and `-ing` ban; exceptions:
+  technical names, code identifiers, Effective Dart patterns. RU and UK: the same rules.
+    - One statement or instruction per sentence.
+    - 25 words or fewer per sentence.
+    - Active voice with a named actor.
+    - One term per concept: the project glossary or code name wins, never a synonym.
+    - A new term gets a one-line definition on first use; never coin a compound name.
+    - Fixed modal words; never a weak one in a rule.
+    - A noun cluster of 3 words or fewer; in RU and UK, a genitive chain of 2 or fewer.
+    - Common words, one word per action, no idioms.
+
+  Language detail and exceptions: the `clarifier` skill's `references/writing.md`.
 
 ### Output Shape
 
@@ -187,6 +200,17 @@ Precedence when it collides with the rules above:
 - An eval that needs a real codebase a synthetic case cannot stand in for — pairs of real
   commits, findings from real reviews, their raw outputs — lives in that project's `plan/`
   (or its worktree); only the procedure, free of project data, sits in the skill's `evals/`.
+- After you edit a skill, agent or rule file, run the `clarifier` skill's
+  `clarify.py check <file> --instructions`. Fix or keep each hint on the changed lines.
+- A style rewrite of a skill or agent body is its own edit and changes no behaviour.
+  The rewrite passes three checks:
+    - The `clarifier` skill's `clarify.py check <new> --source <old>` prints no `new:` line.
+      Each `lost:` token has an explanation.
+    - The skill's `evals/` scripts pass before and after the rewrite.
+    - Each behavioural case in `evals/evals.json` runs 3 times on the old body and 3 times
+      on the new one. The new score is not lower.
+
+  A body without behavioural cases gets 2–3 synthetic ones before the rewrite, or stays as it is.
 
 ### 6. Naming
 

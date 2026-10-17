@@ -43,7 +43,9 @@ document.
 
 ## Style
 
-- Prefer present tense ("Returns…", "Provides…").
+- Prefer present tense ("Returns…", "Creates…").
+- Sentences follow the writing rules of `AGENTS.global.md` §5; an Effective Dart pattern
+  (`Whether…`, `Returns…`) wins on conflict.
 - Use meaningful examples; keep them minimal and runnable.
 - **Do:** explain side effects, preconditions, postconditions.
 - **Don't:** duplicate information already clear from names or types.
@@ -58,7 +60,7 @@ document.
 /// <One-sentence summary of the interface purpose.>
 /// <Optional details providing context/usage.>
 abstract interface class AppRouter {
-  /// Provides the root [NavigatorState] key for the application.
+  /// The root [NavigatorState] key for the application.
   ///
   /// Example:
   /// ```dart
@@ -145,4 +147,6 @@ Before finishing, confirm:
 - Method/constructor parameters follow: `The [parameterName] parameter is …`;
   class fields use a plain per-field `///` above the field.
 - Label is `Example:` (not "Example usage:").
+- You ran the `clarifier` skill's `clarify.py check <file> --dart` on each changed Dart
+  file and fixed or kept each hint.
 - The project's format and analyze commands pass with zero issues.
