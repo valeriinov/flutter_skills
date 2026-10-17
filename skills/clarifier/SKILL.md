@@ -35,6 +35,11 @@ skill's job, on a separate request.
 - Usage: `check <file> [--lang ru|uk|en] [--source <src>] [--minutes N]`. For `.md`, `--lang` is
   required; for `.json` (a `visualize` document, `brief.json` included) the language comes from
   its `lang` field. A bad language or minutes value → usage line, exit 2.
+- `check <path>... --instructions|--dart [--lang ru|uk|en] [--words <file>] [--unlisted]
+  [--summary]` reads skill, agent and rule files or the `///` lines of Dart files. With a
+  folder, the check reads every `.md` file. With `--dart`, it reads every `.dart` file and skips
+  generated ones (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.config.dart`). The language
+  defaults to `en`. Every finding is a `hint:`, then `ok`, exit 0.
 - Errors (exit 1): words over `minutes × rate` (ru and uk 160/min, en 190/min); a sentence over
   25 words; a paragraph over 5 sentences; a list over 5 items; a nested list; with `--source`,
   `new: <token>` — a number or date the source does not have.
@@ -87,8 +92,7 @@ like "если нужно — скажите" or "let me know", filler, meta tex
 
 Write:
 
-- an actor and a verb: "команда раздала", not "было раздано" / "осуществлена раздача";
-- sentences of 15–20 words, never over 25;
+- by the core writing rules of `AGENTS.global.md` §5;
 - a term or abbreviation explained on first use: `ABBR (full name)` or `full name (ABBR)`;
 - "потому что" / "поэтому" / "because" kept inside a sentence — a reason is never cut into
   list fragments; a list is only for parallel items;
@@ -97,22 +101,14 @@ Write:
 
 ## Language rules
 
-- **ru** — no канцелярит (`осуществлять`, `в настоящее время`, `является неотъемлемой частью`),
-  no chains of genitives ("проверка соблюдения требований безопасности"), verbs over
-  nominalisations. Established English technical terms stay when a translation is less precise.
-- **uk** — address the reader as "ви"; no calques or russianisms (`приймати участь` → `брати
-  участь`, `слідуючі` → `наступні`, `любий` → `будь-який`, `на протязі` → `протягом`), no
-  nominal канцелярит (`здійснення`, `відповідно до вимог`); established Ukrainian terminology,
-  English terms where they are conventional. Flexible word order → repeat the key word rather
-  than a pronoun.
-- **en** — plain, direct English: short common words, active voice, "must" for an obligation,
-  "can" for an option; no corporate or AI filler (`leverage`, `seamless`, `in order to`).
+RU, UK and EN detail, modal words and exceptions: `references/writing.md`.
 
 ## Check for another skill
 
 When another skill asks to check its text (`brief.json`, a `visualize` document, a `.md`):
 
-1. Run `python3 clarify.py check <file>` (with `--lang` for `.md`) — no rewrite, no reader test.
+1. Run `python3 clarify.py check <file>` (with `--lang` for `.md`; `--instructions` for a skill,
+   agent or rule file; `--dart` for a Dart file) — no rewrite, no reader test.
 2. Fix error lines in that file within the caller's own fix loop and run limit; change only the
    flagged sentence, paragraph or list.
 3. Hints are the caller's call: fix a stock phrase, leave a term.

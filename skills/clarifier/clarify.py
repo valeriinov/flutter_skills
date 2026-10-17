@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Check a reader-facing text: reading budget, structure, facts against a source, stock phrases."""
+"""Check a reader-facing text: reading budget, structure, facts against a source, stock phrases.
+
+With --instructions (skill, agent and rule bodies) or --dart (Dartdoc), check writing rules instead."""
 import json
 import re
 import sys
@@ -10,7 +12,12 @@ DEFAULT_MINUTES = 5
 MAX_SENTENCE_WORDS = 25
 MAX_PARAGRAPH_SENTENCES = 5
 MAX_LIST_ITEMS = 5
-USAGE = 'usage: clarify.py check <file> [--lang ru|uk|en] [--source <src>] [--minutes N]'
+USAGE = ('usage: clarify.py check <file> [--lang ru|uk|en] [--source <src>] [--minutes N]\n'
+         '       clarify.py check <path>... --instructions|--dart [--lang ru|uk|en] [--words <file>] [--unlisted]\n'
+         '       [--summary]')
+DEFAULT_WORDS = '~/.claude/ste/words.json'
+TECHNICAL_WORDS = Path(__file__).with_name('technical.txt')
+VALUE_OPTIONS = {'--lang', '--source', '--minutes', '--words'}
 KNOWN_ABBREVIATIONS = {'API', 'URL', 'JSON', 'CSV', 'HTML', 'PR', 'UI', 'UX', 'SDK', 'LLM', 'ISO', 'QA'}
 
 SENTENCE_RE = re.compile(r'(?<=[.!?…])\s+')
@@ -28,6 +35,26 @@ URL_RE = re.compile(r'https?://[^\s)>\]`]+')
 GROUPED_NUMBER_RE = re.compile(r'(?<!\d)\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?!\d)')
 GROUP_SPACE_RE = re.compile(r'[ \u00a0\u202f]')
 DASH_RANGE_RE = re.compile(r'(?<=\d)[–—](?=\d)')
+FRONT_MATTER_RE = re.compile(r'\A\s*---\n.*?\n---[ \t]*(?=\n|\Z)', re.S)
+TABLE_ROW_RE = re.compile(r'^\s*\|')
+DOC_LINE_RE = re.compile(r'^\s*/// ?(.*)$')
+DART_REFERENCE_RE = re.compile(r'\[[^\]]*\](?:\([^)]*\))?|\{@[^}]*\}')
+LINK_TARGET_RE = re.compile(r'\]\([^)]*\)')
+IDENTIFIER_RE = re.compile(r'[_/\\.=<>@#$%&\d]|[a-z][A-Z]')
+WORD_RE = re.compile(r"[A-Za-z]+(?:'[a-z]+)?")
+PASSIVE_RE = re.compile(
+    r'(?<!\w)(?:is|are|was|were|be|been)\s+(?:not\s+)?(?!indeed\b)(?:[a-z]{2,}ed|written|done|given|taken|made|sent|built|'
+    r'shown|known|seen|found|kept|set|put|run|read|left|held|broken|chosen|drawn|driven|hidden|spoken|begun|'
+    r'brought|bought|caught|taught|thought|told|sold|paid|laid|meant|lost|won|got|gotten|split|cut|shut|spent|'
+    r'understood|rewritten|overridden)(?!\w)', re.I)
+GENERATED_DART_SUFFIXES = ('.g.dart', '.freezed.dart', '.gr.dart', '.config.dart')
+NAME_THE_ACTION = 'name the specific action (checks, refreshes, returns, sends)'
+NON_VERB_ING = {'thing', 'string', 'during', 'nothing', 'something', 'anything', 'everything'}
+WEAK_MODALS = {
+    'en': [r'should', r'may', r'might', r'try to'],
+    'ru': [r'желательно', r'по возможности'],
+    'uk': [r'бажано', r'по можливості'],
+}
 
 COMMON_PHRASES = [
     (r'если нужно', 'drop the closing offer'),
@@ -76,12 +103,25 @@ LANG_PHRASES = {
         (r'leverag\w*', 'use'),
         (r'seamless\w*', 'say what works without a step'),
         (r'delve\w*', 'look at'),
+        (r'via', 'through'),
+        (r'modif(?:y|ies|ied|ying)', 'change'),
+        (r'preserv\w*', 'keep'),
+        (r'rapid\w*', 'fast'),
+        (r'reveal\w*', 'show'),
+        (r'exceed\w*', 'is more than'),
+        (r'absent', 'missing'),
+        (r'ensur(?:e|es|ed|ing)', NAME_THE_ACTION),
+        (r'perform(?:s|ed|ing)?', NAME_THE_ACTION),
+        (r'provid(?:e|es|ed|ing)', NAME_THE_ACTION),
+        (r'determin(?:e|es|ed|ing)', NAME_THE_ACTION),
+        (r'detect(?:s|ed|ing)?', NAME_THE_ACTION),
     ],
 }
 
 
 class Markdown:
-    def __init__(self):
+    def __init__(self, skip_meta=False):
+        self.skip_meta = skip_meta
         self.paragraphs = []
         self.headings = []
         self.problems = []
@@ -93,6 +133,8 @@ class Markdown:
 
     def read(self, text):
         visible = COMMENT_RE.sub(lambda match: '\n' * match.group(0).count('\n'), text)
+        if self.skip_meta:
+            visible = FRONT_MATTER_RE.sub(lambda match: '\n' * match.group(0).count('\n'), visible)
         for number, line in enumerate(visible.split('\n'), start=1):
             self.feed(number, line)
         self.close_paragraph()
@@ -105,7 +147,7 @@ class Markdown:
             return
         if self.in_fence:
             return
-        if not line.strip():
+        if self.is_break(line):
             self.close_paragraph()
             return
         if HEADING_RE.match(line):
@@ -124,6 +166,9 @@ class Markdown:
             self.start(number, line)
             return
         self.current['parts'].append(line.strip())
+
+    def is_break(self, line):
+        return not line.strip() or (self.skip_meta and TABLE_ROW_RE.match(line))
 
     def track_details(self, line):
         if '<details' in line:
@@ -237,7 +282,7 @@ def is_expanded(text, match):
 def phrase_hints(blocks, lang):
     patterns = [(re.compile(rf'(?<!\w){pattern}(?!\w)', re.I), suggestion)
                 for pattern, suggestion in COMMON_PHRASES + LANG_PHRASES[lang]]
-    return [(item['where'], f'«{match.group()}» → {suggestion}')
+    return [(item['where'], f'consider: «{match.group()}» → {suggestion}')
             for item in blocks for pattern, suggestion in patterns for match in pattern.finditer(item['text'])]
 
 def facts(text):
@@ -272,6 +317,167 @@ def lost_hints(path, blocks, source_blocks):
         lost += [token for token in numbers + others if token not in result and token not in lost]
     return [(str(path), f'lost: {token}') for token in lost]
 
+def rule_check(argv):
+    lang = option(argv, '--lang')
+    lang = 'en' if lang is None else lang
+    paths = [Path(arg) for arg in positionals(argv)]
+    if not is_valid_rule_options(lang, paths):
+        print(USAGE, file=sys.stderr)
+        return 2
+    dart = '--dart' in argv
+    rules = {'lang': lang, 'modals': not dart, 'technical': technical_words(), 'unlisted': '--unlisted' in argv,
+             'words': ste_words(Path(option(argv, '--words') or DEFAULT_WORDS).expanduser())}
+    findings = []
+    for path in files_of(paths, dart):
+        findings += rule_findings(rule_blocks(path, dart), rules)
+    print_findings(findings, '--summary' in argv)
+    print('ok')
+    return 0
+
+def is_valid_rule_options(lang, paths):
+    return lang in RATES and paths and all(path.exists() for path in paths)
+
+def positionals(argv):
+    result = []
+    for index, arg in enumerate(argv):
+        if arg.startswith('--') or (index > 0 and argv[index - 1] in VALUE_OPTIONS):
+            continue
+        result.append(arg)
+    return result
+
+def technical_words():
+    if not TECHNICAL_WORDS.exists():
+        return set()
+    lines = TECHNICAL_WORDS.read_text(encoding='utf-8').split('\n')
+    return {line.split('#', 1)[0].strip().lower() for line in lines} - {''}
+
+def ste_words(path):
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def files_of(paths, dart):
+    for path in paths:
+        yield from folder_files(path, dart) if path.is_dir() else [path]
+
+def folder_files(folder, dart):
+    if not dart:
+        return sorted(path for path in folder.rglob('*.md') if path.is_file())
+    return sorted(path for path in folder.rglob('*.dart') if is_hand_written_dart(path))
+
+def is_hand_written_dart(path):
+    return path.is_file() and not path.name.endswith(GENERATED_DART_SUFFIXES)
+
+def rule_blocks(path, dart):
+    text = path.read_text(encoding='utf-8')
+    if dart:
+        text = '\n'.join(doc_line(line) for line in text.split('\n'))
+    reader = Markdown(skip_meta=True)
+    reader.read(text)
+    return [block(f'{path}:{paragraph["line"]}', rule_text(' '.join(paragraph['parts']), dart))
+            for paragraph in reader.paragraphs]
+
+def doc_line(line):
+    match = DOC_LINE_RE.match(line)
+    return match.group(1) if match else ''
+
+def rule_text(raw, dart):
+    text = LINK_TARGET_RE.sub(']', URL_RE.sub(' ', raw))
+    return DART_REFERENCE_RE.sub(' ', text) if dart else text
+
+def rule_findings(blocks, rules):
+    prose_blocks = [dict(item, text=without_identifiers(item['text'])) for item in blocks]
+    findings = [(where, msg, msg.lower()) for where, msg in phrase_hints(prose_blocks, rules['lang'])]
+    modals = [re.compile(rf'(?<!\w){pattern}(?!\w)', re.I) for pattern in WEAK_MODALS[rules['lang']]]
+    for item in blocks:
+        for sentence in sentences_of(item['text']):
+            findings += sentence_findings(item['where'], sentence, rules, modals)
+    return findings
+
+def without_identifiers(text):
+    return ' '.join(token for token in text.split() if not is_identifier(token))
+
+def is_identifier(token):
+    return bool(IDENTIFIER_RE.search(token.strip('.,;:!?()[]{}"\'«»*')))
+
+def sentence_findings(where, sentence, rules, modals):
+    findings = []
+    count = word_count(sentence)
+    if count > MAX_SENTENCE_WORDS:
+        findings.append((where, f'sentence of {count} words, limit {MAX_SENTENCE_WORDS}',
+                         f'sentence over {MAX_SENTENCE_WORDS} words'))
+    if rules['modals']:
+        findings += [labelled(where, f'weak modal: {match.group().lower()}')
+                     for pattern in modals for match in pattern.finditer(sentence)]
+    if rules['lang'] == 'en':
+        findings += english_findings(where, sentence, rules)
+    return findings
+
+def labelled(where, msg):
+    return where, msg, msg
+
+def english_findings(where, sentence, rules):
+    findings = [labelled(where, f'passive: {match.group().lower()}') for match in PASSIVE_RE.finditer(sentence)]
+    words = prose_words(sentence)
+    if not sentence.lstrip().startswith('Whether'):
+        findings += [labelled(where, f'-ing form: {word}') for word in words if is_ing_form(word, rules)]
+    if rules['words'] is not None:
+        hints = [ste_hint(word, rules) for word in words]
+        findings += [labelled(where, hint) for hint in hints if hint]
+    return findings
+
+def prose_words(sentence):
+    words = []
+    for token in sentence.split():
+        if is_identifier(token):
+            continue
+        words += [word.lower() for word in WORD_RE.findall(token) if not is_abbreviation(word)]
+    return [word[:-2] if word.endswith("'s") else word for word in words]
+
+def is_abbreviation(word):
+    return len(word) > 1 and word.isupper()
+
+def is_ing_form(word, rules):
+    if len(word) <= 4 or not word.endswith('ing'):
+        return False
+    approved = rules['words']['approved'] if rules['words'] else {}
+    return word not in NON_VERB_ING and word not in approved and word not in rules['technical']
+
+def ste_hint(word, rules):
+    for form in word_forms(word):
+        if is_known_word(form, rules):
+            return None
+        if form in rules['words']['unapproved']:
+            return f'STE: {word} → {rules["words"]["unapproved"][form]}'
+    return f'STE: not in list: {word}' if rules['unlisted'] else None
+
+def is_known_word(form, rules):
+    words = rules['words']
+    return form in words['approved'] or form in words.get('forms', {}) or form in rules['technical']
+
+def word_forms(word):
+    forms = [word]
+    for ending, base in (('ies', 'y'), ('ied', 'y'), ('es', ''), ('s', ''), ('ed', ''), ('ed', 'e'),
+                         ('ing', ''), ('ing', 'e')):
+        if word.endswith(ending) and len(word) > len(ending) + 1:
+            forms.append(word[:-len(ending)] + base)
+    bases = sorted(dict.fromkeys(forms[1:]), key=len, reverse=True)
+    return forms[:1] + bases + [base[:-1] for base in bases if is_doubled(base)]
+
+def is_doubled(form):
+    return len(form) > 2 and form[-1] == form[-2] and form[-1] not in 'aeiouls'
+
+def print_findings(findings, summary):
+    if not summary:
+        for where, msg, _ in findings:
+            print(f'{where}: hint: {msg}')
+        return
+    counts = {}
+    for _, _, key in findings:
+        counts[key] = counts.get(key, 0) + 1
+    for key, count in sorted(counts.items(), key=lambda pair: (-pair[1], pair[0])):
+        print(f'hint: {count}× {key}')
+
 def option(argv, name):
     if name not in argv:
         return None
@@ -279,6 +485,8 @@ def option(argv, name):
     return argv[index] if index < len(argv) else ''
 
 def cli_check(argv):
+    if '--instructions' in argv or '--dart' in argv:
+        return rule_check(argv)
     path = Path(argv[0])
     blocks, problems, doc_lang = load_blocks(path)
     lang = option(argv, '--lang') or doc_lang

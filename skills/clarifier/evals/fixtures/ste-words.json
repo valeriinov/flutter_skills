@@ -1,0 +1,31 @@
+{
+  "approved": {
+    "a": ["art"],
+    "be": ["v"],
+    "before": ["prep"],
+    "blor": ["v"],
+    "check": ["v"],
+    "file": ["n"],
+    "missing": ["adj"],
+    "report": ["n"],
+    "run": ["v"],
+    "start": ["v"],
+    "step": ["n"],
+    "test": ["n"],
+    "the": ["art"],
+    "then": ["adv"],
+    "to": ["prep"],
+    "use": ["v"],
+    "when": ["conj"],
+    "write": ["v"],
+    "you": ["pron"]
+  },
+  "unapproved": {
+    "blore": "blor",
+    "utilize": "use"
+  },
+  "forms": {
+    "is": "be",
+    "wrote": "write"
+  }
+}
