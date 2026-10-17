@@ -12,7 +12,7 @@ plan_exclusion='ревью плана|проанализируй план|имп
 slash_make_plan='^/([^[:space:]/:]+:)?make-plan([[:space:]]|$)'
 
 reason=$(cat <<'REASON'
-Never implement here. A request in this session to implement (имплементируй, примени план, внеси правки в код, запусти этап) starts a new session instead: `start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the folder that holds the plan's `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt `имплементируй план <plan path> используй субагентов` plus the step or stage the user named, a `background` naming the plan; then report the session and stop. A refused start → an own_initiative card when that folder is this session's, otherwise the prompt and the folder for the user. Without session tools → the prompt and the folder for the user.
+Never implement here. A request in this session to implement (имплементируй, примени план, внеси правки в код, запусти этап) starts a new session instead: `start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the folder that holds the plan's `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt `имплементируй план <plan path>` plus the step or stage the user named, a `background` naming the plan; then report the session and stop. A refused start → an own_initiative card when that folder is this session's, otherwise the prompt and the folder for the user. Without session tools → the prompt and the folder for the user.
 REASON
 )
 

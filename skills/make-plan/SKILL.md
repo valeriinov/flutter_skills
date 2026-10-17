@@ -140,6 +140,17 @@ parallel, so all sit on its last node); never add a node to it.
   adding `.worktrees/` to `.gitignore` and stop until the user agrees. Never create the worktree
   (`implement-plan` does). Plan and comments always live in `plan/` of the main tree.
 
+## Step names for the user
+
+The user reads only the brief page. In a question, reply or report to the user, name a step by the
+title of the brief section that names it. When that section names more than one step, add ` · `
+and the step heading text without its `S<n> · ` prefix. Never show a bare step id (S5, T2) to the
+user. A question to the user has the shape of a brief question. It says what the user must decide and why it is important. Then it
+gives one concrete example, 2–3 options with the consequence of each, and a recommendation. Write
+it in plain words for a reader who has not seen the code. Before you send a question, write it to
+a temporary `.md` file and run `python3 ../clarifier/clarify.py check <file> --lang ru` from this
+skill's folder; fix each error and each hint.
+
 ## Revise mode
 
 Comments file: `comments.md` beside `plan.md`. A line is `- [ ] [<S3 | T2 | Пункт 2 | Вопрос 1 |
@@ -173,7 +184,7 @@ Never implement here. A request in this session to implement (имплемент
 внеси правки в код, запусти этап) starts a new session instead:
 `start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the folder that
 holds the plan's `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt
-`имплементируй план <plan path> используй субагентов` plus the step or stage the user named, a
-`background` naming the plan; then report the session and stop. A refused start → an
-own_initiative card when that folder is this session's, otherwise the prompt and the folder for
-the user. Without session tools → the prompt and the folder for the user.
+`имплементируй план <plan path>` plus the step or stage the user named, a `background` naming
+the plan; then report the session and stop. A refused start → an own_initiative card when that
+folder is this session's, otherwise the prompt and the folder for the user. Without session
+tools → the prompt and the folder for the user.

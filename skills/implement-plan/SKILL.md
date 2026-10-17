@@ -8,11 +8,11 @@ description: Implement a plan file step by step, verify, then review the diff. U
    says: start a new session instead: `start_session` with `initiation`
    "user_asked", `context` "fresh", `cwd` = the folder that holds the plan's
    `plan/`, `use_worktree` false, `permission_mode` "auto", the prompt
-   `имплементируй план <plan path> используй субагентов` plus the step or stage
-   the user named, a `background` naming the plan; then report the session and
-   stop. A refused start → an own_initiative card when that folder is this
-   session's, otherwise the prompt and the folder for the user. Without session
-   tools → the prompt and the folder for the user.
+   `имплементируй план <plan path>` plus the step or stage the user named, a
+   `background` naming the plan; then report the session and stop. A refused
+   start → an own_initiative card when that folder is this session's,
+   otherwise the prompt and the folder for the user. Without session tools →
+   the prompt and the folder for the user.
 1. Read the plan file the user names (a folder `plan/<name>/` means its
    `plan.md`); ask for the path if none is given. If the user names a step, do
    only that step. If the user names a stage and the plan has `## Stages`, do
@@ -33,15 +33,17 @@ description: Implement a plan file step by step, verify, then review the diff. U
 3. Before editing, verify the plan's file references still exist and compare the
    `base` sha with the worktree/branch HEAD; flag drift and divergence.
 4. Implement exactly what the plan says — no scope creep.
-5. With subagents (the request says «используй субагентов»; `make-plan` sends
-   it too): the main session splits the steps into at most 4 chunks by change
-   contract — steps editing the same files go together, a stage is one chunk —
-   and spawns a fresh worker per chunk with the plan path, the chunk's step ids
-   and their `verify`, demanding a reply of at most 15 lines: what changed, the
-   verify result, deviations. A step with a device run longer than a few
-   minutes is launched by the main session in the background with its report
-   written to a file; reading the report and the fixes go to the next fresh
-   worker.
+5. Subagents by default; «без субагентов» in the request turns them off. The
+   main session splits the steps into at most 4 chunks by change contract —
+   steps editing the same files go together, a stage is one chunk — and spawns
+   a fresh worker per chunk with the plan path, the chunk's step ids and their
+   `verify`, demanding a reply of at most 15 lines: what changed, the verify
+   result, deviations. A single chunk (the user named one step, or every step
+   edits the same files) → the main session implements it itself, no worker.
+   A step with a device run longer than a few minutes is launched by the main
+   session in the background with its report written to a file; reading the
+   report and the fixes go to the next fresh worker. Without a worker, the
+   main session reads the report and makes the fixes.
 6. Verify: if the project has a lint skill use it, otherwise run
    format + analyze + tests for the stack. Fix until clean. Each test the diff
    adds for a fix or a behaviour runs once against the code without that change
@@ -71,4 +73,17 @@ description: Implement a plan file step by step, verify, then review the diff. U
    running a stage, set its status cell to `done`.
 8. Report in Russian, one line each: что теперь работает, результат проверки,
    вердикт ревьюера, отклонения от плана (только если есть). End with a single
-   offer to commit — never commit without confirmation.
+   offer to commit — never commit without confirmation. When `brief.json`
+   lies beside the plan, the user reads only the brief page. In a question,
+   reply or report to the user, name a step by the title of the brief section
+   that names it. When that section names more than one step, add ` · ` and
+   the step heading text without its `S<n> · ` prefix. Without `brief.json`
+   beside the plan, use only the step heading text without its `S<n> · `
+   prefix.
+   Never show a bare step id (S5, T2) to the user. A question to the user has
+   the shape of a brief question. It says what the user must decide and why
+   it is important. Then it gives one concrete example, 2–3 options with the
+   consequence of each, and a recommendation. Write it in plain words for a
+   reader who has not seen the code. Before you send a question, write it to
+   a temporary `.md` file and run `python3 ../clarifier/clarify.py check
+   <file> --lang ru` from this skill's folder; fix each error and each hint.

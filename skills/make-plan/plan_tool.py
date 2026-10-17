@@ -33,7 +33,7 @@ QUOTE_LIMIT = 120
 ANCHOR_RE = re.compile(r'^[\w &-]{1,60}$')
 COMMENT_RE = re.compile(r'^- \[ \] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+): )?(.*)$')
 OPEN_PREFIX = '- [ ] '
-IMPLEMENT_PROMPT = 'имплементируй план {} используй субагентов'
+IMPLEMENT_PROMPT = 'имплементируй план {}'
 DESKTOP_ENTRYPOINT = 'claude-desktop'
 GHOSTTY_SCRIPT = '''on run argv
     set wasRunning to application "Ghostty" is running
