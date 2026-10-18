@@ -15,7 +15,7 @@
         "codemap index for `CounterStore`",
         "class CounterStore  lib/store/counter_store.dart:8",
         "supertypes: BaseStore, LoggerMixin, Disposable",
-        "test/counter_store_test.dart:4  final store = CounterStore();"
+        "test/counter_store_test.dart:4 in main  final store = CounterStore();"
       ]
     }
   ]

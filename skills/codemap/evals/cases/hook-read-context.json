@@ -1,0 +1,80 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "s",
+        "cwd": "$ROOT",
+        "tool_name": "Read",
+        "tool_input": {
+          "file_path": "$ROOT/lib/config_calls.dart",
+          "offset": 1,
+          "limit": 10
+        }
+      },
+      "expect": [
+        "lines 1-10 of lib/config_calls.dart",
+        "  FirstConfig  lib/configs.dart:1",
+        "  FirstConfig.applyConfig  lib/configs.dart:2"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "s",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cd lib; sed -n 1,10p config_calls.dart"
+        }
+      },
+      "expect": [
+        "PreToolUse",
+        "  FirstConfig.applyConfig  lib/configs.dart:2"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "s",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cat -n lib/config_calls.dart | sed -n 1,10p"
+        }
+      },
+      "expect": [
+        "lines 1-10 of lib/config_calls.dart",
+        "!lines 1-2000"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "s",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "f=lib/config_calls.dart; sed -n 1,10p $f"
+        }
+      },
+      "expect": [
+        "lines 1-10 of lib/config_calls.dart"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "s",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cat lib/config_calls.dart"
+        }
+      },
+      "expect": [
+        "lines 1-2000 of lib/config_calls.dart"
+      ]
+    }
+  ]
+}

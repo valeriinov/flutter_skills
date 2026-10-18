@@ -1,0 +1,57 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "prompt": "Who calls `CounterStore.loadNextPage` and where is BaseStore declared? Keep `maxValue = 3` too."
+      },
+      "expect": [
+        "UserPromptSubmit",
+        "named in the prompt",
+        "method CounterStore.loadNextPage",
+        "class BaseStore",
+        "the Dart analyzer resolved it from the current sources"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "prompt": "Where is BaseStore declared?"
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "prompt": "Rename `dispose` everywhere."
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "write": "lib/store/base_store.dart",
+      "content": "/// Holds one value and pages through more of it.\nabstract class BaseStore<T> {\n  BaseStore(this._state);\n\n  T _state;\n\n  T get state => _state;\n\n  set state(T value) {\n    _state = value;\n  }\n\n  Future<void> loadNextPage();\n}\n\nmixin LoggerMixin {\n  void log(String message) {}\n}\n\nabstract interface class Disposable {\n  void dispose();\n}\n\n// edited\n"
+    },
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-g",
+        "cwd": "$ROOT",
+        "prompt": "Where is `CounterStore` declared?"
+      },
+      "expect": [
+        "named in the prompt.",
+        "!current sources"
+      ]
+    }
+  ]
+}

@@ -40,7 +40,7 @@
       ],
       "expect": [
         "function makeCounter",
-        "lib/main.dart:6  final store = makeCounter();"
+        "lib/main.dart:6 in main  final store = makeCounter();"
       ]
     }
   ]

@@ -7,13 +7,12 @@
         "--root",
         "$ROOT"
       ],
-      "max_length": 1000,
+      "max_length": 2500,
       "expect": [
         "method FirstConfig.applyConfig  lib/configs.dart:2",
         "method SecondConfig.applyConfig  lib/configs.dart:24",
-        "more, narrow: python3 ",
-        "codemap/codemap.py show ThirdConfig.applyConfig",
-        "!lib/configs.dart:104"
+        "method ThirdConfig.applyConfig  lib/configs.dart:46",
+        "lib/config_calls.dart:4 in applyDefaults"
       ]
     },
     {
@@ -26,7 +25,7 @@
           "command": "rg -n 'applyConfig|resetConfig' lib"
         }
       },
-      "max_length": 2011,
+      "max_length": 5011,
       "expect": [
         "`applyConfig`, `resetConfig`",
         "method FirstConfig.resetConfig"

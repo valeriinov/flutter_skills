@@ -1,0 +1,67 @@
+{
+  "steps": [
+    {
+      "write": "packages/kit/lib/kit.dart",
+      "content": "class KitClient {\n  Stream<int> get onEvent => const Stream.empty();\n}\n"
+    },
+    {
+      "write": ".dart_tool/package_config.json",
+      "content": "{\"configVersion\": 2, \"packages\": [{\"name\": \"dart_app\", \"rootUri\": \"../\", \"packageUri\": \"lib/\", \"languageVersion\": \"3.9\"}, {\"name\": \"kit\", \"rootUri\": \"../packages/kit/\", \"packageUri\": \"lib/\", \"languageVersion\": \"3.9\"}]}"
+    },
+    {
+      "write": "lib/kit_use.dart",
+      "content": "import 'package:kit/kit.dart';\n\nclass KitListener {\n  KitListener(this.client);\n\n  final KitClient client;\n\n  Stream<int> listen() => client.onEvent;\n}\n\nclass KitScreen {\n  void open(KitListener listener) {\n    listener.listen();\n  }\n}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "KitClient.onEvent",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "getter KitClient.onEvent  package:kit/kit.dart:2",
+        "lib/kit_use.dart:8 in KitListener.listen",
+        "    <- KitListener.listen  lib/kit_use.dart:8",
+        "     <- KitScreen.open  lib/kit_use.dart:13"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "prompt": "Who uses `KitListener`?"
+      },
+      "expect": [
+        "the Dart analyzer resolved it from the current sources"
+      ]
+    },
+    {
+      "delete": "lib/kit_use.dart"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "KitClient",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "codemap: no symbol"
+      ]
+    }
+  ]
+}

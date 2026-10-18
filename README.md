@@ -118,7 +118,7 @@ npx skills add -g valeriinov/flutter_skills --skill naming --skill review-change
 | `backlog` | Park deferred work and tech debt in `docs/BACKLOG.md`, harvest TODOs, groom the list | any | — |
 | `backend-contract` | Write or extend a backend contract from the client implementation and acceptance criteria | any | — |
 | `clarifier` | Turn a document into a short text read in 3–5 minutes (RU, UK, EN) without losing facts; checks text for `make-plan` and `visualize` | any | — |
-| `codemap` | Index Dart symbols with resolved references in SQLite; a hook adds the declaration and uses to an agent's grep | Dart | — |
+| `codemap` | Index Dart symbols with resolved references in SQLite; hooks add the declaration, uses and call tree to an agent's prompt, grep and file reads | Dart | — |
 | `commit-changes` | Split the working tree into logical local commits in a fixed message format; never pushes | any | — |
 | `dart-documentation` | Dartdoc for public interfaces and extensions | Dart | — |
 | `dart-flutter-tests` | Create, update, or refactor Dart/Flutter tests | Dart/Flutter | — |

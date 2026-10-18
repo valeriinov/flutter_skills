@@ -1,19 +1,20 @@
 ---
 name: codemap
-description: Answer where a Dart symbol is declared and who uses it, from a SQLite index of resolved references; a hook adds it to grep. Use for "где объявлен", "кто использует", "codemap show", "codemap build".
+description: Answer where a Dart symbol is declared, who uses and calls it, from a SQLite index of resolved references; hooks add it to prompts, greps and reads. Use for "где объявлен", "кто вызывает".
 argument-hint: "[ show <Name|Container.name> | build <root> | refresh <root> | map <root> ]"
 ---
 
 `codemap.py` keeps an index of the Dart symbols of a project in `<root>/.codemap/index.sqlite`.
 The index holds each declaration, its signature, its supertypes and each reference with its
-source line. `package:analyzer` resolves each reference, so one name in two libraries gives
+source line. It also holds the package declarations that the project refers to, for example
+`StreamChatClient`; `dart:` libraries stay out. `package:analyzer` resolves each reference, so one name in two libraries gives
 two symbols. Run `python3 ~/.claude/skills/codemap/codemap.py show <Name>` from a folder of the
 project. From another folder, add `--root <root>`.
 
 ## When to call it
 
-The hook adds the `show` answer to a grep or `Grep` search for an identifier. Call `show` by
-hand in these cases:
+The hook adds the `show` answer to a prompt that names an identifier and to a grep or `Grep`
+search for one. Call `show` by hand in these cases:
 
 - You need a symbol that a search did not name.
 - The answer lists more than three declarations. Narrow it with `show <Container.name>`.
@@ -26,7 +27,7 @@ that the index does not know gives `codemap: no symbol`; then grep the name.
 
 | command | result |
 |---|---|
-| `show <Name>` | declaration `file:line`, signature, supertypes, subtypes, overrides, up to 8 uses with their source line; at most 1000 characters |
+| `show <Name>` | declaration `file:line`, signature, supertypes, subtypes, overrides, up to 12 uses with their source line and member; for a callable, the declarations it calls and the tree of members that call it; at most 2500 characters |
 | `show <Container.name>` | the same answer for one member |
 | `build <root>` | a full index; about 15 s on 2,500 files |
 | `refresh <root>` | extracts again the changed files and the files that refer to them |
@@ -52,13 +53,28 @@ folder that has `.dart_tool/package_config.json`.
 
 `python3 ~/.claude/skills/codemap/codemap.py hook` reads a hook payload on stdin:
 
+- UserPromptSubmit: the answer for up to two identifiers that the prompt names in backticks or
+  as a class name. A name with more than three declarations gets no answer here.
 - PreToolUse `Bash` or `Grep`: a grep, rg or git grep search gets the answer for up to two
-  identifiers, at most 2000 characters. A command that is not a search exits before it reads the disk.
+  identifiers, at most 5000 characters.
+- PreToolUse `Bash` with `sed -n A,Bp`, `cat` or `cat | sed -n A,Bp` of a `.dart` file, and
+  PostToolUse `Read`: the declarations of other files that the read lines use, with
+  `file:line`.
 - PostToolUse `Edit`, `Write` or `MultiEdit` of a `.dart` file: a background `refresh`.
 - SessionStart and SubagentStart: the map, only when `CODEMAP_MAP=1`.
+- A name that the hook answered once gets no second answer in the same session.
 - `CODEMAP_AB=1`: sessions with an even `session_id` hash get no answer. Each decision goes to
-  `<root>/.codemap/ab.log`.
-- A missing index starts a background `build`. A project without Dart gets no answer.
+  `<root>/.codemap/ab.log`. `CODEMAP_HOOK=off` turns the hook off.
+- A command that does not search or read a `.dart` file exits before it reads the disk. A
+  missing index starts a background `build`. A project without Dart gets no answer.
+
+The settings register the same command for each event:
+
+| event | matcher | timeout, s |
+|---|---|---|
+| `UserPromptSubmit` | none | 10 |
+| `PreToolUse` | `Bash\|Grep` | 10 |
+| `PostToolUse` | `Edit\|Write\|MultiEdit\|Read` | 5 |
 
 ## Evals
 

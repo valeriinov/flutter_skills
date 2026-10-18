@@ -10,7 +10,9 @@ Usage:
 
 `build` runs the Dart extractor over the `lib/` and `test/` of the project and
 writes `<root>/.codemap/index.sqlite`; the folder carries a `.gitignore` of `*`,
-so git and ripgrep skip it. The SDK is `<root>/.fvm/flutter_sdk/bin/cache/dart-sdk`
+so git and ripgrep skip it. The index holds the declarations of the project and
+the package declarations (`package:` libraries, `dart:` excluded) that the
+project refers to. The SDK is `<root>/.fvm/flutter_sdk/bin/cache/dart-sdk`
 when it exists, else the SDK of `dart` on PATH. The extractor compiles once
 per SDK version into `~/.cache/codemap/bin/<version>/`, and again when its
 source changes. A root without `.dart_tool/package_config.json` is skipped:
@@ -24,26 +26,39 @@ rows of deleted files. A refresh that finds the lock taken marks the index
 dirty and exits; the holder runs one more pass before it releases the lock.
 
 `show` prints the declaration, signature, supertypes, subtypes and up to
-eight uses (lib/ first, one per file) with their source line. The answer for
-one name holds at most 1000 characters; a longer one ends with a line that
+twelve uses (production lib/ first) with their source line and the member they
+stand in. The first three of those members print their head (annotations and
+signature) or, at six lines or fewer, their whole body. A method, function,
+getter or constructor also prints the declarations it calls and the tree of
+production members that call it, up to ten levels and twenty nodes. The answer
+for one name holds at most 2500 characters; a longer one ends with a line that
 names the `Container.name` to narrow it to. More than three declarations of a
-name print only their list. Without `--root`, `show` uses the nearest folder
-above the current folder that has `.dart_tool/package_config.json`.
+name print only their list, at most 1000 characters. Without `--root`, `show`
+uses the nearest folder above the current folder that has
+`.dart_tool/package_config.json`.
 
 `map` ranks the files by the references between them (PageRank) and prints the
 public types of the top files with the signatures of their public members, in
 at most `--budget` tokens (one token is four characters).
 
-`hook` reads a hook payload on stdin. Before a Grep, or a Bash command that runs
-grep, rg or git grep inside a Dart project, it adds the `show` answer for up to
-two searched identifiers to the context, at most 2000 characters in all; the
-search runs as well. After an
-Edit, Write or MultiEdit of a .dart file it starts a detached refresh. On
-SessionStart and SubagentStart it prints the map when CODEMAP_MAP=1. With
-CODEMAP_AB=1 it stays silent in sessions whose session_id hash is even and logs
-each decision to `<root>/.codemap/ab.log`. A command that is not a search exits
-before any disk access. A missing index starts a detached build. Any error
-exits silently with code 0.
+`hook` reads a hook payload on stdin:
+- UserPromptSubmit: the `show` answer for up to two identifiers the prompt
+  names (in backticks, or a class name), without declaration lists.
+- PreToolUse of a Grep, or of a Bash command that runs grep, rg or git grep
+  inside a Dart project: the `show` answer for up to two searched identifiers,
+  at most 5000 characters in all; the search runs as well.
+- PreToolUse of a Bash `sed -n A,Bp`, `cat` or `cat | sed -n A,Bp` of a .dart
+  file, and PostToolUse of a Read: the declarations of other files that the
+  read lines use, with their location.
+- PostToolUse of an Edit, Write or MultiEdit of a .dart file: a detached
+  refresh.
+- SessionStart and SubagentStart: the map when CODEMAP_MAP=1.
+A name answered once is not answered again in the same session
+(`<root>/.codemap/seen/`, kept for a day). With CODEMAP_AB=1 the hook stays
+silent in sessions whose session_id hash is even and logs each decision to
+`<root>/.codemap/ab.log`. With CODEMAP_HOOK=off it does nothing. A command that
+neither searches nor reads a Dart file exits before any disk access. A missing
+index starts a detached build. Any error exits silently with code 0.
 """
 import json
 import os
@@ -59,14 +74,28 @@ INDEX_DIR = ".codemap"
 INDEX_FILE = "index.sqlite"
 PACKAGE_CONFIG = os.path.join(".dart_tool", "package_config.json")
 FVM_SDK = os.path.join(".fvm", "flutter_sdk", "bin", "cache", "dart-sdk")
-SYMBOL_LIMIT = 1000
+SYMBOL_LIMIT = 2500
 HOOK_LIMIT = 2 * SYMBOL_LIMIT
+LIST_LIMIT = 1000
 LISTED_DECLARATIONS = 3
-USE_LIMIT = 8
+USE_LIMIT = 12
+ANNOTATION_SPAN = 3
+BODY_USES = 3
+READ_LINES = 2000
+SEEN_MAX_AGE = 24 * 60 * 60
+READ_FILE_LIMIT = 3
+READ_REF_LIMIT = 12
+READ_KINDS = ("class", "mixin", "enum", "extension", "constructor", "method", "getter", "setter", "function")
+BODY_LINES = 6
+CUT_MARK = "\0"
 SUBTYPE_LIMIT = 6
 USE_TEXT_LIMIT = 60
 HOOK_SYMBOL_LIMIT = 2
 HOOK_CANDIDATE_LIMIT = 6
+CHAIN_DEPTH = 10
+CHAIN_BRANCHES = 4
+CHAIN_NODES = 20
+CALLEE_LIMIT = 8
 MAP_BUDGET = 1500
 MAP_MEMBER_LIMIT = 3
 MAP_DETAILED_SHARE = 0.5
@@ -75,6 +104,8 @@ PAGERANK_ITERATIONS = 30
 PAGERANK_DAMPING = 0.85
 TYPE_KINDS = ("class", "mixin", "enum", "extension", "extensionType", "typedef")
 MEMBER_KINDS = ("constructor", "method", "getter", "setter", "field")
+CALLABLE_KINDS = ("constructor", "method", "getter", "setter", "function")
+NON_PRODUCTION = re.compile(r"(^|/)(test|integration_test|mocks?)/")
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit"}
 SEARCH_TOOLS = {"grep", "egrep", "fgrep", "rg", "ag", "ack", "git grep"}
 DIRECTORY_SEARCHES = {"rg", "ag", "ack", "git grep"}
@@ -92,9 +123,20 @@ SHELL_OPERATOR = re.compile(r"[();<>|&]+")
 SHELL_WORD = re.compile(r"[();<>|&]+|[^\s();<>|&]+")
 REGEX_ESCAPE = re.compile(r"\\[bBwWsSdD<>]")
 CLASS_NAME = re.compile(r"(?<![A-Za-z0-9_$])_?[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+(?![A-Za-z0-9_])")
+QUALIFIED_NAME = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*\.[A-Za-z_$][A-Za-z0-9_$]*")
+GENERATED_FILE = re.compile(r"\.(g|freezed|gr|config|mocks)\.dart$")
+SHELL_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=[^=]+")
+SHELL_NAME = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
+SED_RANGE = re.compile(r"(\d+),(\d+)p")
+ANNOTATION_LINE = re.compile(r"@[\w.]+(\(.*\))?")
+BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
 MEMBER_NAME = re.compile(r"(?<![A-Za-z0-9_$])_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+(?![A-Za-z0-9_])")
-CUT_LINE = "    ... cut at 1000 characters"
+CUT_LINE = "    ... cut at {limit} characters"
 HOOK_HEADER = "codemap index for {names}; the search runs as well.\n\n"
+PROMPT_HEADER = "codemap index for {names} named in the prompt.\n\n"
+CURRENT_PROMPT_HEADER = (
+    "codemap index for {names} named in the prompt; the Dart analyzer resolved it from the current sources.\n\n"
+)
 MAP_HEADER = "codemap project map: files ranked by references, public types and members.\n"
 SCHEMA = """
 CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT);
@@ -476,18 +518,31 @@ def symbol_answer(db, name):
         return ""
     if len(declarations) > LISTED_DECLARATIONS:
         return declaration_list(name, declarations)
-    return clip_answer(declarations, [declaration_lines(db, row) for row in declarations])
+    return clip_answer(declarations, without_repeated_chains([declaration_lines(db, row) for row in declarations]))
+
+
+def without_repeated_chains(blocks):
+    shown = set()
+    kept_blocks = []
+    for lines in blocks:
+        kept = [line for line in lines if not (is_chain_line(line) and line.strip() in shown)]
+        shown.update(line.strip() for line in kept if is_chain_line(line))
+        if kept and kept[-1] == "  called through:":
+            kept.pop()
+        kept_blocks.append(kept)
+    return kept_blocks
 
 
 def clip_answer(declarations, blocks):
+    limit = SYMBOL_LIMIT
     answer = "\n\n".join("\n".join(lines) for lines in blocks)
-    if len(answer) <= SYMBOL_LIMIT:
+    if len(answer) <= limit:
         return answer
     kept = []
     for index, lines in enumerate(blocks):
-        cut = narrow_line(len(blocks) - index, declarations[index]) if len(blocks) > 1 else CUT_LINE
+        cut = narrow_line(len(blocks) - index, declarations[index]) if len(blocks) > 1 else CUT_LINE.format(limit=limit)
         for line in ([""] if kept else []) + lines:
-            if len("\n".join(kept + [line, cut])) > SYMBOL_LIMIT:
+            if len("\n".join(kept + [line, cut])) > limit:
                 return "\n".join(kept + [cut])
             kept.append(line)
     return answer
@@ -508,7 +563,7 @@ def declaration_list(name, declarations):
     for index, row in enumerate(declarations):
         line = f"  {row[2]} {qualified(row)}  {row[4]}:{row[5]}"
         more = narrow_line(len(declarations) - index, row)
-        if len("\n".join(lines + [line, more])) > SYMBOL_LIMIT:
+        if len("\n".join(lines + [line, more])) > LIST_LIMIT:
             lines.append(more)
             break
         lines.append(line)
@@ -550,7 +605,142 @@ def declaration_lines(db, row):
     if overrides:
         lines.append("  overridden in: " + ", ".join(f"{owner} {path}:{number}" for owner, path, number in overrides[:3]))
     lines += use_lines(db, symbol_id, {(path, number) for _, path, number in children})
+    if kind in CALLABLE_KINDS:
+        lines += callee_lines(db, row) + caller_chain_lines(db, row)
     return lines
+
+
+def callee_lines(db, row):
+    file, line = row[4], row[5]
+    end = db.execute(
+        f"SELECT MIN(line) FROM symbol_rows WHERE file = ? AND line > ? AND kind IN ({marks(CALLABLE_KINDS + ('field',))})",
+        (file, line, *CALLABLE_KINDS, "field"),
+    ).fetchone()[0]
+    rows = db.execute(
+        f"SELECT s.id, s.name, s.container, s.file, s.line, r.text FROM ref_rows r JOIN symbol_rows s ON s.id = r.target"
+        f" WHERE r.file = ? AND r.line > ? AND r.line < ? AND s.kind IN ({marks(CALLABLE_KINDS)}) ORDER BY r.line",
+        (file, line, end or 1 << 30, *CALLABLE_KINDS),
+    ).fetchall()
+    callees = list(
+        dict.fromkeys(
+            (f"{container}.{name}" if container else name, f"{path}:{number}")
+            for symbol_id, name, container, path, number, text in rows
+            if symbol_id != row[0] and not is_comment(text) and not (container or "").startswith("_$")
+        )
+    )
+    if not callees:
+        return []
+    lines = ["  calls:"] + [f"    {name}  {location}" for name, location in callees[:CALLEE_LIMIT]]
+    if len(callees) > CALLEE_LIMIT:
+        lines.append(f"    ... {len(callees) - CALLEE_LIMIT} more")
+    return lines
+
+
+def caller_chain_lines(db, row):
+    lines = []
+    append_callers(db, row, 0, {row[0]}, lines)
+    return ["  called through:"] + lines if lines else []
+
+
+def append_callers(db, row, depth, seen, lines):
+    callers = [(caller, number) for caller, number in production_callers(db, row) if caller[0] not in seen]
+    for index, (caller, number) in enumerate(callers):
+        indent = "    " + " " * depth
+        if index == CHAIN_BRANCHES or len(lines) == CHAIN_NODES:
+            lines.append(f"{indent}<- ... {len(callers) - index} more")
+            return
+        seen.add(caller[0])
+        lines.append(f"{indent}<- {qualified(caller)}  {caller[4]}:{number}")
+        if depth + 1 < CHAIN_DEPTH:
+            append_callers(db, caller, depth + 1, seen, lines)
+
+
+def production_callers(db, row):
+    targets = [row[0]] + interface_member_ids(db, row)
+    rows = db.execute(
+        f"SELECT file, line, text FROM ref_rows WHERE target IN ({marks(targets)}) ORDER BY file, line",
+        targets,
+    ).fetchall()
+    callers = {}
+    for path, number, text in rows:
+        if NON_PRODUCTION.search(path) or is_comment(text):
+            continue
+        caller = enclosing_member(db, path, number)
+        if caller is not None and caller[0] != row[0]:
+            callers.setdefault(caller[0], (caller, number))
+    return list(callers.values())
+
+
+def interface_member_ids(db, row):
+    if not row[3]:
+        return []
+    container_id = row[0].rsplit(".", 1)[0]
+    found = db.execute("SELECT supertypes FROM symbol_rows WHERE id = ?", (container_id,)).fetchone()
+    candidates = [f"{parent}.{row[1]}" for parent in json.loads((found or ["[]"])[0] or "[]")]
+    if not candidates:
+        return []
+    return [r[0] for r in db.execute(f"SELECT id FROM ids WHERE id IN ({marks(candidates)})", candidates)]
+
+
+def enclosing_member(db, path, number):
+    return db.execute(
+        "SELECT id, name, kind, container, file, line, signature, supertypes FROM symbol_rows"
+        f" WHERE file = ? AND line <= ? AND kind IN ({marks(CALLABLE_KINDS)}) ORDER BY line DESC LIMIT 1",
+        (path, number, *CALLABLE_KINDS),
+    ).fetchone()
+
+
+def use_owner(db, path, number, text):
+    caller = annotated_member(db, path, number) if ANNOTATION_LINE.fullmatch(text.strip()) else None
+    return caller or enclosing_member(db, path, number)
+
+
+def short_body_lines(db, member):
+    path, start = member[4], member[5]
+    end = db.execute("SELECT MIN(line) FROM symbol_rows WHERE file = ? AND line > ?", (path, start)).fetchone()[0]
+    root = os.path.dirname(os.path.dirname(db.execute("PRAGMA database_list").fetchone()[2]))
+    try:
+        with open(os.path.join(root, path)) as source:
+            text = source.read().split("\n")
+    except OSError:
+        return []
+    first = start - 1
+    while first > 0 and text[first - 1].strip().startswith("@"):
+        first -= 1
+    body = text[first : (end - 1 if end else len(text))]
+    while body and not body[-1].strip():
+        body.pop()
+    if len(body) > BODY_LINES:
+        body = declaration_head(body)
+    shown = body[:BODY_LINES] + ([CUT_MARK] if len(body) > BODY_LINES and body[BODY_LINES - 1] != CUT_MARK else [])
+    return ["      ..." if line == CUT_MARK else f"      {first + 1 + offset}| {line.strip()}" for offset, line in enumerate(shown)]
+
+
+def declaration_head(body):
+    for index, line in enumerate(body):
+        if line.rstrip().endswith(("{", "=>", ";")) and not line.strip().startswith("@"):
+            return body[: index + 1] + [CUT_MARK]
+    return []
+
+
+def annotated_member(db, path, number):
+    return db.execute(
+        "SELECT id, name, kind, container, file, line, signature, supertypes FROM symbol_rows"
+        f" WHERE file = ? AND line > ? AND line <= ? AND kind IN ({marks(CALLABLE_KINDS)}) ORDER BY line LIMIT 1",
+        (path, number, number + ANNOTATION_SPAN, *CALLABLE_KINDS),
+    ).fetchone()
+
+
+def is_chain_line(line):
+    return line.lstrip().startswith("<- ")
+
+
+def is_comment(text):
+    return text.lstrip().startswith("//")
+
+
+def marks(values):
+    return ",".join("?" * len(values))
 
 
 def member_overrides(db, symbol_id, name, container):
@@ -569,18 +759,25 @@ def use_lines(db, symbol_id, subtype_lines):
         "SELECT file, line, text FROM ref_rows WHERE target = ? ORDER BY file LIKE 'lib/%' DESC, file, line",
         (symbol_id,),
     ).fetchall()
-    rows = [row for row in rows if row[:2] not in subtype_lines]
+    rows = [row for row in rows if row[:2] not in subtype_lines and not is_comment(row[2])]
+    rows.sort(key=lambda row: (not row[0].startswith("lib/"), bool(NON_PRODUCTION.search(row[0]))))
     label = "other uses" if subtype_lines else "uses"
     if not rows:
         return [f"  {label}: none"]
-    first_by_file = {}
-    for path, number, text in rows:
-        first_by_file.setdefault(path, (number, text))
-    lines = [f"  {label}: {len(rows)} in {len(first_by_file)} files"]
-    for path, (number, text) in list(first_by_file.items())[:USE_LIMIT]:
-        lines.append(f"    {path}:{number}  {text[:USE_TEXT_LIMIT]}")
-    if len(first_by_file) > USE_LIMIT:
-        lines.append(f"    ... {len(first_by_file) - USE_LIMIT} more files")
+    files = len({path for path, _, _ in rows})
+    count = f"all {len(rows)} shown" if len(rows) <= USE_LIMIT else f"{len(rows)} in {files} files"
+    lines = [f"  {label}: {count}"]
+    bodies = 0
+    for path, number, text in rows[:USE_LIMIT]:
+        caller = use_owner(db, path, number, text)
+        label_text = f" in {qualified(caller)}" if caller else ""
+        lines.append(f"    {path}:{number}{label_text}  {text[:USE_TEXT_LIMIT]}")
+        if caller and bodies < BODY_USES:
+            body = short_body_lines(db, caller)
+            bodies += 1 if body else 0
+            lines += body
+    if len(rows) > USE_LIMIT:
+        lines.append(f"    ... {len(rows) - USE_LIMIT} more")
     return lines
 
 
@@ -687,17 +884,24 @@ def public_members(db, path, container):
 
 
 def hook(payload):
+    if os.environ.get("CODEMAP_HOOK") == "off":
+        return
     event = payload.get("hook_event_name")
     if event in ("SessionStart", "SubagentStart"):
         start_session(payload, event)
         return
     if event == "PostToolUse":
         after_edit(payload)
+        after_read(payload)
+        return
+    if event == "UserPromptSubmit":
+        answer_prompt(payload)
         return
     if event != "PreToolUse":
         return
     search = searched(payload)
     if search is None:
+        answer_reads(payload, "PreToolUse", sed_reads(payload))
         return
     names, path = search
     root = find_root(path)
@@ -741,19 +945,181 @@ def answer_search(payload, root, names):
     try:
         if is_stale(db, root):
             spawn("refresh", root)
-        answers = {}
-        for name in names[:HOOK_CANDIDATE_LIMIT]:
-            answer = symbol_answer(db, name)
-            if answer:
-                answers[name] = answer
-            if len(answers) == HOOK_SYMBOL_LIMIT:
-                break
+        seen = seen_names(root, payload)
+        answers = symbol_answers(db, [name for name in names if name not in seen], keeps_lists=True)
     finally:
         db.close()
     log_decision(root, payload, names, list(answers), "hook")
+    text = ""
     if answers:
+        remember_names(root, payload, seen, answers)
         header = HOOK_HEADER.format(names=", ".join(f"`{name}`" for name in answers))
-        emit("PreToolUse", clip_lines(header + "\n\n".join(answers.values()), HOOK_LIMIT))
+        text = clip_lines(header + "\n\n".join(answers.values()), HOOK_LIMIT)
+    reads = read_context_text(sed_reads(payload))
+    if text or reads:
+        emit("PreToolUse", "\n\n".join(part for part in (text, reads) if part))
+
+
+def after_read(payload):
+    if payload.get("tool_name") != "Read":
+        return
+    tool_input = payload.get("tool_input", {})
+    path = absolute(str(payload.get("cwd") or os.getcwd()), str(tool_input.get("file_path") or ""))
+    start = int(tool_input.get("offset") or 1)
+    answer_reads(payload, "PostToolUse", [(path, start, start + int(tool_input.get("limit") or READ_LINES) - 1)])
+
+
+def answer_reads(payload, event, reads):
+    text = read_context_text(reads)
+    if text:
+        emit(event, text)
+
+
+def sed_reads(payload):
+    if payload.get("tool_name") != "Bash":
+        return []
+    cwd = str(payload.get("cwd") or os.getcwd())
+    names = {}
+    reads = []
+    segments = raw_segments(str(payload.get("tool_input", {}).get("command") or ""))
+    for index, (operator, tokens) in enumerate(segments):
+        tokens = [expand_names(token, names) for token in tokens]
+        files = [absolute(cwd, token) for token in tokens[1:] if token.endswith(".dart")]
+        is_piped_out = index + 1 < len(segments) and segments[index + 1][0] == "|"
+        if SHELL_ASSIGNMENT.fullmatch(tokens[0]) and len(tokens) == 1:
+            name, _, value = tokens[0].partition("=")
+            names[name] = value
+        elif tokens[0] == "cd" and len(tokens) > 1:
+            cwd = absolute(cwd, tokens[1])
+        elif tokens[0] == "cat" and not is_piped_out:
+            reads += [(path, 1, READ_LINES) for path in files]
+        elif tokens[0] == "sed" and "-n" in tokens:
+            ranges = [match for match in map(SED_RANGE.fullmatch, tokens[1:]) if match]
+            sources = files or (piped_files(segments[index - 1][1], names, cwd) if operator == "|" else [])
+            reads += [(path, int(match.group(1)), int(match.group(2))) for match in ranges[:1] for path in sources]
+    return reads
+
+
+def piped_files(tokens, names, cwd):
+    if tokens[0] != "cat":
+        return []
+    return [absolute(cwd, expand_names(token, names)) for token in tokens[1:] if token.endswith(".dart")]
+
+
+def expand_names(token, names):
+    return SHELL_NAME.sub(lambda match: names.get(match.group(1) or match.group(2), match.group(0)), token)
+
+
+def read_context_text(reads):
+    import sqlite3
+
+    blocks = []
+    for path, start, end in reads[:READ_FILE_LIMIT]:
+        root = find_root(os.path.dirname(path)) if path.endswith(".dart") else None
+        if root is None or not os.path.isfile(index_path(root)):
+            continue
+        db = sqlite3.connect(f"file:{index_path(root)}?mode=ro", uri=True, timeout=0.2)
+        try:
+            block = used_declarations(db, os.path.relpath(path, root), start, end)
+        finally:
+            db.close()
+        if block:
+            blocks.append(block)
+    return "\n\n".join(blocks)
+
+
+def used_declarations(db, path, start, end):
+    rows = db.execute(
+        "SELECT s.name, s.container, s.file, s.line FROM ref_rows r JOIN symbol_rows s ON s.id = r.target"
+        f" WHERE r.file = ? AND r.line BETWEEN ? AND ? AND s.file != ? AND s.file NOT LIKE 'package:%'"
+        f" AND s.kind IN ({marks(READ_KINDS)}) ORDER BY r.line",
+        (path, start, end, path, *READ_KINDS),
+    ).fetchall()
+    used = list(
+        dict.fromkeys(
+            (f"{container}.{name}" if container else name, f"{file}:{line}")
+            for name, container, file, line in rows
+            if not (container or name).startswith("_$") and not GENERATED_FILE.search(file)
+        )
+    )
+    if not used:
+        return ""
+    lines = [f"codemap: lines {start}-{end} of {path} use these declarations of other files:"]
+    lines += [f"  {name}  {location}" for name, location in used[:READ_REF_LIMIT]]
+    if len(used) > READ_REF_LIMIT:
+        lines.append(f"  ... {len(used) - READ_REF_LIMIT} more")
+    return "\n".join(lines)
+
+
+def answer_prompt(payload):
+    names = prompt_identifiers(str(payload.get("prompt") or ""))
+    root = find_root(str(payload.get("cwd") or os.getcwd()))
+    if not names or root is None or not os.path.isfile(index_path(root)):
+        return
+    if is_silent_session(payload):
+        return
+    import sqlite3
+
+    db = sqlite3.connect(f"file:{index_path(root)}?mode=ro", uri=True, timeout=0.2)
+    try:
+        is_current = not is_stale(db, root)
+        seen = seen_names(root, payload)
+        answers = symbol_answers(db, [name for name in names if name not in seen], keeps_lists=False)
+    finally:
+        db.close()
+    if answers:
+        remember_names(root, payload, seen, answers)
+        header = (CURRENT_PROMPT_HEADER if is_current else PROMPT_HEADER).format(names=", ".join(f"`{name}`" for name in answers))
+        emit("UserPromptSubmit", clip_lines(header + "\n\n".join(answers.values()), HOOK_LIMIT))
+
+
+def symbol_answers(db, names, keeps_lists):
+    answers = {}
+    for name in names[:HOOK_CANDIDATE_LIMIT]:
+        answer = symbol_answer(db, name)
+        if answer and (keeps_lists or not answer.startswith(f"{name}: ")):
+            answers[name] = answer
+        if len(answers) == HOOK_SYMBOL_LIMIT:
+            break
+    return answers
+
+
+def prompt_identifiers(prompt):
+    quoted = []
+    for span in BACKTICK_SPAN.findall(prompt):
+        span = span.strip().rstrip("()")
+        quoted += [span] if QUALIFIED_NAME.fullmatch(span) else identifiers([span])
+    plain = [match.group(0) for match in CLASS_NAME.finditer(BACKTICK_SPAN.sub(" ", prompt))]
+    return list(dict.fromkeys(quoted + plain))
+
+
+def seen_names(root, payload):
+    try:
+        with open(seen_path(root, payload)) as file:
+            return set(json.load(file))
+    except (OSError, ValueError):
+        return set()
+
+
+def remember_names(root, payload, seen, answers):
+    path = seen_path(root, payload)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    drop_old_sessions(os.path.dirname(path))
+    with open(path, "w") as file:
+        json.dump(sorted(seen | set(answers) | {name.rpartition(".")[2] for name in answers}), file)
+
+
+def drop_old_sessions(directory):
+    import time
+
+    for entry in os.scandir(directory):
+        if entry.stat().st_mtime < time.time() - SEEN_MAX_AGE:
+            os.remove(entry.path)
+
+
+def seen_path(root, payload):
+    session = re.sub(r"[^A-Za-z0-9_-]", "_", str(payload.get("session_id") or "none"))
+    return os.path.join(index_dir(root), "seen", session)
 
 
 def clip_lines(text, limit):
@@ -766,7 +1132,7 @@ def clip_lines(text, limit):
 
 
 def is_stale(db, root):
-    for path, mtime in db.execute("SELECT path, mtime FROM files"):
+    for path, mtime in db.execute("SELECT path, mtime FROM files WHERE mtime IS NOT NULL"):
         try:
             if os.stat(os.path.join(root, path)).st_mtime_ns != mtime:
                 return True

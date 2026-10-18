@@ -26,7 +26,8 @@ must be clean before each run; a dirty worktree stops the runner.
 
 A variant also takes `setup` (commands run once, before its first run, not
 timed) and `before_run` (commands run before each run). All commands run in
-the worktree.
+the worktree. `cli_args` is a list of extra `claude` arguments, such as
+`--agents` or `--append-system-prompt`, that leave the worktree unchanged.
 
 Each run appends one line to `<out>/runs.jsonl`; a run already in that file is
 skipped, so a stopped benchmark resumes. The raw stream of each run is in
@@ -262,6 +263,7 @@ def run_claude(args, variant, prompt, raw_path):
         args.permission_mode,
         "--max-budget-usd",
         str(args.budget_usd),
+        *variant.get("cli_args", []),
     ]
     with open(raw_path, "w") as raw:
         try:

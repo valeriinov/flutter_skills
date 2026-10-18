@@ -15,7 +15,7 @@
         "method BaseStore.loadNextPage  lib/store/base_store.dart:13",
         "overridden in: CounterStore lib/store/counter_store.dart:16",
         "method CounterStore.loadNextPage",
-        "lib/main.dart:7  store.loadNextPage();"
+        "lib/main.dart:7 in main  store.loadNextPage();"
       ]
     }
   ]

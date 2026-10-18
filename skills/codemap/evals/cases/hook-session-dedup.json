@@ -1,0 +1,85 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "expect": [
+        "class CounterStore"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-f",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "expect": [
+        "class CounterStore"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session-h",
+        "cwd": "$ROOT",
+        "prompt": "Who calls `CounterStore.loadNextPage`?"
+      },
+      "expect": [
+        "method CounterStore.loadNextPage"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-h",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn loadNextPage lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    }
+  ]
+}

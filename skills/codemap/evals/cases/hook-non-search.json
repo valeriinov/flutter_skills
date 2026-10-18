@@ -7,7 +7,7 @@
         "cwd": "$ROOT",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "ls -la lib && cat lib/main.dart"
+          "command": "ls -la lib && echo done"
         }
       },
       "expect": [

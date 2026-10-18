@@ -1,0 +1,102 @@
+{
+  "steps": [
+    {
+      "write": "lib/flow.dart",
+      "content": "abstract interface class Gateway {\n  /// Calls [fetchToken] on the server.\n  Future<String> fetchToken();\n}\n\nclass HttpGateway implements Gateway {\n  @override\n  Future<String> fetchToken() async {\n    return _send();\n  }\n\n  Future<String> _send() async => 'token';\n}\n\nclass TokenRefresher {\n  TokenRefresher(this.gateway);\n\n  final Gateway gateway;\n\n  Future<String> refresh() async {\n    return gateway.fetchToken();\n  }\n}\n\nclass RetryInterceptor {\n  RetryInterceptor(this.refresher);\n\n  final TokenRefresher refresher;\n\n  Future<String> onFailure() async {\n    return refresher.refresh();\n  }\n}\n\nclass TokenWarmup {\n  TokenWarmup(this.refresher);\n\n  final TokenRefresher refresher;\n\n  Future<String> warm() async {\n    return refresher.refresh();\n  }\n}\n\nclass Named {\n  const Named(this.name);\n\n  final String name;\n}\n\nclass GatewayModule {\n  @Named('token')\n  Gateway gateway() => HttpGateway();\n}\n"
+    },
+    {
+      "write": "test/flow_test.dart",
+      "content": "import 'package:dart_app/flow.dart';\n\nvoid main() {\n  HttpGateway().fetchToken();\n}\n"
+    },
+    {
+      "write": "lib/named_user.dart",
+      "content": "import 'flow.dart';\n\nclass NamedUser {\n  NamedUser({\n    @Named('user') required this.user,\n  });\n  void greet() {}\n  final String user;\n}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "HttpGateway.fetchToken",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "    HttpGateway._send  lib/flow.dart:12",
+        "called through:",
+        "    <- TokenRefresher.refresh  lib/flow.dart:21",
+        "    <- RetryInterceptor.onFailure  lib/flow.dart:31",
+        "!    <- main",
+        "     <- RetryInterceptor.onFailure  lib/flow.dart:31",
+        "     <- TokenWarmup.warm  lib/flow.dart:41"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Gateway.fetchToken",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "lib/flow.dart:21 in TokenRefresher.refresh",
+        "!    Gateway.fetchToken  lib/flow.dart",
+        "!lib/flow.dart:2 "
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Named",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "lib/flow.dart:52 in GatewayModule.gateway"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Named",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "lib/named_user.dart:5  @Named",
+        "!in NamedUser.greet"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "TokenRefresher.refresh",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "uses: all 2 shown",
+        "lib/flow.dart:31 in RetryInterceptor.onFailure",
+        "      30| Future<String> onFailure() async {",
+        "      31| return refresher.refresh();",
+        "      32| }"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Named",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "      52| @Named('token')",
+        "      53| Gateway gateway() => HttpGateway();"
+      ]
+    }
+  ]
+}

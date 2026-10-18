@@ -182,6 +182,10 @@ class _Project {
     return path.startsWith('$root/') ? path.substring(root.length + 1) : path;
   }
 
+  bool indexesLibrary(Uri uri) {
+    return ownsLibrary(uri) || uri.isScheme('package');
+  }
+
   bool ownsLibrary(Uri uri) {
     if (uri.isScheme('package')) {
       return uri.pathSegments.first == packageName;
@@ -262,7 +266,11 @@ class _Externals {
     if (path == null) {
       return;
     }
-    final declarations = _byFile.putIfAbsent(project.relative(path), () => {});
+    final library = element.library;
+    final shownPath = library == null || project.ownsLibrary(library.uri)
+        ? project.relative(path)
+        : project.libraryId(library.uri);
+    final declarations = _byFile.putIfAbsent(shownPath, () => {});
     if (declarations.containsKey(id)) {
       return;
     }
@@ -378,7 +386,7 @@ class _UnitVisitor extends GeneralizingAstVisitor<void> {
     final resolved = _declared(element);
     final library = resolved.library;
     if (library == null ||
-        !project.ownsLibrary(library.uri) ||
+        !project.indexesLibrary(library.uri) ||
         _kind(resolved) == null) {
       return null;
     }
