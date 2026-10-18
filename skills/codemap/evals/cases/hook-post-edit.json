@@ -1,0 +1,33 @@
+{
+  "steps": [
+    {
+      "write": "lib/store/counter_store.dart",
+      "content": "import '../routes.gr.dart';\nimport 'base_store.dart';\n\ntypedef CounterListener = void Function(int value);\n\nconst int counterStart = 0;\n\nclass CounterStore extends BaseStore<int> with LoggerMixin implements Disposable {\n  CounterStore() : super(counterStart);\n\n  CounterStore.fromValue(int value) : super(value);\n\n  final List<CounterListener> listeners = [];\n\n  @override\n  Future<void> loadNextPage() async {\n    state = state + 1;\n    log('page $state');\n  }\n\n  DetailsRoute detailsRoute() => DetailsRoute('$state');\n\n  void undoCount() {}\n\n  @override\n  void dispose() {}\n}\n\nCounterStore createCounter() => CounterStore.fromValue(counterStart);\n"
+    },
+    {
+      "hook": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "cwd": "$ROOT",
+        "tool_input": {
+          "file_path": "$ROOT/lib/store/counter_store.dart"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "undoCount",
+        "--root",
+        "$ROOT"
+      ],
+      "poll": true,
+      "expect": [
+        "method CounterStore.undoCount"
+      ]
+    }
+  ]
+}

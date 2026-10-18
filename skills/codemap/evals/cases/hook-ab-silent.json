@@ -1,0 +1,46 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-a",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "env": {
+        "CODEMAP_AB": "1"
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "env": {
+        "CODEMAP_AB": "1"
+      },
+      "expect": [
+        "class CounterStore"
+      ]
+    },
+    {
+      "file": ".codemap/ab.log",
+      "expect": [
+        "\"group\": \"silent\"",
+        "\"group\": \"hook\"",
+        "\"answered\": [\"CounterStore\"]"
+      ]
+    }
+  ]
+}

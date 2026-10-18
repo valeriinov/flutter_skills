@@ -1,0 +1,16 @@
+{
+  "steps": [
+    {
+      "run": [
+        "map",
+        "$ROOT",
+        "--budget",
+        "60"
+      ],
+      "expect": [
+        "codemap project map",
+        "!lib/handlers.dart\n  abstract interface class Handler\n    void handle()\n  class Handler1"
+      ]
+    }
+  ]
+}

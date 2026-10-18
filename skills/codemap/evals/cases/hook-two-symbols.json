@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "rg -n 'BaseStore|CounterStore|LoggerMixin' lib"
+        }
+      },
+      "expect": [
+        "`BaseStore`, `CounterStore`",
+        "class BaseStore",
+        "class CounterStore",
+        "!mixin LoggerMixin"
+      ]
+    }
+  ]
+}

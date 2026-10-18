@@ -1,0 +1,4 @@
+name: dart_app
+publish_to: none
+environment:
+  sdk: ^3.9.0

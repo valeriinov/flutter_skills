@@ -1,0 +1,7 @@
+name: codemap_dart
+publish_to: none
+environment:
+  sdk: ^3.11.0
+dependencies:
+  analyzer: 13.3.0
+  crypto: 3.0.7

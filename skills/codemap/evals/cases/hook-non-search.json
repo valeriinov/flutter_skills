@@ -1,0 +1,32 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "ls -la lib && cat lib/main.dart"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo 'grep -rn CounterStore lib'"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    }
+  ]
+}

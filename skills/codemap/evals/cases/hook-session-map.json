@@ -1,0 +1,29 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "SessionStart",
+        "cwd": "$ROOT"
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "SubagentStart",
+        "cwd": "$ROOT"
+      },
+      "env": {
+        "CODEMAP_MAP": "1"
+      },
+      "expect": [
+        "SubagentStart",
+        "codemap project map",
+        "lib/store/base_store.dart",
+        "abstract class BaseStore<T>",
+        "!test/"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {
+      "run": [
+        "show",
+        "handle",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "handle: 25 declarations",
+        "method Handler.handle  lib/handlers.dart:2",
+        "more, narrow: python3 ",
+        "codemap/codemap.py show Handler"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Handler3.handle",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "method Handler3.handle  lib/handlers.dart:17",
+        "!declarations"
+      ]
+    }
+  ]
+}

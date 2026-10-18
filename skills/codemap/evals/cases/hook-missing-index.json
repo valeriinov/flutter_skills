@@ -1,0 +1,39 @@
+{
+  "steps": [
+    {
+      "remove_index": true
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn CounterStore lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "CounterStore",
+        "--root",
+        "$ROOT"
+      ],
+      "poll": true,
+      "expect": [
+        "class CounterStore"
+      ]
+    },
+    {
+      "file": ".codemap/.gitignore",
+      "expect": [
+        "*"
+      ]
+    }
+  ]
+}

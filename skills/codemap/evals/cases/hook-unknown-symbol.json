@@ -1,0 +1,18 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn 'NoSuchWidget' lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    }
+  ]
+}

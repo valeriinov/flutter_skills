@@ -1,0 +1,20 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git grep -n HomeRoute"
+        }
+      },
+      "expect": [
+        "class HomeRoute  lib/routes.gr.dart:1",
+        "lib/app.dart:1  export 'routes.gr.dart' show HomeRoute;",
+        "lib/main.dart:1  import 'routes.gr.dart' show HomeRoute;"
+      ]
+    }
+  ]
+}

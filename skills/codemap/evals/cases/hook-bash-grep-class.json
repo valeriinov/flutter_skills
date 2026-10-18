@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "grep -rn 'CounterStore' lib | head"
+        }
+      },
+      "expect": [
+        "PreToolUse",
+        "codemap index for `CounterStore`",
+        "class CounterStore  lib/store/counter_store.dart:8",
+        "supertypes: BaseStore, LoggerMixin, Disposable",
+        "test/counter_store_test.dart:4  final store = CounterStore();"
+      ]
+    }
+  ]
+}

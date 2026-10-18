@@ -1,0 +1,18 @@
+{
+  "steps": [
+    {
+      "run": [
+        "show",
+        "_Content",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "_Content: 4 declarations",
+        "class _Content  lib/widgets/first_panel.dart:7",
+        "!uses:",
+        "!narrow"
+      ]
+    }
+  ]
+}

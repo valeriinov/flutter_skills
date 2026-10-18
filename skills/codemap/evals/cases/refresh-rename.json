@@ -1,0 +1,47 @@
+{
+  "steps": [
+    {
+      "write": "lib/store/counter_store.dart",
+      "content": "import '../routes.gr.dart';\nimport 'base_store.dart';\n\ntypedef CounterListener = void Function(int value);\n\nconst int counterStart = 0;\n\nclass CounterStore extends BaseStore<int> with LoggerMixin implements Disposable {\n  CounterStore() : super(counterStart);\n\n  CounterStore.fromValue(int value) : super(value);\n\n  final List<CounterListener> listeners = [];\n\n  @override\n  Future<void> loadNextPage() async {\n    state = state + 1;\n    log('page $state');\n  }\n\n  DetailsRoute detailsRoute() => DetailsRoute('$state');\n\n  @override\n  void dispose() {}\n}\n\nCounterStore makeCounter() => CounterStore.fromValue(counterStart);\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "createCounter",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "codemap: no symbol"
+      ]
+    },
+    {
+      "write": "lib/main.dart",
+      "content": "import 'routes.gr.dart' show HomeRoute;\nimport 'store/counter_store.dart';\n\nvoid main() {\n  const route = HomeRoute();\n  final store = makeCounter();\n  store.loadNextPage();\n  print('$route ${store.state}');\n}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "makeCounter",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "function makeCounter",
+        "lib/main.dart:6  final store = makeCounter();"
+      ]
+    }
+  ]
+}

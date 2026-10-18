@@ -1,0 +1,114 @@
+{
+  "steps": [
+    {
+      "hold_lock": true
+    },
+    {
+      "write": "lib/extra.dart",
+      "content": "void extraOne() {}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ],
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "write": "lib/extra.dart",
+      "content": "void extraTwo() {}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ],
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "write": "lib/extra.dart",
+      "content": "void extraThree() {}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ],
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "write": "lib/extra.dart",
+      "content": "void extraFour() {}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ],
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "write": "lib/extra.dart",
+      "content": "void extraFive() {}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ],
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "extraFive",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "codemap: no symbol"
+      ]
+    },
+    {
+      "release_lock": true
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "extraFive",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "function extraFive  lib/extra.dart:1"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "extraOne",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "codemap: no symbol"
+      ]
+    }
+  ]
+}

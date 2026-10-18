@@ -1,0 +1,27 @@
+{
+  "steps": [
+    {
+      "run": [
+        "show",
+        "FakeBase",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "class FakeBase  test/fake_store_test.dart:1",
+        "subtypes: FakeStore"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "FakeStore",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "supertypes: FakeBase"
+      ]
+    }
+  ]
+}

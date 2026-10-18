@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-d",
+        "cwd": "$ROOT",
+        "tool_name": "Grep",
+        "tool_input": {
+          "pattern": "\\bloadNextPage\\(",
+          "path": "lib"
+        }
+      },
+      "expect": [
+        "method BaseStore.loadNextPage  lib/store/base_store.dart:13",
+        "overridden in: CounterStore lib/store/counter_store.dart:16",
+        "method CounterStore.loadNextPage",
+        "lib/main.dart:7  store.loadNextPage();"
+      ]
+    }
+  ]
+}

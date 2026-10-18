@@ -1,0 +1,36 @@
+{
+  "steps": [
+    {
+      "delete": "lib/extensions.dart"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "StringX",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "codemap: no symbol"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "Mode",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "enum Mode",
+        "!lib/extensions.dart"
+      ]
+    }
+  ]
+}

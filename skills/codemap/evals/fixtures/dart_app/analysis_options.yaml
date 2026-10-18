@@ -1,0 +1,4 @@
+analyzer:
+  exclude:
+    - "**/*.gr.dart"
+    - "**/*.g.dart"

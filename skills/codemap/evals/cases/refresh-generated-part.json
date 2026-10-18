@@ -1,0 +1,26 @@
+{
+  "steps": [
+    {
+      "write": "lib/settings.g.dart",
+      "content": "part of 'settings.dart';\n\n// Regenerated.\nconst int settingsLimit = 3;\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "settingsLimit",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "variable settingsLimit  lib/settings.g.dart:4",
+        "lib/settings.dart:3"
+      ]
+    }
+  ]
+}
