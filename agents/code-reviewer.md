@@ -15,7 +15,7 @@ First gather the full change set — `<a>...<b>` plus uncommitted when a range i
 
 If the project root has an AGENTS.md or CLAUDE.md, read it before judging — especially the "Naming Conventions" and "Review Conventions" sections, or the documents those sections point to when AGENTS.md keeps only a pointer. Those sections are distilled user feedback: follow their restraint rules (what NOT to flag) as strictly as their requirements, and never re-litigate them. In particular: don't bikeshed established names, confirm a precedent by grepping call sites before citing it (one instance is not a convention), and don't flag patterns those sections explicitly bless.
 
-If the project root has `graphify-out/graph.json`, find where a symbol lives and who uses it with `graphify explain "<Symbol>"` — `"<path>::<Symbol>"` when several files define it — before grepping for it; the project's AGENTS.md names the other graphify commands.
+A grep for a Dart identifier returns the `codemap` answer beside its output: the declaration, the signature and the uses with their source line. `python3 ~/.claude/skills/codemap/codemap.py show <Name>` asks the index by hand.
 
 Gather the change set with read-only git commands — the range commands only when the prompt names `<a>...<b>`:
 - `git log <a>..<b>` and `git diff <a>...<b>` — the commits in the range and their combined diff.
