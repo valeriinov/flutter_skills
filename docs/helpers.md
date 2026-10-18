@@ -73,10 +73,10 @@ cp docs/examples/RTK.md ~/.claude/RTK.md
 echo '@RTK.md' >> ~/.claude/CLAUDE.md
 ```
 
-## Edit-confirm hooks
+## Worktree hooks
 
-Two scripts that make each session choose, once, between confirming every edit
-and full auto. They need `jq` on `PATH`.
+Two scripts that put every worktree Claude Code creates in
+`<repo>/.worktrees/<name>`. They need `jq` and `rsync` on `PATH`.
 
 ```bash
 mkdir -p ~/.claude/hooks
@@ -85,15 +85,12 @@ cp docs/examples/hooks/*.sh ~/.claude/hooks/
 
 Wired by the two `$HOME/.claude/hooks/...` entries in the settings example:
 
-- `SessionStart` → `edit-confirm-session-start.sh` injects an instruction:
-  before the first edit, ask the user "Confirm every edit" vs "Full auto" and
-  write the single word `confirm` or `auto` into
-  `/tmp/claude-edit-confirm/mode-<session_id>`.
-- `PreToolUse` on `Edit|Write|MultiEdit|NotebookEdit` → `edit-confirm-pre.sh`
-  reads that file: `allow` for `auto`, `ask` otherwise (missing file = confirm).
-
-Approving one edit prompt never flips the session to auto; only an explicit
-chat request does.
+- `WorktreeCreate` → `worktree-create.sh` fetches `origin`, creates the branch
+  `worktree-<name>` from the origin default branch (`HEAD` without a remote),
+  and copies into the worktree the gitignored files that `.worktreeinclude`
+  lists. Claude Code reads the worktree path from the last line of stdout.
+- `WorktreeRemove` → `worktree-remove.sh` removes the worktree and deletes its
+  `worktree-*` branch.
 
 ## Personal CLAUDE.md via `@` imports
 

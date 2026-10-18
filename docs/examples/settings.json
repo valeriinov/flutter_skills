@@ -11,15 +11,6 @@
         ]
       },
       {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/edit-confirm-pre.sh\""
-          }
-        ]
-      },
-      {
         "matcher": "Skill",
         "hooks": [
           {
@@ -27,14 +18,14 @@
             "command": "bash \"$HOME/.claude/skills/make-plan/plan_session_gate.sh\""
           }
         ]
-      }
-    ],
-    "SessionStart": [
+      },
       {
+        "matcher": "Bash|Grep",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/edit-confirm-session-start.sh\""
+            "command": "python3 \"$HOME/.claude/skills/codemap/codemap.py\" hook || true",
+            "timeout": 10
           }
         ]
       }
@@ -50,6 +41,43 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.claude/skills/make-plan/plan_session_gate.sh\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/skills/codemap/codemap.py\" hook || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/worktree-create.sh\""
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/worktree-remove.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/skills/codemap/codemap.py\" hook || true",
+            "timeout": 5
           }
         ]
       }

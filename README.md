@@ -206,5 +206,5 @@ treats `## Review Conventions` as mandatory context.
 ## Helper tooling
 
 [`docs/helpers.md`](docs/helpers.md) covers the tooling around the skills: a
-token-saving CLI proxy, output-shaping plugins, a statusline, edit-confirm
+token-saving CLI proxy, output-shaping plugins, a statusline, worktree
 hooks. Config examples live in [`docs/examples/`](docs/examples/).
