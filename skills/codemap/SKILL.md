@@ -48,6 +48,23 @@ folder that has `.dart_tool/package_config.json`.
   symbol gives the file and the line of the declaration.
 - After an edit of a `.dart` file, the hook starts `refresh` in the background. Run `refresh`
   by hand only after a change outside the agent tools, for example `git checkout`.
+- `refresh` keeps the package declarations. It updates them only when it extracts again a
+  project file that refers to them. After `dart pub upgrade` or a removed dependency, run
+  `build`.
+
+## Order of uses
+
+`show` lists the uses in this order:
+
+1. A use on a line directly under at most three whole annotation lines, one of them
+   `@LazySingleton`, `@lazySingleton` or `@Injectable`. In a DI module this is the method
+   that registers the type; a parameter of that method counts too. `@Named` alone does not
+   count, because it also marks constructor parameters. A use inside the annotation itself,
+   as in `@LazySingleton(as: X)`, does not count.
+2. Uses in `lib/`: production files first, then `mock/` folders.
+3. Uses outside `lib/`: files in `test/` and `integration_test/` come last.
+4. Inside each group, uses in generated files (`.g.dart`, `.freezed.dart`, `.gr.dart`,
+   `.config.dart`, `.mocks.dart`) come last.
 
 ## Hook
 

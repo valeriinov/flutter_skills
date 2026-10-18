@@ -1,0 +1,54 @@
+{
+  "steps": [
+    {
+      "write": "lib/di/chat_client.dart",
+      "content": "class LazySingleton {\n  const LazySingleton();\n}\n\nconst lazySingleton = LazySingleton();\n\nclass ChatClient {\n  void connect() {}\n}\n"
+    },
+    {
+      "write": "lib/a_chat.config.dart",
+      "content": "import 'di/chat_client.dart';\n\nChatClient buildChatClient() => ChatClient();\n"
+    },
+    {
+      "write": "lib/a_chat_screen.dart",
+      "content": "import 'di/chat_client.dart';\n\nclass ChatScreen {\n  ChatScreen(this.client);\n\n  final ChatClient client;\n}\n"
+    },
+    {
+      "write": "lib/b_chat_view.dart",
+      "content": "import 'di/chat_client.dart';\n\nclass ChatView {\n  ChatView(this.client);\n\n  final ChatClient client;\n}\n"
+    },
+    {
+      "write": "lib/b_chat_logger.dart",
+      "content": "import 'di/chat_client.dart';\n\n@lazySingleton\nclass ChatLogger {\n  final ChatClient client;\n\n  ChatLogger(this.client);\n}\n"
+    },
+    {
+      "write": "lib/b_chat_sender.dart",
+      "content": "import 'di/chat_client.dart';\n\nclass Named {\n  const Named(this.name);\n\n  final String name;\n}\n\nclass ChatSender {\n  ChatSender({\n    @Named('chat') required String channel,\n    required ChatClient client,\n  });\n}\n"
+    },
+    {
+      "write": "lib/c_chat_list.dart",
+      "content": "import 'di/chat_client.dart';\n\nclass ChatList {\n  ChatList(this.client);\n\n  final ChatClient client;\n}\n"
+    },
+    {
+      "write": "lib/z_chat_module.dart",
+      "content": "import 'di/chat_client.dart';\n\nabstract class ChatModule {\n  @lazySingleton\n  ChatClient chatClient() => ChatClient();\n}\n"
+    },
+    {
+      "run": [
+        "refresh",
+        "$ROOT"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "ChatClient",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "uses: all 7 shown\n    lib/z_chat_module.dart:5 in ChatModule.chatClient",
+        "    lib/c_chat_list.dart:6  final ChatClient client;\n    lib/a_chat.config.dart:3 in buildChatClient"
+      ]
+    }
+  ]
+}

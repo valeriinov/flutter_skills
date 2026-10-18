@@ -22,13 +22,18 @@ exists and no other build runs.
 `refresh` compares the modification time, then the hash, of every indexed file
 with the disk. It extracts again the changed and new files and every file that
 refers to a changed or deleted library, in one extractor run, and drops the
-rows of deleted files. A refresh that finds the lock taken marks the index
-dirty and exits; the holder runs one more pass before it releases the lock.
+rows of deleted files. Package files stay; their rows change only when a
+file that refers to them is extracted again. A refresh that finds the lock
+taken marks the index dirty and exits; the holder runs one more pass before it
+releases the lock.
 
 `show` prints the declaration, signature, supertypes, subtypes and up to
-twelve uses (production lib/ first) with their source line and the member they
-stand in. The first three of those members print their head (annotations and
-signature) or, at six lines or fewer, their whole body. A method, function,
+twelve uses with their source line and the member they stand in: first a use
+directly under `@LazySingleton`, `@lazySingleton` or `@Injectable` (in a DI
+module, usually the method that registers the type), then production lib/,
+generated files last in each group. The first three of those members print
+their head (annotations and signature) or, at six lines or fewer, their whole
+body. A method, function,
 getter or constructor also prints the declarations it calls and the tree of
 production members that call it, up to ten levels and twenty nodes. The answer
 for one name holds at most 2500 characters; a longer one ends with a line that
@@ -129,6 +134,7 @@ SHELL_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=[^=]+")
 SHELL_NAME = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
 SED_RANGE = re.compile(r"(\d+),(\d+)p")
 ANNOTATION_LINE = re.compile(r"@[\w.]+(\(.*\))?")
+REGISTRATION_ANNOTATION = re.compile(r"\s*@(LazySingleton|lazySingleton|Injectable)\b")
 BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
 MEMBER_NAME = re.compile(r"(?<![A-Za-z0-9_$])_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+(?![A-Za-z0-9_])")
 CUT_LINE = "    ... cut at {limit} characters"
@@ -271,7 +277,7 @@ def refresh_pass(root, sdk, extractor):
     roots = json.loads(meta(db, "roots") or "[]")
     mtimes = source_mtimes(root, roots)
     known = {path: (digest, mtime, uri) for path, digest, mtime, uri in db.execute("SELECT path, hash, mtime, uri FROM files")}
-    deleted = [path for path in known if path not in mtimes]
+    deleted = [path for path in known if path not in mtimes and not path.startswith("package:")]
     touched = [path for path, (_, mtime, _) in known.items() if path in mtimes and mtime != mtimes[path]]
     changed = [path for path in touched if is_changed(root, path, known[path][0])]
     created = [path for path in mtimes if path not in known]
@@ -698,11 +704,8 @@ def use_owner(db, path, number, text):
 def short_body_lines(db, member):
     path, start = member[4], member[5]
     end = db.execute("SELECT MIN(line) FROM symbol_rows WHERE file = ? AND line > ?", (path, start)).fetchone()[0]
-    root = os.path.dirname(os.path.dirname(db.execute("PRAGMA database_list").fetchone()[2]))
-    try:
-        with open(os.path.join(root, path)) as source:
-            text = source.read().split("\n")
-    except OSError:
+    text = source_lines(db, path)
+    if not text:
         return []
     first = start - 1
     while first > 0 and text[first - 1].strip().startswith("@"):
@@ -714,6 +717,15 @@ def short_body_lines(db, member):
         body = declaration_head(body)
     shown = body[:BODY_LINES] + ([CUT_MARK] if len(body) > BODY_LINES and body[BODY_LINES - 1] != CUT_MARK else [])
     return ["      ..." if line == CUT_MARK else f"      {first + 1 + offset}| {line.strip()}" for offset, line in enumerate(shown)]
+
+
+def source_lines(db, path):
+    root = os.path.dirname(os.path.dirname(db.execute("PRAGMA database_list").fetchone()[2]))
+    try:
+        with open(os.path.join(root, path)) as source:
+            return source.read().split("\n")
+    except OSError:
+        return []
 
 
 def declaration_head(body):
@@ -760,7 +772,15 @@ def use_lines(db, symbol_id, subtype_lines):
         (symbol_id,),
     ).fetchall()
     rows = [row for row in rows if row[:2] not in subtype_lines and not is_comment(row[2])]
-    rows.sort(key=lambda row: (not row[0].startswith("lib/"), bool(NON_PRODUCTION.search(row[0]))))
+    registrations = registration_uses(db, rows)
+    rows.sort(
+        key=lambda row: (
+            row[:2] not in registrations,
+            not row[0].startswith("lib/"),
+            bool(NON_PRODUCTION.search(row[0])),
+            bool(GENERATED_FILE.search(row[0])),
+        )
+    )
     label = "other uses" if subtype_lines else "uses"
     if not rows:
         return [f"  {label}: none"]
@@ -778,6 +798,26 @@ def use_lines(db, symbol_id, subtype_lines):
             lines += body
     if len(rows) > USE_LIMIT:
         lines.append(f"    ... {len(rows) - USE_LIMIT} more")
+    return lines
+
+
+def registration_uses(db, rows):
+    sources = {}
+    found = set()
+    for path, number, _ in rows:
+        if path not in sources:
+            sources[path] = source_lines(db, path)
+        if any(REGISTRATION_ANNOTATION.match(line) for line in annotations_above(sources[path], number)):
+            found.add((path, number))
+    return found
+
+
+def annotations_above(text, number):
+    lines = []
+    for line in reversed(text[max(0, number - 1 - ANNOTATION_SPAN) : max(0, number - 1)]):
+        if not ANNOTATION_LINE.fullmatch(line.strip()):
+            break
+        lines.append(line)
     return lines
 
 
