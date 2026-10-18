@@ -28,10 +28,12 @@ taken marks the index dirty and exits; the holder runs one more pass before it
 releases the lock.
 
 `show` prints the declaration, signature, supertypes, subtypes and up to
-twelve uses with their source line and the member they stand in: first a use
-directly under `@LazySingleton`, `@lazySingleton` or `@Injectable` (in a DI
-module, usually the method that registers the type), then production lib/,
-generated files last in each group. The first three of those members print
+twelve uses with their source line and the member they stand in: first the
+registrations, then production lib/, generated files last in each group. A
+registration is a use on a `@LazySingleton`, `@Singleton` or `@Injectable` line
+(any case of the first letter), as `X` in `@LazySingleton(as: X)`, or a use
+before the declared name on the line directly under such an annotation: in a DI
+module, the return type of the method that registers the type. The first three of those members print
 their head (annotations and signature) or, at six lines or fewer, their whole
 body. A method, function,
 getter or constructor also prints the declarations it calls and the tree of
@@ -134,7 +136,7 @@ SHELL_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=[^=]+")
 SHELL_NAME = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
 SED_RANGE = re.compile(r"(\d+),(\d+)p")
 ANNOTATION_LINE = re.compile(r"@[\w.]+(\(.*\))?")
-REGISTRATION_ANNOTATION = re.compile(r"\s*@(LazySingleton|lazySingleton|Injectable)\b")
+REGISTRATION_ANNOTATION = re.compile(r"\s*@(LazySingleton|lazySingleton|Singleton|singleton|Injectable|injectable)\b")
 BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
 MEMBER_NAME = re.compile(r"(?<![A-Za-z0-9_$])_?[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+(?![A-Za-z0-9_])")
 CUT_LINE = "    ... cut at {limit} characters"
@@ -772,7 +774,7 @@ def use_lines(db, symbol_id, subtype_lines):
         (symbol_id,),
     ).fetchall()
     rows = [row for row in rows if row[:2] not in subtype_lines and not is_comment(row[2])]
-    registrations = registration_uses(db, rows)
+    registrations = registration_uses(db, symbol_id, rows)
     rows.sort(
         key=lambda row: (
             row[:2] not in registrations,
@@ -801,15 +803,26 @@ def use_lines(db, symbol_id, subtype_lines):
     return lines
 
 
-def registration_uses(db, rows):
+def registration_uses(db, symbol_id, rows):
+    name = db.execute("SELECT name FROM symbol_rows WHERE id = ?", (symbol_id,)).fetchone()[0]
     sources = {}
     found = set()
-    for path, number, _ in rows:
+    for path, number, text in rows:
         if path not in sources:
             sources[path] = source_lines(db, path)
-        if any(REGISTRATION_ANNOTATION.match(line) for line in annotations_above(sources[path], number)):
+        if REGISTRATION_ANNOTATION.match(text) or is_registered_type(db, name, path, number, text, sources[path]):
             found.add((path, number))
     return found
+
+
+def is_registered_type(db, name, path, number, text, source):
+    if not any(REGISTRATION_ANNOTATION.match(line) for line in annotations_above(source, number)):
+        return False
+    declared = db.execute("SELECT name FROM symbol_rows WHERE file = ? AND line = ?", (path, number)).fetchone()
+    if declared is None:
+        return False
+    head = re.match(rf"(.*?)(?<![A-Za-z0-9_$]){re.escape(declared[0])}(?![A-Za-z0-9_$])", text)
+    return bool(head and re.search(rf"(?<![A-Za-z0-9_$]){re.escape(name)}(?![A-Za-z0-9_$])", head.group(1)))
 
 
 def annotations_above(text, number):

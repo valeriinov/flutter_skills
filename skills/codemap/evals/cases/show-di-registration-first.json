@@ -2,7 +2,7 @@
   "steps": [
     {
       "write": "lib/di/chat_client.dart",
-      "content": "class LazySingleton {\n  const LazySingleton();\n}\n\nconst lazySingleton = LazySingleton();\n\nclass ChatClient {\n  void connect() {}\n}\n"
+      "content": "class LazySingleton {\n  const LazySingleton({this.as});\n\n  final Type? as;\n}\n\nconst lazySingleton = LazySingleton();\n\nclass ChatClient {\n  void connect() {}\n}\n\nclass Singleton {\n  const Singleton();\n}\n\nconst singleton = Singleton();\n\nclass Injectable {\n  const Injectable();\n}\n\nconst injectable = Injectable();\n"
     },
     {
       "write": "lib/a_chat.config.dart",
@@ -33,6 +33,30 @@
       "content": "import 'di/chat_client.dart';\n\nabstract class ChatModule {\n  @lazySingleton\n  ChatClient chatClient() => ChatClient();\n}\n"
     },
     {
+      "write": "lib/di/chat_types.dart",
+      "content": "class ChatStore {}\n\nclass ChatCache {\n  ChatCache(this.store);\n\n  final ChatStore store;\n}\n\nabstract class ChatHandler {}\n\nclass ChatQueue {}\n\nclass ChatTimer {}\n"
+    },
+    {
+      "write": "lib/a_store_view.dart",
+      "content": "import 'di/chat_types.dart';\n\nclass StoreView {\n  StoreView(this.store);\n\n  final ChatStore store;\n}\n"
+    },
+    {
+      "write": "lib/z_store_module.dart",
+      "content": "import 'di/chat_client.dart';\nimport 'di/chat_types.dart';\n\nabstract class StoreModule {\n  @lazySingleton\n  ChatCache chatCache(ChatStore store) => ChatCache(store);\n\n  @singleton\n  ChatQueue chatQueue() => ChatQueue();\n\n  @injectable\n  ChatTimer chatTimer() => ChatTimer();\n}\n"
+    },
+    {
+      "write": "lib/a_handler_view.dart",
+      "content": "import 'di/chat_types.dart';\n\nclass HandlerView {\n  HandlerView(this.handler);\n\n  final ChatHandler handler;\n}\n"
+    },
+    {
+      "write": "lib/z_text_handler.dart",
+      "content": "import 'di/chat_client.dart';\nimport 'di/chat_types.dart';\n\n@LazySingleton(as: ChatHandler)\nclass TextChatHandler implements ChatHandler {}\n"
+    },
+    {
+      "write": "lib/a_queue_view.dart",
+      "content": "import 'di/chat_types.dart';\n\nclass QueueView {\n  QueueView(this.queue, this.timer);\n\n  final ChatQueue queue;\n  final ChatTimer timer;\n}\n"
+    },
+    {
       "run": [
         "refresh",
         "$ROOT"
@@ -48,6 +72,51 @@
       "expect": [
         "uses: all 7 shown\n    lib/z_chat_module.dart:5 in ChatModule.chatClient",
         "    lib/c_chat_list.dart:6  final ChatClient client;\n    lib/a_chat.config.dart:3 in buildChatClient"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "ChatStore",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "uses: all 3 shown\n    lib/a_store_view.dart:6",
+        "!uses: all 3 shown\n    lib/z_store_module.dart"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "ChatHandler",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "other uses: all 2 shown\n    lib/z_text_handler.dart:4"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "ChatQueue",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "uses: all 2 shown\n    lib/z_store_module.dart:9 in StoreModule.chatQueue"
+      ]
+    },
+    {
+      "run": [
+        "show",
+        "ChatTimer",
+        "--root",
+        "$ROOT"
+      ],
+      "expect": [
+        "uses: all 2 shown\n    lib/z_store_module.dart:12 in StoreModule.chatTimer"
       ]
     }
   ]

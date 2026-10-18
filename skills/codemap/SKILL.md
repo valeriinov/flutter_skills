@@ -56,11 +56,16 @@ folder that has `.dart_tool/package_config.json`.
 
 `show` lists the uses in this order:
 
-1. A use on a line directly under at most three whole annotation lines, one of them
-   `@LazySingleton`, `@lazySingleton` or `@Injectable`. In a DI module this is the method
-   that registers the type; a parameter of that method counts too. `@Named` alone does not
-   count, because it also marks constructor parameters. A use inside the annotation itself,
-   as in `@LazySingleton(as: X)`, does not count.
+1. Registrations. A registration annotation is `@LazySingleton`, `@Singleton`,
+   `@Injectable` or the lowercase form of one of them. A use is a registration in two
+   cases:
+   - The use stands on the annotation line itself, as `X` in `@LazySingleton(as: X)`.
+   - The use stands on a line directly under at most three whole annotation lines, one of
+     them a registration annotation. The use comes before the name that the line declares.
+     In a DI module this is the return type of the method that registers the type. A
+     parameter of that method comes after the name and does not count.
+
+   `@Named` alone does not count, because it also marks constructor parameters.
 2. Uses in `lib/`: production files first, then `mock/` folders.
 3. Uses outside `lib/`: files in `test/` and `integration_test/` come last.
 4. Inside each group, uses in generated files (`.g.dart`, `.freezed.dart`, `.gr.dart`,
