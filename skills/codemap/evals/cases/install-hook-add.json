@@ -1,0 +1,41 @@
+{
+  "root": "plain",
+  "steps": [
+    {
+      "write": "settings.json",
+      "content": "{\n  \"model\": \"sonnet\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Skill\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"echo keep\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    },
+    {
+      "run": [
+        "install-hook",
+        "--settings",
+        "$ROOT/settings.json"
+      ],
+      "expect": [
+        "codemap hook: installed in "
+      ]
+    },
+    {
+      "file": "settings.json",
+      "expect": [
+        "\"model\": \"sonnet\"",
+        "\"matcher\": \"Skill\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"echo keep\"",
+        "\"matcher\": \"Bash|Grep\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ~/",
+        "codemap.py hook || true\",\n            \"timeout\": 10",
+        "\"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ~/",
+        "\"matcher\": \"Edit|Write|MultiEdit|Read\",",
+        "codemap.py hook || true\",\n            \"timeout\": 5"
+      ]
+    },
+    {
+      "run": [
+        "install-hook",
+        "--settings",
+        "$ROOT/settings.json"
+      ],
+      "expect": [
+        "codemap hook: already installed in "
+      ]
+    }
+  ]
+}

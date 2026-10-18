@@ -1,7 +1,7 @@
 ---
 name: codemap
 description: Answer where a Dart symbol is declared, who uses and calls it, from a SQLite index of resolved references; hooks add it to prompts, greps and reads. Use for "где объявлен", "кто вызывает".
-argument-hint: "[ show <Name|Container.name> | build <root> | refresh <root> | map <root> ]"
+argument-hint: "[ show <Name|Container.name> | build <root> | refresh <root> | map <root> | install-hook | remove-hook ]"
 ---
 
 `codemap.py` keeps an index of the Dart symbols of a project in `<root>/.codemap/index.sqlite`.
@@ -32,6 +32,8 @@ that the index does not know gives `codemap: no symbol`; then grep the name.
 | `build <root>` | a full index; about 15 s on 2,500 files |
 | `refresh <root>` | extracts again the changed files and the files that refer to them |
 | `map <root> [--budget 1500]` | the public types and members of the most referenced files |
+| `install-hook [--settings <path>]` | writes the three hook entries into `~/.claude/settings.json` or the given file; other hooks stay, a second run changes nothing |
+| `remove-hook [--settings <path>]` | deletes the codemap hook entries from the same file |
 
 `show` takes `--root <root>`; without it, the script uses the nearest folder above the current
 folder that has `.dart_tool/package_config.json`.
@@ -90,7 +92,7 @@ folder that has `.dart_tool/package_config.json`.
 - A command that does not search or read a `.dart` file exits before it reads the disk. A
   missing index starts a background `build`. A project without Dart gets no answer.
 
-The settings register the same command for each event:
+`install-hook` registers the same command for each event:
 
 | event | matcher | timeout, s |
 |---|---|---|

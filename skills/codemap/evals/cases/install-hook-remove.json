@@ -1,0 +1,83 @@
+{
+  "root": "plain",
+  "steps": [
+    {
+      "run": [
+        "install-hook",
+        "--settings",
+        "$ROOT/new/settings.json"
+      ],
+      "expect": [
+        "codemap hook: installed in "
+      ]
+    },
+    {
+      "file": "new/settings.json",
+      "expect": [
+        "\"PostToolUse\"",
+        "codemap.py hook || true"
+      ]
+    },
+    {
+      "run": [
+        "remove-hook",
+        "--settings",
+        "$ROOT/new/settings.json"
+      ],
+      "expect": [
+        "codemap hook: removed from "
+      ]
+    },
+    {
+      "file": "new/settings.json",
+      "expect": [
+        "!codemap.py",
+        "!PreToolUse",
+        "!UserPromptSubmit",
+        "!PostToolUse"
+      ]
+    },
+    {
+      "write": "settings.json",
+      "content": "{\n  \"model\": \"sonnet\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Skill\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"echo keep\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    },
+    {
+      "run": [
+        "install-hook",
+        "--settings",
+        "$ROOT/settings.json"
+      ],
+      "expect": [
+        "installed"
+      ]
+    },
+    {
+      "run": [
+        "remove-hook",
+        "--settings",
+        "$ROOT/settings.json"
+      ],
+      "expect": [
+        "removed"
+      ]
+    },
+    {
+      "file": "settings.json",
+      "expect": [
+        "!codemap.py",
+        "\"command\": \"echo keep\"",
+        "!UserPromptSubmit"
+      ]
+    },
+    {
+      "run": [
+        "remove-hook",
+        "--settings",
+        "$ROOT/settings.json"
+      ],
+      "expect": [
+        "codemap hook: not installed in "
+      ]
+    }
+  ]
+}

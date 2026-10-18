@@ -141,6 +141,28 @@ skills are installed together.
 `make-plan` and `visualize` run `clarify.py` from the `clarifier` folder to check
 the text they write for the reader, so `clarifier` is installed with them.
 
+### `codemap` hook
+
+The hook puts the codemap answer into the agent's context. Neither install
+route sets it up, because the plugin keeps the script under a versioned cache
+path. Install the skill with `npx skills`, then add the hook:
+
+```bash
+npx skills add -g valeriinov/flutter_skills --skill codemap
+python3 ~/.claude/skills/codemap/codemap.py install-hook
+```
+
+`install-hook` adds three entries to `~/.claude/settings.json` and keeps the
+rest of the file. A second run changes nothing. The entries point at
+`~/.claude/skills/codemap/`, so they stay valid after an update of the skill.
+`remove-hook` deletes them.
+
+Each project needs `python3`, a Dart SDK (`.fvm/flutter_sdk` or `dart` on
+`PATH`) and `.dart_tool/package_config.json`: run `pub get` once. The first
+search in a project builds the index in the background; `codemap.py build .`
+builds it at once. The index is in `.codemap/`, which git ignores.
+`CODEMAP_HOOK=off` turns the hook off.
+
 ## Subagents
 
 Three Claude Code subagents live in `agents/`:

@@ -7,6 +7,8 @@ Usage:
   codemap.py show <Name|Container.name> [--root <root>]
   codemap.py map <root> [--budget <tokens>]
   codemap.py hook
+  codemap.py install-hook [--settings <path>]
+  codemap.py remove-hook [--settings <path>]
 
 `build` runs the Dart extractor over the `lib/` and `test/` of the project and
 writes `<root>/.codemap/index.sqlite`; the folder carries a `.gitignore` of `*`,
@@ -60,6 +62,14 @@ at most `--budget` tokens (one token is four characters).
 - PostToolUse of an Edit, Write or MultiEdit of a .dart file: a detached
   refresh.
 - SessionStart and SubagentStart: the map when CODEMAP_MAP=1.
+`install-hook` writes the three `hook` entries of this script into the Claude
+Code settings file, `~/.claude/settings.json` unless `--settings` names
+another: PreToolUse of Bash and Grep, UserPromptSubmit, and PostToolUse of
+Edit, Write, MultiEdit and Read. The command names this file, with `~` in
+place of the home folder. Other keys and hooks stay. `remove-hook` deletes the
+entries that run `codemap.py` with `hook`, and then the groups and events that
+have no hooks left. A second `install-hook` changes nothing.
+
 A name answered once is not answered again in the same session
 (`<root>/.codemap/seen/`, kept for a day). With CODEMAP_AB=1 the hook stays
 silent in sessions whose session_id hash is even and logs each decision to
@@ -104,6 +114,9 @@ CHAIN_BRANCHES = 4
 CHAIN_NODES = 20
 CALLEE_LIMIT = 8
 MAP_BUDGET = 1500
+SETTINGS_FILE = "~/.claude/settings.json"
+HOOK_EVENTS = (("PreToolUse", "Bash|Grep", 10), ("UserPromptSubmit", None, 10), ("PostToolUse", "Edit|Write|MultiEdit|Read", 5))
+CODEMAP_HOOK_COMMAND = re.compile(r'codemap\.py"? hook\b')
 MAP_MEMBER_LIMIT = 3
 MAP_DETAILED_SHARE = 0.5
 SUPERTYPE_WEIGHT = 10
@@ -182,6 +195,9 @@ def main(argv):
     if command == "map" and arguments:
         budget = int(option(arguments, "--budget") or MAP_BUDGET)
         return print_answer(map_text(index_path(os.path.abspath(arguments[0])), budget))
+    if command in ("install-hook", "remove-hook"):
+        path = option(arguments, "--settings") or os.path.expanduser(SETTINGS_FILE)
+        return install_hook(path) if command == "install-hook" else remove_hook(path)
     print(__doc__.split("\n\n", 2)[1], file=sys.stderr)
     return 2
 
@@ -931,6 +947,89 @@ def public_members(db, path, container):
         (path, container, *MEMBER_KINDS, MAP_MEMBER_LIMIT),
     ).fetchall()
     return [row[0] for row in rows]
+
+
+# install-hook and remove-hook
+
+
+def install_hook(path):
+    settings = read_settings(path)
+    updated = with_hook(without_hook(settings))
+    if updated == settings:
+        print(f"codemap hook: already installed in {path}")
+        return 0
+    write_settings(path, updated)
+    print(f"codemap hook: installed in {path}")
+    return 0
+
+
+def remove_hook(path):
+    settings = read_settings(path)
+    updated = without_hook(settings)
+    if updated == settings:
+        print(f"codemap hook: not installed in {path}")
+        return 0
+    write_settings(path, updated)
+    print(f"codemap hook: removed from {path}")
+    return 0
+
+
+def read_settings(path):
+    if not os.path.isfile(path):
+        return {}
+    with open(path) as file:
+        return json.load(file)
+
+
+def with_hook(settings):
+    events = dict(settings.get("hooks", {}))
+    for event, matcher, timeout in HOOK_EVENTS:
+        events[event] = [*events.get(event, []), hook_group(matcher, timeout)]
+    return {**settings, "hooks": events}
+
+
+def hook_group(matcher, timeout):
+    group = {"matcher": matcher} if matcher else {}
+    group["hooks"] = [{"type": "command", "command": hook_command(), "timeout": timeout}]
+    return group
+
+
+def hook_command():
+    path = os.path.abspath(__file__)
+    home = os.path.expanduser("~") + os.sep
+    script = f"~/{shlex.quote(path[len(home) :])}" if path.startswith(home) else shlex.quote(path)
+    return f"python3 {script} hook || true"
+
+
+def without_hook(settings):
+    events = {event: groups_without_hook(groups) for event, groups in settings.get("hooks", {}).items()}
+    events = {event: groups for event, groups in events.items() if groups}
+    result = dict(settings)
+    if events:
+        result["hooks"] = events
+    else:
+        result.pop("hooks", None)
+    return result
+
+
+def groups_without_hook(groups):
+    groups = [
+        {**group, "hooks": [entry for entry in group.get("hooks", []) if not is_codemap_hook(entry)]}
+        for group in groups
+    ]
+    return [group for group in groups if group["hooks"]]
+
+
+def is_codemap_hook(entry):
+    return bool(CODEMAP_HOOK_COMMAND.search(entry.get("command", "")))
+
+
+def write_settings(path, settings):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    temporary = f"{path}.codemap"
+    with open(temporary, "w") as file:
+        file.write(json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+    os.replace(temporary, path)
 
 
 # hook
