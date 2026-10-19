@@ -610,7 +610,9 @@ def lines_html(lines):
 
 def section_files(doc, section):
     by_id = {entity['id']: entity for entity in doc.get('entities', [])}
-    files = [file for name in section.get('entities', []) for file in by_id[name].get('files', [])]
+    flow_entities = [node['entity'] for node in section.get('flow', {}).get('nodes', []) if node.get('entity')]
+    names = dict.fromkeys(section.get('entities', []) + flow_entities)
+    files = [file for name in names for file in by_id[name].get('files', [])]
     return files + section.get('files', [])
 
 
