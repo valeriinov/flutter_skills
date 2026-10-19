@@ -1,6 +1,6 @@
 ---
 name: ux-approval
-description: Run UI text approval rounds in a shared artifact: create, next round from answers and the project, finalize. Use for "утверди тексты", "следующий раунд", "approval round".
+description: 'Run UI text approval rounds in a shared artifact: create, next round from answers and the project, finalize. Use for "утверди тексты", "следующий раунд", "approval round".'
 argument-hint: "[ ux-translate brief, review and locale files | artifact url + next round | artifact url + finalize ]"
 ---
 

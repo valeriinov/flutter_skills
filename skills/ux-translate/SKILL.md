@@ -1,6 +1,6 @@
 ---
 name: ux-translate
-description: Translate UI strings as a UX writer: brief, review, new keys. Use for "бриф локализации", "переведи строки", "проверь тексты", "добавь ключ".
+description: 'Translate UI strings as a UX writer: brief, review, new keys. Use for "бриф локализации", "переведи строки", "проверь тексты", "добавь ключ".'
 argument-hint: "[ project docs and translation files | brief + target language | translations to review ]"
 ---
 

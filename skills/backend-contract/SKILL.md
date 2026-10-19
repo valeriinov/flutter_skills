@@ -1,6 +1,6 @@
 ---
 name: backend-contract
-description: Write or review a backend contract: endpoints, fields, statuses, events. Use for "контракт для бэкенда", "сверь контракт с реализацией", "backend contract".
+description: 'Write or review a backend contract: endpoints, fields, statuses, events. Use for "контракт для бэкенда", "сверь контракт с реализацией", "backend contract".'
 argument-hint: "[ tasks, or the contract to extend or audit ]"
 ---
 
