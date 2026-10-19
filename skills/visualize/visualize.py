@@ -147,6 +147,8 @@ def file_problems(owner, files):
         where = f'{owner}: file {file.get("path")}'
         if file.get('status') not in FILE_STATUSES:
             found.append(f'{where} has no valid status')
+        if file.get('status') != 'same' and not file.get('edits'):
+            found.append(f'{where} is {file.get("status")} but has no "edits"')
         found += edit_problems(where, file.get('edits', []))
     return found
 
@@ -632,6 +634,7 @@ def concept_labels(doc):
 
 
 def files_tree_html(doc, files):
+    files = [file for file in files if file['status'] != 'same']
     if not files:
         return ''
     labels = concept_labels(doc)

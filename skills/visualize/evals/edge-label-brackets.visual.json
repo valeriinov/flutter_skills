@@ -47,7 +47,13 @@
       "files": [
         {
           "path": "lib/orders/orders_screen.dart",
-          "status": "changed"
+          "status": "changed",
+          "edits": [
+            {
+              "kind": "add",
+              "text": "button `Export` in the app bar"
+            }
+          ]
         }
       ]
     },
@@ -60,7 +66,13 @@
       "files": [
         {
           "path": "lib/export/order_export.dart",
-          "status": "new"
+          "status": "new",
+          "edits": [
+            {
+              "kind": "add",
+              "text": "class `OrderExport` — orders to CSV rows"
+            }
+          ]
         }
       ]
     }

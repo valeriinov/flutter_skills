@@ -132,10 +132,11 @@ merges into the point it serves.
   unless `same`); `files` every file the document changes for it — never a document it only
   references.
 - File — `{"path", "status", "edits"}`. `status` is `new`, `changed`, `same` or `deleted`;
-  `deleted` is for files only. `edits` is optional: `[{"kind", "text"}]`, `kind` is `add`,
-  `change`, `remove` or `rename`. One edit is one line with the name from the code
-  (`` class `OrderExport` ``, `` `_compress` → `_compressImage` ``). A click on the file in the tree
-  shows its edits.
+  `deleted` is for files only. `edits` — `[{"kind", "text"}]`, required unless `same`; `kind` is
+  `add`, `change`, `remove` or `rename`. One edit is one line with the name from the code
+  (`` class `OrderExport` ``, `` `_compress` → `_compressImage` ``); a test file names the cases it
+  adds or changes. A click on the file in the tree shows its edits; a `same` file stays out of the
+  tree.
 - Overall diagram — a top-level `flow` when the source describes behaviour (a contract, a
   feature); without it the page draws `entities` + `links`, which fits a set of code changes (a
   plan). A link `label` is a verb: who calls, feeds, reads or writes whom.
@@ -193,7 +194,8 @@ merges into the point it serves.
 - Text: `name`, `code`, `change` ≤40 chars; labels as above; vague variants rejected; no sentence
   in `lines` over 25 words; a `takeaway` in every section; `concept` is present, ≤5 sentences, each
   ≤25 words.
-- Files: `status` is one of `new`, `changed`, `same`, `deleted`; an edit `kind` is one of `add`,
+- Files: `status` is one of `new`, `changed`, `same`, `deleted`; every file but a `same` one has
+  `edits`; an edit `kind` is one of `add`,
   `change`, `remove`, `rename`; an edit `text` ≤15 words.
 - Payloads: a changed field shows its `values` or children; a merged `a · b` node is unchanged and
   has no example. Questions are complete.

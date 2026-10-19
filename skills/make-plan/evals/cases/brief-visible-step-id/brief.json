@@ -19,7 +19,8 @@
       "code": "notesToCsv",
       "status": "new",
       "change": "заметки → текст таблицы",
-      "files": [{"path": "lib/notes_csv.dart", "status": "new"}]
+      "files": [{"path": "lib/notes_csv.dart", "status": "new",
+                 "edits": [{"kind": "add", "text": "функция `notesToCsv(notes)` — заголовок и строка на заметку"}]}]
     },
     {
       "id": "screen",
@@ -27,7 +28,8 @@
       "code": "NotesScreen",
       "status": "changed",
       "change": "кнопка «Экспорт»",
-      "files": [{"path": "lib/notes_screen.dart", "status": "changed"}]
+      "files": [{"path": "lib/notes_screen.dart", "status": "changed",
+                 "edits": [{"kind": "add", "text": "кнопка «Экспорт» вызывает `notesToCsv` и окно «Поделиться»"}]}]
     },
     {
       "id": "share",
