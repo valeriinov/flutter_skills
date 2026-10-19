@@ -29,7 +29,7 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
 
 ```json
 {
-  "title": "Approval of app texts", "lang": "en", "product": "Example app", "slug": "example-texts",
+  "title": "Погодження текстів Example app", "lang": "en", "product": "Example app", "slug": "example-texts",
   "ui": {"…": "every interface string the page shows, in `lang`: each key page_template.html reads with t() and tMap()"},
   "round": 1, "final": false, "fullReview": {"en": 1, "fr": 1},
   "origin": {"branch": "main", "commit": "3f2a9c1"},
@@ -65,6 +65,8 @@ You write the spec; `approval.py check` validates it and `build` turns it into t
 }
 ```
 
+- `title` — `Погодження текстів <product>` for all values of `lang`. `build` writes it into the
+  page's `<title>`, and the artifact gets its name from that tag.
 - `values` — the artifact's texts; `base` — the project's values at the last reconcile; in
   round 1 `base` equals `values`.
 - `files.targets` — one entry per translation, the first one fixed across rounds; a spec with

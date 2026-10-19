@@ -14,6 +14,7 @@ Exit: 0 ok, 1 spec problems, 2 usage error, unreadable input or <dir> inside <ro
 """
 
 import argparse
+import html
 import json
 import re
 import subprocess
@@ -485,7 +486,8 @@ def run_build(args):
     data = page_data(spec, previous)
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     output = args.output or args.spec.parent / 'page.html'
-    output.write_text(template.replace(DATA_SLOT, payload, 1), encoding='utf-8')
+    title = f'<title>{html.escape(spec["title"])}</title>\n'
+    output.write_text(title + template.replace(DATA_SLOT, payload, 1), encoding='utf-8')
     if args.stats:
         print_stats(data)
     print(f'page {output} {output.stat().st_size} bytes')
