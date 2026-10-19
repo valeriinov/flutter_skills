@@ -70,5 +70,6 @@ Examples: `feature: ABC-123 - add received state to the order banner`,
 ## Never
 
 - Commit under any identity but the user's — no `--author`, no `-c user.*` override.
-- Touch the main checkout while working inside a worktree.
+- Touch the main checkout while working inside a worktree, apart from the
+  gitignored directory that the project rules open to a worktree session.
 - Print diff content carrying credentials, tokens or personal data.
