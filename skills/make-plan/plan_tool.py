@@ -363,7 +363,15 @@ def visible_texts(doc):
                 if key not in skip:
                     walk(f'{spot}.{key}' if spot else key, item)
     walk('', doc)
-    return found
+    return found + edit_texts(doc)
+
+def edit_texts(doc):
+    owners = [(f'entities[{index}]', entity) for index, entity in enumerate(doc.get('entities', []), start=1)]
+    owners += [(f'sections[{index}]', section) for index, section in enumerate(doc.get('sections', []), start=1)]
+    return [(f'{spot}.files[{file_index}].edits[{edit_index}].text', edit.get('text', ''))
+            for spot, owner in owners
+            for file_index, file in enumerate(owner.get('files', []), start=1)
+            for edit_index, edit in enumerate(file.get('edits', []), start=1)]
 
 def contract_visual_path(plan_path, sections, root):
     for _, line in sections.get('Contract', []):
@@ -431,6 +439,7 @@ def brief_payload(brief_path):
     sections = doc.get('sections', [])
     return {
         'overview': visualize.overview(doc),
+        'concept': visualize.concept_html(doc),
         'sections': [visualize.section_html(doc, index, section) for index, section in enumerate(sections, start=1)],
         'steps': [section.get('steps', []) for section in sections],
         'checks': [section.get('check', '') for section in sections],
@@ -457,7 +466,8 @@ def contract_payload(contract_path):
     if error:
         return None
     header = f'<header><h2>{visualize.inline(doc["title"])}</h2><p class="summary">{visualize.inline(doc["summary"])}</p></header>'
-    body = [header, visualize.overview(doc), visualize.sections_html(doc), visualize.questions_html(doc)]
+    body = [header, visualize.overview(doc), visualize.concept_html(doc), visualize.sections_html(doc),
+            visualize.questions_html(doc)]
     return {'html': ''.join(body), 'sectionsByNode': visualize.sections_by_overview_node(doc)}
 
 def render_plan(plan_path, out_arg):

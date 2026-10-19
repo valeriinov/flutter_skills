@@ -215,13 +215,19 @@ def markdown_blocks(path, text):
     return blocks, problems
 
 def json_blocks(path, doc):
-    fields = [('summary', doc.get('summary', ''), True)]
+    fields = [('summary', doc.get('summary', ''), True), ('concept', doc.get('concept', ''), True)]
     for index, section in enumerate(doc.get('sections', [])):
         where = f'sections[{index}]'
         fields.append((f'{where}.takeaway', section.get('takeaway', ''), True))
         fields += [(f'{where}.lines[{number}].text', line.get('text', ''), False)
                    for number, line in enumerate(section.get('lines', []))]
         fields.append((f'{where}.check', section.get('check', ''), True))
+    owners = [(f'entities[{index}]', entity) for index, entity in enumerate(doc.get('entities', []))]
+    owners += [(f'sections[{index}]', section) for index, section in enumerate(doc.get('sections', []))]
+    fields += [(f'{where}.files[{file_index}].edits[{edit_index}].text', edit.get('text', ''), False)
+               for where, owner in owners
+               for file_index, file in enumerate(owner.get('files', []))
+               for edit_index, edit in enumerate(file.get('edits', []))]
     fields += [(f'questions[{index}].gist', question.get('gist', ''), True)
                for index, question in enumerate(doc.get('questions', []))]
     return [block(f'{path}: {name}', text, sentences=sentences) for name, text, sentences in fields if text]

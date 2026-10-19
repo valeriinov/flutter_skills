@@ -1,6 +1,7 @@
 {
   "title": "Edge labels with brackets",
   "summary": "One sentence: what the document makes different.",
+  "concept": "Orders stay inside the app today. A new export class turns every order into a CSV row. One button on the orders screen starts the export.",
   "lang": "en",
   "ui": {
     "new": "new",

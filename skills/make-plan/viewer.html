@@ -1225,6 +1225,7 @@ function renderOverview(brief, stepNodes, panel) {
   panel.appendChild(root);
   const blocks = [];
   if (brief.overview) blocks.push(overviewBlock(root, brief));
+  if (brief.concept) blocks.push(conceptBlock(root, brief));
   brief.sections.forEach((html, index) => blocks.push(pointCard(root, html, index + 1, brief, stepNodes)));
   if (brief.questions.length) root.appendChild(sectionHeading('Решения'));
   brief.questions.forEach((question, index) => {
@@ -1265,6 +1266,12 @@ function overviewBlock(root, brief) {
   };
   root.onVisualRendered = svg => bindDiagram(svg, region);
   return { el, regions: [region] };
+}
+
+function conceptBlock(root, brief) {
+  root.insertAdjacentHTML('beforeend', brief.concept);
+  const el = root.lastElementChild;
+  return { el, regions: [{ anchor: 'Концепт', head: el, nodes: [el] }] };
 }
 
 function bindDiagram(svg, region) {

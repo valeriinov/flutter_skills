@@ -1,6 +1,6 @@
 ---
 name: make-plan
-description: Create or revise a plan: draft, gate, review, plan.html. Use for "создай/составь план", "давай составим план", "нужно создать план", "спланируй", "добавь/заложим в план", "доработай план".
+description: 'Create or revise a plan: draft, gate, review, plan.html. Use for "создай/составь план", "давай составим план", "нужно создать план", "спланируй", "добавь/заложим в план", "доработай план".'
 argument-hint: "[ task description (optionally: plan name) | plan path + revise ]"
 ---
 
@@ -124,6 +124,9 @@ parallel, so all sit on its last node); never add a node to it.
 - **brief.json writing** — for a reader who has not seen the code; the visual reviewer checks it:
   - The overall diagram answers "what changes and where": every entity the plan creates or changes
     is on it, and its arrows show who calls or feeds whom.
+  - `concept` says what changes as a whole: the problem today, the new idea, what the reader gets.
+  - A file's `edits` come from the plan's steps: one line for each class, method or key the
+    step adds, changes, removes or renames.
   - A section's `title` is the result in plain words, its `takeaway` the conclusion, its diagram
     the change it makes; `lines` hold only how it is today and what the diagram cannot carry.
   - A question's `gist` is understandable without the code: what is being decided, why it needs
@@ -154,7 +157,7 @@ skill's folder; fix each error and each hint.
 ## Revise mode
 
 Comments file: `comments.md` beside `plan.md`. A line is `- [ ] [<S3 | T2 | Пункт 2 | Вопрос 1 |
-Схема | section>] «<quote>» @<name>: <text>`; quote and name are optional. Read the open `- [ ]`
+Схема | Концепт | section>] «<quote>» @<name>: <text>`; quote and name are optional. Read the open `- [ ]`
 items. For each: edit only the addressed step, section or question (the quote pins the spot) — in
 `brief.json` and `plan.md` together whenever the change touches both. `Пункт <n>` is the n-th
 entry of `sections`, `Вопрос <n>` the n-th of `questions`:
@@ -163,6 +166,7 @@ entry of `sections`, `Вопрос <n>` the n-th of `questions`:
   answer per question wins, earlier ones are marked `[x]` without a reply.
 - `[Схема] «<node label>»` or `«<from> → <to>»` → edit that node or arrow of the overall `flow`
   (or `entities`/`links`) in `brief.json`, and the matching sections and steps.
+- `[Концепт]` → edit `concept` in `brief.json`.
 
 Mark each `[x]`, add an
 indented reply `  - @<agent>: <what changed>`. Re-scout only when a

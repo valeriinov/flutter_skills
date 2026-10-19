@@ -18,9 +18,12 @@ The page is read top-down, and each level is enough on its own:
    source makes is a node or a `note` on one. A secondary condition that lives inside one variant
    ("only if the order has a discount") is a `note` on that node here and a branch in its own
    section.
-2. **Points** — at most 6, each collapsed to `title` + `takeaway`. Reading only the takeaways
+2. **Concept** — one collapsed card under the overall diagram: the whole idea in 3–5 sentences.
+   It does not repeat `summary` and does not retell the diagram. The page adds a tree of every
+   file the document names.
+3. **Points** — at most 6, each collapsed to `title` + `takeaway`. Reading only the takeaways
    retells the source. Open questions sit below the points in `questions`, never as a point.
-3. **Point diagram** — every point has one. It zooms into its own topic: it may start from one
+4. **Point diagram** — every point has one. It zooms into its own topic: it may start from one
    overall node, and it adds at least one node or branch the overall diagram does not have. Text
    under it only adds detail the diagram cannot carry.
 
@@ -63,6 +66,7 @@ merges into the point it serves.
 {
   "title": "Order export to CSV",
   "summary": "One sentence: what the document makes different.",
+  "concept": "Orders stay inside the app today. A new export class turns every order into a CSV row. One button on the orders screen starts the export.",
   "lang": "en",
   "ui": {"new": "new", "changed": "changes", "same": "unchanged", "context": "nearby, unchanged",
          "overview": "Whole picture", "files": "Files", "branch": "branch by condition",
@@ -76,7 +80,8 @@ merges into the point it serves.
   ],
   "entities": [
     {"id": "screen", "name": "Orders screen", "code": "OrdersScreen", "status": "changed",
-     "change": "export button", "files": [{"path": "lib/orders/orders_screen.dart", "status": "changed"}]},
+     "change": "export button", "files": [{"path": "lib/orders/orders_screen.dart", "status": "changed",
+                                           "edits": [{"kind": "add", "text": "button `Export` in the app bar"}]}]},
     {"id": "export", "name": "Order export", "code": "OrderExport", "status": "new",
      "change": "orders to CSV rows", "files": [{"path": "lib/export/order_export.dart", "status": "new"}]}
   ],
@@ -120,10 +125,17 @@ merges into the point it serves.
 ```
 
 - `ui` — every string the page shows besides the content, in the document's language (`lang`).
+- `concept` — 3–5 sentences: what changes as a whole and why. The card title, the tree buttons and
+  the hint come from the script by `lang` (ru, uk, en; English otherwise).
 - Entity — `name` is what a non-developer calls it; `code` the identifier as written in code or
   on the wire (optional for actors such as "backend"); `change` what becomes different (required
   unless `same`); `files` every file the document changes for it — never a document it only
   references.
+- File — `{"path", "status", "edits"}`. `status` is `new`, `changed`, `same` or `deleted`;
+  `deleted` is for files only. `edits` is optional: `[{"kind", "text"}]`, `kind` is `add`,
+  `change`, `remove` or `rename`. One edit is one line with the name from the code
+  (`` class `OrderExport` ``, `` `_compress` → `_compressImage` ``). A click on the file in the tree
+  shows its edits.
 - Overall diagram — a top-level `flow` when the source describes behaviour (a contract, a
   feature); without it the page draws `entities` + `links`, which fits a set of code changes (a
   plan). A link `label` is a verb: who calls, feeds, reads or writes whom.
@@ -179,7 +191,10 @@ merges into the point it serves.
   draws a `flow`, not entities already on it; no section repeats the entity diagram of an earlier
   one; a section with a `flow` carries no `steps` view — the order lives in the flow.
 - Text: `name`, `code`, `change` ≤40 chars; labels as above; vague variants rejected; no sentence
-  in `lines` over 25 words; a `takeaway` in every section.
+  in `lines` over 25 words; a `takeaway` in every section; `concept` is present, ≤5 sentences, each
+  ≤25 words.
+- Files: `status` is one of `new`, `changed`, `same`, `deleted`; an edit `kind` is one of `add`,
+  `change`, `remove`, `rename`; an edit `text` ≤15 words.
 - Payloads: a changed field shows its `values` or children; a merged `a · b` node is unchanged and
   has no example. Questions are complete.
 

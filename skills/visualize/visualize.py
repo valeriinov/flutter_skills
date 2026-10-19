@@ -9,6 +9,11 @@ import sys
 from pathlib import Path
 
 STATUSES = ('new', 'changed', 'same')
+FILE_STATUSES = STATUSES + ('deleted',)
+FILE_STATUS_ORDER = ('deleted', 'new', 'changed', 'same')
+FILE_BADGES = {'new': 'A', 'changed': 'M', 'deleted': 'D'}
+EDIT_MARKS = {'add': '+', 'change': '~', 'remove': '−', 'rename': '↺'}
+EDIT_KINDS = tuple(EDIT_MARKS)
 VIEW_TYPES = ('shape', 'table', 'steps')
 MAX_OVERVIEW_NODES = 8
 MAX_OVERVIEW_LINKS = 10
@@ -23,6 +28,7 @@ MAX_BRANCH_LABEL_WORDS = 6
 MAX_SENTENCE_WORDS = 25
 MAX_TAKEAWAY_WORDS = 15
 MAX_SECTIONS = 6
+MAX_CONCEPT_SENTENCES = 5
 MAX_OVERVIEW_BRANCHES = 1
 VAGUE_VARIANT_RE = re.compile(r'(інакше|решта|і далі|иначе|остальн|и далее|\belse\b|otherwise|the rest|and later)', re.I)
 MERMAID_URL = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js'
@@ -36,6 +42,14 @@ WIDE_LABELS = {
     'ru': {'swipe': 'Листайте вбок', 'full': 'Целиком'},
     'uk': {'swipe': 'Гортайте вбік', 'full': 'Повністю'},
     'en': {'swipe': 'Scroll sideways', 'full': 'Full screen'},
+}
+CONCEPT_LABELS = {
+    'ru': {'title': 'Концепт', 'open': 'Развернуть всё', 'close': 'Свернуть всё',
+           'hint': 'Нажмите на файл, чтобы увидеть, что в нём изменится.'},
+    'uk': {'title': 'Концепт', 'open': 'Розгорнути все', 'close': 'Згорнути все',
+           'hint': 'Натисніть на файл, щоб побачити, що в ньому зміниться.'},
+    'en': {'title': 'Concept', 'open': 'Expand all', 'close': 'Collapse all',
+           'hint': 'Click a file to see what changes in it.'},
 }
 
 
@@ -77,13 +91,27 @@ def problems(doc):
 
 
 def head_problems(doc):
-    found = [f'missing "{key}"' for key in ('title', 'summary', 'ui', 'sections') if key not in doc]
+    found = [f'missing "{key}"' for key in ('title', 'summary', 'concept', 'ui', 'sections') if key not in doc]
+    if 'concept' in doc:
+        found += concept_problems(doc['concept'])
     ui = doc.get('ui', {})
     found += [f'ui: missing "{key}"' for key in UI_KEYS if key not in ui]
     if doc.get('questions'):
         found += [f'ui: missing "{key}"' for key in QUESTION_UI_KEYS if key not in ui]
     if has_branch(doc) and 'branch' not in ui:
         found.append('ui: missing "branch"')
+    return found
+
+
+def concept_problems(concept):
+    if not isinstance(concept, str) or not concept.strip():
+        return ['concept must be a non-empty string']
+    sentences = [sentence for sentence in SENTENCE_RE.split(concept.strip()) if sentence]
+    found = []
+    if len(sentences) > MAX_CONCEPT_SENTENCES:
+        found.append(f'concept has {len(sentences)} sentences, limit {MAX_CONCEPT_SENTENCES}')
+    found += [f'concept: a sentence over {MAX_SENTENCE_WORDS} words'
+              for sentence in sentences if len(sentence.split()) > MAX_SENTENCE_WORDS]
     return found
 
 
@@ -114,8 +142,25 @@ def entity_problems(entities):
 
 
 def file_problems(owner, files):
-    return [f'{owner}: file {file.get("path")} has no valid status'
-            for file in files if file.get('status') not in STATUSES]
+    found = []
+    for file in files:
+        where = f'{owner}: file {file.get("path")}'
+        if file.get('status') not in FILE_STATUSES:
+            found.append(f'{where} has no valid status')
+        found += edit_problems(where, file.get('edits', []))
+    return found
+
+
+def edit_problems(where, edits):
+    found = []
+    for edit in edits:
+        if edit.get('kind') not in EDIT_KINDS:
+            found.append(f'{where}: edit kind must be one of {EDIT_KINDS}')
+        if not edit.get('text'):
+            found.append(f'{where}: edit has no "text"')
+        if len(edit.get('text', '').split()) > MAX_TAKEAWAY_WORDS:
+            found.append(f'{where}: edit text over {MAX_TAKEAWAY_WORDS} words')
+    return found
 
 
 def link_problems(links, entities, forbid_latin):
@@ -428,6 +473,7 @@ def render(doc):
     body = [
         f'<header><h1>{inline(doc["title"])}</h1><p class="summary">{inline(doc["summary"])}</p></header>',
         overview(doc),
+        concept_html(doc),
         sections_html(doc),
         questions_html(doc),
     ]
@@ -539,9 +585,7 @@ def section_html(doc, index, section):
     if section.get('lines'):
         top.append(lines_html(section['lines']))
     parts.append(''.join(top))
-    files = section_files(doc, section)
-    if files:
-        parts.append(files_html(doc['ui']['files'], files))
+    parts.append(files_tree_html(doc, section_files(doc, section)))
     parts += [view_html(view) for view in section.get('views', [])]
     summary = (f'<summary><span class="sec-head"><span class="sec-title">{index}. {inline(section["title"])}</span>'
                f'<span class="takeaway">{inline(section["takeaway"])}</span></span></summary>')
@@ -570,10 +614,92 @@ def section_files(doc, section):
     return files + section.get('files', [])
 
 
-def files_html(title, files):
-    rows = [f'<li class="{file["status"]}"><span class="dot"></span><code>{html.escape(file["path"])}</code></li>'
-            for file in files]
-    return f'<div class="files"><div class="eyebrow">{html.escape(title)}</div><ul>{"".join(rows)}</ul></div>'
+def concept_html(doc):
+    if not doc.get('concept'):
+        return ''
+    files = [file for entity in doc.get('entities', []) for file in entity.get('files', [])]
+    files += [file for section in doc.get('sections', []) for file in section.get('files', [])]
+    title = html.escape(concept_labels(doc)['title'])
+    summary = f'<summary><span class="sec-head"><span class="sec-title">{title}</span></span></summary>'
+    body = f'<p class="concept-text">{inline(doc["concept"])}</p>{files_tree_html(doc, files)}'
+    return f'<details class="sec concept">{summary}<div class="sec-body">{body}</div></details>'
+
+
+def concept_labels(doc):
+    return CONCEPT_LABELS.get(doc.get('lang', 'ru'), CONCEPT_LABELS['en'])
+
+
+def files_tree_html(doc, files):
+    if not files:
+        return ''
+    labels = concept_labels(doc)
+    merged = merged_files(files)
+    stats = ''.join(f'<span class="stat {status}">{mark}{count}</span>'
+                    for status, mark in (('new', '+'), ('changed', '~'), ('deleted', '−'))
+                    if (count := sum(file['status'] == status for file in merged)))
+    summary = (f'<summary><span class="pm"></span>{html.escape(doc["ui"]["files"])}'
+               f'<span class="stats">{stats}</span></summary>')
+    tools = (f'<div class="tree-tools"><button type="button" data-act="open">{html.escape(labels["open"])}</button>'
+             f'<button type="button" data-act="close">{html.escape(labels["close"])}</button></div>')
+    hint = (f'<div class="fdetail-hint">{html.escape(labels["hint"])}</div>'
+            if any(file['edits'] for file in merged) else '')
+    tree = f'<div class="tree-root">{dir_html(file_tree(merged))}</div>'
+    return f'<details class="ftree" open>{summary}{tools}{tree}{hint}<div class="fdetail" hidden></div></details>'
+
+
+def merged_files(files):
+    by_path = {}
+    for file in files:
+        known = by_path.setdefault(file['path'], {'path': file['path'], 'status': file['status'], 'edits': []})
+        known['status'] = min(known['status'], file['status'], key=file_status_rank)
+        known['edits'] += file.get('edits', [])
+    return list(by_path.values())
+
+
+def file_status_rank(status):
+    return FILE_STATUS_ORDER.index(status) if status in FILE_STATUS_ORDER else len(FILE_STATUS_ORDER)
+
+
+def file_tree(files):
+    root = {'dirs': {}, 'files': []}
+    for file in files:
+        *folders, name = file['path'].split('/')
+        node = root
+        for folder in folders:
+            node = node['dirs'].setdefault(folder, {'dirs': {}, 'files': []})
+        node['files'].append({**file, 'name': name})
+    return root
+
+
+def dir_html(node):
+    rows = []
+    for name, child in sorted(node['dirs'].items()):
+        while not child['files'] and len(child['dirs']) == 1:
+            (sub, child), = child['dirs'].items()
+            name = f'{name}/{sub}'
+        rows.append(f'<li><details class="dir" open><summary class="t-row"><span class="pm"></span>{DIR_ICON}'
+                    f'<span class="d-name">{html.escape(name)}</span><span class="count">{file_count(child)}</span>'
+                    f'</summary>{dir_html(child)}</details></li>')
+    rows += [file_html(file) for file in sorted(node['files'], key=lambda file: file['name'])]
+    return f'<ul>{"".join(rows)}</ul>'
+
+
+def file_count(node):
+    return len(node['files']) + sum(file_count(child) for child in node['dirs'].values())
+
+
+def file_html(file):
+    status = file['status']
+    badge = f'<span class="badge {status}">{FILE_BADGES[status]}</span>' if status in FILE_BADGES else ''
+    focus = ' tabindex="0"' if file['edits'] else ''
+    row = (f'<div class="t-row file"{focus}><span class="pm leaf"></span>{FILE_ICON}'
+           f'<span class="f-name {status}">{html.escape(file["name"])}</span>{badge}</div>')
+    if not file['edits']:
+        return f'<li>{row}</li>'
+    edits = ''.join(f'<li><span class="kind {html.escape(edit.get("kind", ""))}">'
+                    f'{EDIT_MARKS.get(edit.get("kind"), "")}</span>'
+                    f'<span>{inline(edit.get("text", ""))}</span></li>' for edit in file['edits'])
+    return f'<li>{row}<ul class="edits" hidden>{edits}</ul></li>'
 
 
 def view_html(view):
@@ -636,6 +762,11 @@ def inline(text):
     return re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', escaped)
 
 
+DIR_ICON = ('<svg class="ico" viewBox="0 0 16 16"><path d="M1.5 3.5h4.2l1.5 1.5h7.3v8.5h-13z" fill="none" '
+            'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>')
+FILE_ICON = ('<svg class="ico" viewBox="0 0 16 16"><path d="M3.5 1.5h6l3 3v10h-9z" fill="none" '
+             'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>')
+
 TOKENS_CSS = """
   --ink: #151823; --ink-2: #5B6173; --ink-3: #3E4456;
   --blue: #3F5FD8; --blue-d: #2C47B3; --blue-l: #5577EE; --blue-bg: #E6ECFF; --blue-bg2: #F7F9FF; --blue-line: #C9D4FA;
@@ -643,6 +774,7 @@ TOKENS_CSS = """
   --node-new-bg: #DAFBE1; --node-new-border: #1A7F37; --node-new-fg: #116329;
   --node-changed-bg: #DDF4FF; --node-changed-border: #0969DA; --node-changed-fg: #0550AE;
   --node-same-bg: #F6F8FA; --node-same-border: #D0D7DE; --node-same-fg: #57606A;
+  --node-deleted-bg: #FFEBE9; --node-deleted-border: #CF222E; --node-deleted-fg: #A40E26;
   --node-branch-bg: #EDE4FF; --node-branch-border: #7A4FD6; --node-branch-fg: #4A2696;
   --node-context-bg: #FFFFFF; --node-context-border: #D5D9E3; --node-context-fg: #8A90A2;
   --f-display: 'Unbounded', system-ui, sans-serif;
@@ -680,9 +812,9 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .n-file { font-family: var(--f-mono); font-size: 13px; opacity: .7; }
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 10px 0 28px; }
 .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
-.legend .new::before, .mark.new, li.new .dot { background: var(--node-new-bg); border-color: var(--node-new-border); }
-.legend .changed::before, .mark.changed, li.changed .dot { background: var(--node-changed-bg); border-color: var(--node-changed-border); }
-.legend .same::before, .mark.same, li.same .dot { background: var(--node-same-bg); border-color: var(--node-same-border); }
+.legend .new::before, .mark.new { background: var(--node-new-bg); border-color: var(--node-new-border); }
+.legend .changed::before, .mark.changed { background: var(--node-changed-bg); border-color: var(--node-changed-border); }
+.legend .same::before, .mark.same { background: var(--node-same-bg); border-color: var(--node-same-border); }
 .legend .branch::before { background: var(--node-branch-bg); border-color: var(--node-branch-border); }
 :is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:has(.n-branch) {
   background: var(--node-branch-bg) !important; border-color: var(--node-branch-border); color: var(--node-branch-fg);
@@ -692,15 +824,64 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .sec { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 12px; transition: box-shadow .3s, border-color .3s; }
 .sec[open] { border-color: var(--blue-line); }
 .sec.flash { border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-bg); }
-.sec summary { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; list-style: none; }
-.sec summary::-webkit-details-marker { display: none; }
-.sec summary::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; }
-.sec[open] summary::after { transform: rotate(-135deg); }
+.sec > summary { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; list-style: none; }
+.sec > summary::-webkit-details-marker { display: none; }
+.sec > summary::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); transition: transform .15s; }
+.sec[open] > summary::after { transform: rotate(-135deg); }
 .sec-head { display: flex; flex-direction: column; }
 .sec-title { font-weight: 700; font-size: 17px; }
 .takeaway { color: var(--ink-2); font-size: 15px; }
-.sec summary .sec-title + .takeaway { margin-top: 2px; }
+.sec > summary .sec-title + .takeaway { margin-top: 2px; }
 .sec-body { padding: 0 20px 16px; }
+.sec.concept { background: var(--blue-bg2); border-color: var(--blue-line); margin-bottom: 20px; }
+.concept .sec-title { color: var(--blue-d); }
+.concept-text { margin: 0 0 10px; }
+.ftree { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0; margin: 6px 0 12px; }
+.ftree > summary { display: flex; align-items: center; justify-content: flex-start; gap: 10px; min-height: 0; padding: 10px 14px; cursor: pointer; list-style: none; font-weight: 700; font-size: 15px; color: var(--ink); }
+.ftree > summary::-webkit-details-marker, .dir > summary::-webkit-details-marker { display: none; }
+.ftree > summary::after, .dir > summary::after { content: none; }
+.dir { background: none; border: none; border-radius: 0; padding: 0; margin: 0; }
+.dir > summary { list-style: none; cursor: pointer; }
+.stats { display: flex; gap: 8px; margin-left: auto; font-size: 13px; font-weight: 600; }
+.stat { padding: 1px 8px; border-radius: 999px; border: 1.5px solid; }
+.stat.new, .kind.add { background: var(--node-new-bg); border-color: var(--node-new-border); color: var(--node-new-fg); }
+.stat.changed, .kind.change { background: var(--node-changed-bg); border-color: var(--node-changed-border); color: var(--node-changed-fg); }
+.stat.deleted, .kind.remove { background: var(--node-deleted-bg); border-color: var(--node-deleted-border); color: var(--node-deleted-fg); }
+.kind.rename { background: var(--node-branch-bg); border-color: var(--node-branch-border); color: var(--node-branch-fg); }
+.tree-tools { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 6px; }
+.tree-tools button { font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-3); background: var(--card); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 10px; cursor: pointer; min-height: 28px; }
+.tree-root { padding: 0 8px 10px; overflow-x: auto; }
+.tree-root ul { list-style: none; margin: 0; padding: 0; }
+.tree-root ul ul { margin-left: 11px; padding-left: 10px; border-left: 1px solid var(--line); }
+.t-row { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-height: 0; padding: 3px 6px; border-radius: 6px; font-family: var(--f-mono); font-size: 13.5px; font-weight: 400; white-space: nowrap; }
+.t-row:hover { background: var(--section); }
+.pm { flex: none; width: 16px; height: 16px; border: 1px solid var(--line-2); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1; color: var(--ink-2); background: var(--card); font-family: var(--f-mono); }
+.pm::before { content: "+"; }
+details[open] > summary .pm::before { content: "−"; }
+.pm.leaf { border-color: transparent; background: none; }
+.pm.leaf::before { content: ""; }
+.ico { flex: none; width: 15px; height: 15px; color: var(--ink-2); }
+.d-name { color: var(--ink); font-weight: 600; }
+.count { color: var(--ink-2); font-family: var(--f-body); font-size: 12.5px; }
+.f-name.same { color: var(--ink-2); }
+.f-name.new { color: var(--node-new-fg); }
+.f-name.changed { color: var(--node-changed-fg); }
+.f-name.deleted { color: var(--node-deleted-fg); text-decoration: line-through; }
+.badge { margin-left: auto; padding-left: 12px; font-weight: 700; font-size: 12px; }
+.badge.new { color: var(--node-new-border); }
+.badge.changed { color: var(--node-changed-border); }
+.badge.deleted { color: var(--node-deleted-border); }
+.t-row.file[tabindex] { cursor: pointer; }
+.t-row.file.sel { background: var(--blue-bg); box-shadow: inset 2px 0 0 var(--blue); }
+.fdetail { margin: 0 8px 10px; border: 1px solid var(--blue-line); background: var(--blue-bg2); border-radius: 10px; padding: 10px 14px; }
+.fdetail[hidden] { display: none; }
+.fdetail-head { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.fdetail-head .badge { margin: 0; padding: 0; }
+.fdetail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fdetail li { display: flex; align-items: baseline; gap: 8px; font-size: 14.5px; }
+.kind { flex: none; min-width: 22px; text-align: center; font-family: var(--f-mono); font-weight: 700; font-size: 12px; border-radius: 6px; padding: 1px 6px; border: 1.5px solid; }
+.fdetail-hint { color: var(--ink-2); font-size: 13px; padding: 0 14px 10px; }
+.fdetail-hint[hidden] { display: none; }
 #decide h2 { color: #9A4312; }
 .decision { border-color: #E08A4F; background: #FFF8F3; }
 .options { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
@@ -729,10 +910,7 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 .h2-block { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px 16px; margin: 0 0 16px; }
 .lines p { margin: 0 0 8px; }
 .point-label { font-weight: 600; margin-right: 6px; }
-.files ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.files li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.files code { background: none; padding: 0; }
-.dot, .mark { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }
+.mark { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; flex: none; display: inline-block; }
 .tree, .tree ul { list-style: none; margin: 0; padding: 0; }
 .tree ul { margin-left: 6px; padding-left: 18px; border-left: 1.5px solid var(--line-2); }
 .tree .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 4px 0; }
@@ -771,6 +949,32 @@ const EDGE_LABEL_SIZE_CSS = `
   span.edgeLabel:has(.n-branch) { border-width: 1.5px; border-style: solid; border-radius: 999px; padding: 1px 10px; font-style: normal; font-weight: 700; }
   span.edgeLabel .n-code { font-family: var(--f-body); font-size: 13px; }
 `;
+
+function bindFileTree(tree) {
+  const panel = tree.querySelector('.fdetail');
+  const hint = tree.querySelector('.fdetail-hint');
+  tree.querySelectorAll('.tree-tools button').forEach(button => button.addEventListener('click', () => {
+    tree.querySelectorAll('details.dir').forEach(dir => { dir.open = button.dataset.act === 'open'; });
+  }));
+  const showEdits = row => {
+    const wasSelected = row.classList.contains('sel');
+    tree.querySelectorAll('.t-row.sel').forEach(other => other.classList.remove('sel'));
+    panel.hidden = wasSelected;
+    hint.hidden = !wasSelected;
+    if (wasSelected) return;
+    row.classList.add('sel');
+    const head = document.createElement('div');
+    head.className = 'fdetail-head';
+    head.append(...[...row.querySelectorAll('.badge, .f-name')].map(part => part.cloneNode(true)));
+    const edits = row.nextElementSibling.cloneNode(true);
+    edits.hidden = false;
+    panel.replaceChildren(head, edits);
+  };
+  tree.querySelectorAll('.t-row.file[tabindex]').forEach(row => {
+    row.addEventListener('click', () => showEdits(row));
+    row.addEventListener('keydown', event => { if (event.key === 'Enter') showEdits(row); });
+  });
+}
 
 function renderVisual(root, options = {}) {
   const cssVar = name => getComputedStyle(root).getPropertyValue(name).trim();
@@ -882,6 +1086,7 @@ function renderVisual(root, options = {}) {
     placedLabels.add(svg);
     placeLabelsOnCurves(svg);
   }));
+  root.querySelectorAll('.ftree').forEach(bindFileTree);
   return (async () => {
     await document.fonts.ready;
     for (const pre of root.querySelectorAll('.mermaid-src')) {
