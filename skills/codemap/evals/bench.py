@@ -28,6 +28,11 @@ A variant also takes `setup` (commands run once, before its first run, not
 timed) and `before_run` (commands run before each run). All commands run in
 the worktree. `cli_args` is a list of extra `claude` arguments, such as
 `--agents` or `--append-system-prompt`, that leave the worktree unchanged.
+`extra_cost_log` is the path of a JSON lines file with a `cost` field per line,
+such as the `JEV_COST_LOG` of a hook. The runner empties the file before each
+run and writes the sum of `cost` to the run as `jev_cost_usd` and the line
+count as `jev_calls`; without the field, both are null and the `jev $` column
+stays empty.
 
 Each run appends one line to `<out>/runs.jsonl`; a run already in that file is
 skipped, so a stopped benchmark resumes. The raw stream of each run is in
@@ -139,6 +144,9 @@ def run_once(args, tasks_file, task, variant, repeat):
         args.out, RAW_DIR, f"{task['id']}__{variant['name']}__{repeat}.jsonl"
     )
     prompt = f"{task['prompt']}\n\n{tasks_file.get('prompt_suffix', '')}".strip()
+    cost_log = variant.get("extra_cost_log")
+    if cost_log:
+        open(os.path.expanduser(cost_log), "w").close()
     started = time.time()
     timed_out = run_claude(args, variant, prompt, raw_path)
     wall_seconds = round(time.time() - started, 1)
@@ -168,6 +176,8 @@ def run_once(args, tasks_file, task, variant, repeat):
         "wall_seconds": wall_seconds,
         "duration_ms": result.get("duration_ms"),
         "total_cost_usd": result.get("total_cost_usd"),
+        "jev_cost_usd": extra_cost(cost_log),
+        "jev_calls": len(extra_cost_lines(cost_log)) if cost_log else None,
         "usage": usage_of(result.get("usage") or {}),
         "model_usage": model_usage_sum(result.get("modelUsage") or {}),
         "models": sorted((result.get("modelUsage") or {}).keys()),
@@ -177,6 +187,20 @@ def run_once(args, tasks_file, task, variant, repeat):
         "tool_uses": tool_use_count(events),
         "answer": answer[:2000],
     }
+
+
+def extra_cost(cost_log):
+    if not cost_log:
+        return None
+    return sum(line.get("cost") or 0 for line in extra_cost_lines(cost_log))
+
+
+def extra_cost_lines(cost_log):
+    path = os.path.expanduser(cost_log)
+    if not os.path.exists(path):
+        return []
+    with open(path) as file:
+        return [json.loads(line) for line in file if line.strip()]
 
 
 def require_clean(worktree):
@@ -403,14 +427,14 @@ def write_results(out, baseline):
         "Weighted tokens = input + cache_write + output + 0.1 × cache_read, summed over",
         "every model of the session (`modelUsage`, subagents included).",
         "",
-        "| variant | runs | correct | weighted (median) | input | cache read | cache write | output | turns | wall s | cost $ |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "| variant | runs | correct | weighted (median) | input | cache read | cache write | output | turns | wall s | cost $ | jev $ |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
         lines.append(
             f"| {row['variant']} | {row['runs']} | {row['correct']:.0%} | {row['weighted']:.0f} "
             f"| {row['input']:.0f} | {row['cache_read']:.0f} | {row['cache_write']:.0f} "
-            f"| {row['output']:.0f} | {row['turns']:.1f} | {row['wall']:.1f} | {row['cost']:.3f} |"
+            f"| {row['output']:.0f} | {row['turns']:.1f} | {row['wall']:.1f} | {row['cost']:.3f} | {row['jev']} |"
         )
     lines += ["", winner_line(rows, baseline), "", "## Weighted tokens per task (median)", ""]
     lines += task_table(records, [row["variant"] for row in rows])
@@ -435,9 +459,15 @@ def variant_rows(records):
                 "turns": median(r["num_turns"] or 0 for r in runs),
                 "wall": median(r["wall_seconds"] for r in runs),
                 "cost": median(r["total_cost_usd"] or 0 for r in runs),
+                "jev": jev_cell(runs),
             }
         )
     return rows
+
+
+def jev_cell(runs):
+    costs = [r["jev_cost_usd"] for r in runs if r.get("jev_cost_usd") is not None]
+    return f"{median(costs):.5f}" if costs else ""
 
 
 def median(values):
