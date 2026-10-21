@@ -829,6 +829,8 @@ h3 { font-family: var(--f-body); font-weight: 700; font-size: 18px; margin: 16px
 code { font-family: var(--f-mono); font-size: max(12px, .86em); background: var(--badge); color: var(--ink-3); padding: 1px 5px; border-radius: 6px; }
 """
 
+# Safari paints a node-label span that is inline with its own font, or has opacity, away from its
+# foreignObject; .n-code and .n-file stay inline-block and dim through color.
 VISUAL_CSS = """.eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); margin: 18px 0 8px; }
 .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; overflow-x: auto; text-align: center; }
 .h2-block .diagram { background: var(--blue-bg2); border-color: var(--line); padding: 12px; margin: 4px 0 12px; }
@@ -839,9 +841,9 @@ VISUAL_CSS = """.eyebrow { font-size: 12px; font-weight: 700; text-transform: up
 section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }
 .diagram .node rect { rx: 10px; ry: 10px; }
 .mermaid-src { display: none; }
-.n-code { font-family: var(--f-mono); font-size: 14px; opacity: .8; }
+.n-code { display: inline-block; font-family: var(--f-mono); font-size: 14px; color: color-mix(in srgb, currentColor 80%, transparent); }
 .n-change { font-size: 15px; font-style: italic; }
-.n-file { font-family: var(--f-mono); font-size: 13px; opacity: .7; }
+.n-file { display: inline-block; font-family: var(--f-mono); font-size: 13px; color: color-mix(in srgb, currentColor 70%, transparent); }
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 10px 0 28px; }
 .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; border: 1.5px solid; }
 .legend .new::before, .mark.new { background: var(--node-new-bg); border-color: var(--node-new-border); }
@@ -932,7 +934,7 @@ details[open] > summary .pm::before { content: "−"; }
 :is(.diagram, .zoom-body) .edgeLabel p { margin: 0; display: inline; background: transparent !important; }
 :is(.diagram, .zoom-body) .edgeLabel span.edgeLabel { background: var(--card) !important; color: var(--ink-2); }
 :is(.diagram, .zoom-body) .edgeLabel span.edgeLabel:empty { display: none; }
-:is(.diagram, .zoom-body) .edgeLabel .n-code { opacity: 1; color: var(--blue-d); }
+:is(.diagram, .zoom-body) .edgeLabel .n-code { color: var(--blue-d); }
 .zoom { position: fixed; inset: 0; z-index: 20; background: var(--section); overflow: auto; padding: 56px 24px 24px; }
 .zoom[hidden] { display: none; }
 .zoom-body { width: max-content; min-width: 100%; display: flex; justify-content: center; }
