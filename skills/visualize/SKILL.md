@@ -174,6 +174,8 @@ merges into the point it serves.
     `"name": "id · title · createdAt"`; every other field gets its own node.
   - `{"type": "table", "title", "columns", "rows"}` — a hex colour cell renders as a swatch.
   - `{"type": "steps", "title", "items": [{"text", "tag", "note"}]}`.
+  - `{"type": "images", "title", "items": [{"src", "caption"}]}` — screens or mockups, collapsed
+    under `title`. `src` is a PNG path relative to the document; `render` embeds the file.
 - Verification — a plan's tests and manual checks become one `lines` entry per section saying
   what they prove ("Tests: day rollover compresses yesterday, deletes expired"); test files go
   in `files`. Individual test cases are not listed.

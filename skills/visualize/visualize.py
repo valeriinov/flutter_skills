@@ -2,6 +2,7 @@
 """Check and render a visualize document (JSON) into a self-contained HTML page."""
 
 import argparse
+import base64
 import html
 import json
 import re
@@ -14,7 +15,7 @@ FILE_STATUS_ORDER = ('deleted', 'new', 'changed', 'same')
 FILE_BADGES = {'new': 'A', 'changed': 'M', 'deleted': 'D'}
 EDIT_MARKS = {'add': '+', 'change': '~', 'remove': '−', 'rename': '↺'}
 EDIT_KINDS = tuple(EDIT_MARKS)
-VIEW_TYPES = ('shape', 'table', 'steps')
+VIEW_TYPES = ('shape', 'table', 'steps', 'images')
 MAX_OVERVIEW_NODES = 8
 MAX_OVERVIEW_LINKS = 10
 MAX_SECTION_NODES = 6
@@ -61,7 +62,7 @@ def main():
     args = parser.parse_args()
 
     doc = json.loads(args.doc.read_text(encoding='utf-8'))
-    found = problems(doc)
+    found = problems(doc) + embed_images(doc, args.doc.parent)
     for problem in found:
         print(f'{args.doc}: {problem}', file=sys.stderr)
     if found:
@@ -73,6 +74,22 @@ def main():
     output = args.output or args.doc.with_suffix('.html')
     output.write_text(render(doc), encoding='utf-8')
     print(output)
+
+
+def embed_images(doc, base):
+    """Inline every `images` view file as a data URI, so the page stays one file."""
+    missing = []
+    for section in doc.get('sections', []):
+        for view in section.get('views', []):
+            if view.get('type') != 'images':
+                continue
+            for item in view.get('items', []):
+                path = base / item.get('src', '')
+                if not path.is_file():
+                    missing.append(f'image not found: {path}')
+                    continue
+                item['data'] = 'data:image/png;base64,' + base64.b64encode(path.read_bytes()).decode()
+    return missing
 
 
 # ---------------------------------------------------------------- check
@@ -709,8 +726,18 @@ def file_html(file):
 
 def view_html(view):
     title = f'<div class="eyebrow">{inline(view["title"])}</div>' if view.get('title') else ''
+    if view['type'] == 'images':
+        return images_html(view)
     body = {'shape': shape_html, 'table': table_html, 'steps': steps_html}[view['type']](view)
     return f'<div class="view {view["type"]}">{title}{body}</div>'
+
+
+def images_html(view):
+    figures = ''.join(f'<figure><img src="{item["data"]}" alt="{html.escape(item.get("caption", ""))}">'
+                      f'<figcaption>{inline(item.get("caption", ""))}</figcaption></figure>'
+                      for item in view['items'])
+    return (f'<details class="view images"><summary class="eyebrow">{inline(view.get("title", ""))}</summary>'
+            f'<div class="shots">{figures}</div></details>')
 
 
 def shape_html(view):
@@ -935,6 +962,14 @@ details[open] > summary .pm::before { content: "−"; }
 .example { display: inline-flex; align-items: center; }
 .swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid var(--line-2); display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .table-wrap { overflow-x: auto; }
+.images summary { cursor: pointer; }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 260px)); gap: 16px; margin-top: 12px; }
+.shots figure { margin: 0; display: grid; gap: 8px; align-content: start; }
+.shots img { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line); cursor: zoom-in; }
+.zoom-body figure { margin: 0; display: grid; gap: 12px; justify-items: center; }
+.zoom-body figure img { height: calc(100vh - 140px); width: auto; border-radius: 16px; border: 1px solid var(--line); }
+.zoom-body figcaption { max-width: 480px; font-size: 14px; color: var(--ink-2); text-align: center; }
+.shots figcaption { font-size: 13px; color: var(--ink-2); }
 table { border-collapse: collapse; margin: 4px 0; font-size: 14px; width: 100%; }
 th, td { padding: 10px 12px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: break-word; }
 th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
@@ -1133,6 +1168,12 @@ function renderVisual(root, options = {}) {
     });
     root.querySelectorAll('.sec-body > .diagram svg').forEach(svg => {
       svg.parentElement.addEventListener('click', () => openZoom(svg));
+    });
+    root.querySelectorAll('.shots figure').forEach(figure => {
+      figure.querySelector('img').addEventListener('click', () => {
+        zoom.querySelector('.zoom-body').append(figure.cloneNode(true));
+        zoom.hidden = false;
+      });
     });
     zoom.querySelector('.zoom-close').addEventListener('click', closeZoom);
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeZoom(); });
