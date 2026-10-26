@@ -11,6 +11,12 @@ Rules proposed from retrospectives or usage reports need recurrence evidence:
 rule goes into the skill/file where it bit, not into global instructions. No
 new skill for a rarely-performed operation.
 
+### Auto mode
+
+- When the auto-mode classifier denies a step the task needs, name the command
+  and the denial reason in one line. Then offer to switch this session to ask
+  mode, so the user approves the step. Never hand the command to the user.
+
 ### Git
 
 - Never add a `Co-Authored-By` trailer to commit messages unless the user
