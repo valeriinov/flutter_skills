@@ -51,7 +51,7 @@ merges into the point it serves.
    finding against the source, the JSON and the page model; drop the ones that do not hold,
    including any that moves a fact to the level the page model does not give it.
 7. **Correct** — apply every finding that holds, Minor included, then rerun the check. Then
-   review again in a new fresh context and correct once more. Stop after the second correction
+   review again in a new fresh context, whatever the size of the correction, and correct once more. Stop after the second correction
    even if findings remain: they go to the report, a remaining Blocking or Significant first.
 8. **Render** — `python3 visualize.py render <json>` writes `<json stem>.html` beside it.
 9. **Look** — open the page in a browser at 375px and 1280px; a mermaid error shows as an error

@@ -67,7 +67,7 @@ description: Implement a plan file step by step, verify, then review the diff. U
    `HEAD`) — and the list `git ls-files --others --exclude-standard`. Fix every
    verified finding, Minor included, yourself; spawn up to 4 workers only when
    there are more findings than you fix yourself. Then one
-   re-review: one `code-reviewer` over `git diff <snapshot>` plus, read whole,
+   re-review, whatever the size of the fix: one `code-reviewer` over `git diff <snapshot>` plus, read whole,
    the untracked files the fix created (absent from that list) or edited,
    Significant and above; verify and fix what it finds, no third round. When
    running a stage, set its status cell to `done`.

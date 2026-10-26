@@ -155,7 +155,8 @@ The reader has ADHD. Shape every prose the user reads — dialogue, plans, repor
   Next: <action>" — the reader holds no state between messages.
 - Before sending, delete: an opening sentence that announces what follows, a closing line that
   recaps or offers more help, any "by the way" sidebar, hedges that carry no real uncertainty,
-  idioms. Then check: first and last line alone tell what happened and what to do next.
+  idioms. Also delete an internal label the user did not use first (a variant or step code, a PR
+  number, a tool or agent name) and say what it is. Then check: first and last line alone tell what happened and what to do next.
 - Verify a subagent's findings, then relay what survives in its own form — never retell it as prose.
 - A run that goes quiet is a run the user interrupts. Before a stretch that will hold the
   turn — a delegated fan-out, a long device or lint loop — say in one line what is running
