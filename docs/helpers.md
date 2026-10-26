@@ -75,7 +75,7 @@ echo '@RTK.md' >> ~/.claude/CLAUDE.md
 
 ## Worktree hooks
 
-Two scripts that put every worktree Claude Code creates in
+Three scripts. Two of them put every worktree Claude Code creates in
 `<repo>/.worktrees/<name>`. They need `jq` and `rsync` on `PATH`.
 
 ```bash
@@ -91,6 +91,19 @@ Wired by the two `$HOME/.claude/hooks/...` entries in the settings example:
   lists. Claude Code reads the worktree path from the last line of stdout.
 - `WorktreeRemove` → `worktree-remove.sh` removes the worktree and deletes its
   `worktree-*` branch.
+
+`git-post-checkout.sh` is a git hook, not a Claude Code hook. It covers every
+plain `git worktree add`: it copies into the new worktree the gitignored files
+that the main tree's `.worktreeinclude` lists, and skips files that exist.
+Link it per project into the directory that `core.hooksPath` names, or into
+`.git/hooks` when the project sets none:
+
+```bash
+ln -s ~/.claude/hooks/git-post-checkout.sh .git/hooks/post-checkout
+```
+
+A link inside a tracked hooks directory goes into `.git/info/exclude`, so it
+stays local.
 
 ## Personal CLAUDE.md via `@` imports
 
