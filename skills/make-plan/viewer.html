@@ -1056,7 +1056,7 @@ async function startImplementation(button, status) {
   if (response.ok) {
     button.hidden = true;
     status.textContent = body.where === 'desktop'
-      ? 'В чате make-plan появится карточка — нажми её, чтобы начать'
+      ? 'В Claude открылась новая сессия с промптом — нажми Enter, чтобы начать'
       : 'Имплементация запущена в новом окне терминала';
     return;
   }

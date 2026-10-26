@@ -29,8 +29,8 @@ parallel, so all sit on its last node); never add a node to it.
    directory is not that root, call `change_directory` with it first and use absolute paths
    until the turn ends. No project named →
    stay here. A refusal (the app does not move a session into its own config folder
-   `~/.claude`) → continue here; step 8 then starts the implementation session on the user's
-   «запусти». Elsewhere → stay in the current folder and use absolute paths. Then list
+   `~/.claude`) → continue here; the step 8 button still opens the implementation session in the
+   project folder. Elsewhere → stay in the current folder and use absolute paths. Then list
    `<root>/plan/<name>/inputs/`. No folder → the task text is the only input.
 2. **Extract** — only if inputs hold non-code (screenshots, text, links): one extractor agent
    returns distilled requirements → `## Requirements`, ≤10 lines.
@@ -60,24 +60,21 @@ parallel, so all sit on its last node); never add a node to it.
 7. **Correct** — apply Blocking/Significant fixes to the flagged steps only, one round, then rerun
    the gate. Minor findings go to the report for the user to decide.
 8. **Render** — `python3 plan_tool.py render <plan.md>`, then start
-   `python3 plan_tool.py serve <plan.md>` as a background process: it opens the plan in the
+   `python3 plan_tool.py serve <plan.md>` as a background process. Use the harness's own
+   background run, never `&`, `nohup` or a subshell: only that run wakes you when `serve` exits.
+   It opens the plan in the
    browser, every comment and option pick is appended to the comments file at once,
    and "Отправить ревью" stops the server with `review submitted: <n> open comments`. Open
    comments can be edited or deleted on the page before submitting.
    - No open comments → the button becomes "Имплементировать план": it opens a separate Claude
      Code session for `implement-plan` with subagents in the project folder.
-     - Under Claude Desktop `serve` exits with `implementation started: desktop`, `folder:` and
-       `prompt:` lines → propose the session with `start_session`: `initiation`
-       "own_initiative", `permission_mode` "auto", the `prompt:` line as the prompt, a
-       one-line `background` naming the plan, and stop.
-       The app refuses "user_asked" on a turn a background task started, and a card carries no
-       folder, so the card session opens in this session's folder: when that differs from
-       `folder:`, propose no card; ask the user to reply «запусти»; on that reply call
-       `start_session` with `initiation` "user_asked", `context` "fresh", `cwd` = the `folder:`
-       line, `use_worktree` false, `permission_mode` "auto", the `prompt:` line as the prompt, a
-       one-line `background` naming the plan.
-     - Elsewhere the first available of: Ghostty 1.3+ (a new tab in the front window, a new
-       window only when none is open) → Terminal.app (a new window). `serve` exits with
+     - Under Claude Desktop `serve` opens `claude://code/new` with the prompt and the project
+       folder. The app shows a new Code session with the prompt filled in; the user presses
+       Enter. `serve` exits with `implementation started: desktop`, `folder:` and `prompt:`
+       lines → report in one line that the session waits for Enter in the app, and stop.
+       Propose no card and call no `start_session`.
+     - Elsewhere, or when `open` fails, the first available of: Ghostty 1.3+ (a new tab in the
+       front window, a new window only when none is open) → Terminal.app (a new window). `serve` exits with
        `implementation started: terminal` → stop and report that the session runs in the
        terminal. macOS only — elsewhere the page shows the error and the user starts
        `implement-plan` themselves.

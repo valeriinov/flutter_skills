@@ -12,6 +12,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -35,6 +36,7 @@ COMMENT_RE = re.compile(r'^- \[ \] \[([^\]]+)\] (?:«([^»]*)» )?(?:@([^:]+): )
 OPEN_PREFIX = '- [ ] '
 IMPLEMENT_PROMPT = 'имплементируй план {}'
 DESKTOP_ENTRYPOINT = 'claude-desktop'
+DESKTOP_NEW_SESSION_URL = 'claude://code/new'
 GHOSTTY_SCRIPT = '''on run argv
     set wasRunning to application "Ghostty" is running
     tell application "Ghostty"
@@ -558,15 +560,19 @@ def implement_session(plan_path):
     return root, IMPLEMENT_PROMPT.format(target)
 
 def launch_implement(plan_path):
-    if os.environ.get('CLAUDE_CODE_ENTRYPOINT') == DESKTOP_ENTRYPOINT:
-        return 'desktop', None
     root, prompt = implement_session(plan_path)
+    if os.environ.get('CLAUDE_CODE_ENTRYPOINT') == DESKTOP_ENTRYPOINT and open_desktop_session(root, prompt):
+        return 'desktop', None
     session = f'claude {shlex.quote(prompt)}'
     if launch_ghostty(root, session):
         return 'terminal', None
     if run_osascript(TERMINAL_SCRIPT, f'cd {shlex.quote(str(root))} && {session}'):
         return 'terminal', None
     return None, 'не удалось открыть терминал — запусти implement-plan сам'
+
+def open_desktop_session(root, prompt):
+    query = urllib.parse.urlencode({'q': prompt, 'folder': str(root)})
+    return subprocess.run(['open', f'{DESKTOP_NEW_SESSION_URL}?{query}'], capture_output=True).returncode == 0
 
 def launch_ghostty(root, session):
     if subprocess.run(['open', '-Ra', 'Ghostty'], capture_output=True).returncode != 0:
