@@ -68,6 +68,12 @@ The test: Every changed line should trace directly to the user's request.
 
 - When moving changes between worktrees or branches, do not commit them without
   the user's explicit request.
+- After you push a PR branch from a worktree, run
+  `bash ~/.claude/skills/implement-plan/prune_worktrees.sh <worktree>` without a
+  question. The script removes only a clean worktree whose HEAD is on a remote branch and
+  keeps the branch. Make it the last action of the turn: a session inside that
+  worktree has no directory after it. Report the script's line; never remove a kept
+  worktree by hand.
 
 ### 4. Goal-Driven Execution
 
