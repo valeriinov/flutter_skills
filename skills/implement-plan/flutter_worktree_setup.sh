@@ -75,7 +75,8 @@ install_pods() {
     return
   fi
 
-  (cd "$worktree/ios" && pod install)
+  # CocoaPods fails with Encoding::CompatibilityError under a non-UTF-8 locale.
+  (cd "$worktree/ios" && LANG="${LANG:-en_US.UTF-8}" pod install)
   echo "ok: pod install"
 }
 
