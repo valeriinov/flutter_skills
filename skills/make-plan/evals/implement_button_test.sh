@@ -1,6 +1,7 @@
 #!/bin/bash
-# The "Имплементировать план" button under Claude Desktop must open a new Code session itself
-# (claude://code/new with the prompt and the project folder), not only stop serve.
+# The "Имплементировать план" button under Claude Desktop must open nothing itself: serve stops and
+# reports the folder and the prompt, so the agent proposes the implementation session as a card.
+# Outside Desktop the button opens a terminal with the prompt.
 export LC_ALL=en_US.UTF-8
 tool="$(cd "$(dirname "$0")/.." && pwd)/plan_tool.py"
 case_dir="$(cd "$(dirname "$0")" && pwd)/cases/ok"
@@ -28,7 +29,7 @@ chmod +x "$work/bin/open" "$work/bin/osascript"
 
 start_serve() {
   rm -f "$work/open.log" "$work/osascript.log"
-  PATH="$work/bin:$PATH" CLAUDE_CODE_ENTRYPOINT=claude-desktop \
+  PATH="$work/bin:$PATH" CLAUDE_CODE_ENTRYPOINT="$1" \
     python3 "$tool" serve "$work/project/plan/sample/plan.md" --no-open --port "$port" > "$work/serve.out" 2>&1 &
   serve_pid=$!
   for _ in $(seq 50); do
@@ -38,7 +39,7 @@ start_serve() {
   fail "serve start" "$(cat "$work/serve.out")"
 }
 
-start_serve
+start_serve claude-desktop
 printf -- '- [ ] [Пункт 1] open question\n' > "$work/project/plan/sample/comments.md"
 status=$(curl -s -o "$work/body" -w '%{http_code}' -X POST "http://127.0.0.1:$port/implement")
 [ "$status" = "409" ] || fail "open comment blocks the button" "$status $(cat "$work/body")"
@@ -49,16 +50,16 @@ body=$(curl -s -X POST "http://127.0.0.1:$port/implement")
 [[ "$body" == *'"where": "desktop"'* ]] || fail "desktop start" "$body"
 wait "$serve_pid"
 
-url=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote_plus(sys.stdin.read()))' < "$work/open.log")
-[[ "$url" == "claude://code/new?"* ]] || fail "deep link" "$url"
-[[ "$url" == *"q=имплементируй план $work/project/plan/sample"* ]] || fail "prompt names the plan" "$url"
-[[ "$url" == *"folder=$work/project"* ]] || fail "folder is the project root" "$url"
+[ ! -f "$work/open.log" ] || fail "desktop opens nothing" "$(cat "$work/open.log")"
+[ ! -f "$work/osascript.log" ] || fail "desktop opens no terminal" "$(cat "$work/osascript.log")"
 grep -q '^implementation started: desktop$' "$work/serve.out" || fail "serve report" "$(cat "$work/serve.out")"
+grep -qx "folder: $work/project" "$work/serve.out" || fail "folder is the project root" "$(cat "$work/serve.out")"
+grep -qx "prompt: имплементируй план $work/project/plan/sample" "$work/serve.out" || fail "prompt names the plan" "$(cat "$work/serve.out")"
 
-start_serve
+start_serve cli
 printf '#!/bin/bash\nexit 1\n' > "$work/bin/open"
 body=$(curl -s -X POST "http://127.0.0.1:$port/implement")
-[[ "$body" == *'"where": "terminal"'* ]] || fail "terminal fallback when the deep link fails" "$body"
+[[ "$body" == *'"where": "terminal"'* ]] || fail "terminal outside desktop" "$body"
 grep -q 'имплементируй план' "$work/osascript.log" || fail "terminal gets the prompt" "$(cat "$work/osascript.log" 2>/dev/null)"
 wait "$serve_pid"
 

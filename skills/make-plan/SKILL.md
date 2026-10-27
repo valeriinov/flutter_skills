@@ -29,8 +29,8 @@ parallel, so all sit on its last node); never add a node to it.
    directory is not that root, call `change_directory` with it first and use absolute paths
    until the turn ends. No project named →
    stay here. A refusal (the app does not move a session into its own config folder
-   `~/.claude`) → continue here; the step 8 button still opens the implementation session in the
-   project folder. Elsewhere → stay in the current folder and use absolute paths. Then list
+   `~/.claude`) → continue here; step 8 then starts the implementation session from the button
+   in the next-step box. Elsewhere → stay in the current folder and use absolute paths. Then list
    `<root>/plan/<name>/inputs/`. No folder → the task text is the only input.
 2. **Extract** — only if inputs hold non-code (screenshots, text, links): one extractor agent
    returns distilled requirements → `## Requirements`, ≤10 lines.
@@ -68,12 +68,20 @@ parallel, so all sit on its last node); never add a node to it.
    comments can be edited or deleted on the page before submitting.
    - No open comments → the button becomes "Имплементировать план": it opens a separate Claude
      Code session for `implement-plan` with subagents in the project folder.
-     - Under Claude Desktop `serve` opens `claude://code/new` with the prompt and the project
-       folder. The app shows a new Code session with the prompt filled in; the user presses
-       Enter. `serve` exits with `implementation started: desktop`, `folder:` and `prompt:`
-       lines → report in one line that the session waits for Enter in the app, and stop.
-       Propose no card and call no `start_session`.
-     - Elsewhere, or when `open` fails, the first available of: Ghostty 1.3+ (a new tab in the
+     - Under Claude Desktop `serve` opens nothing and exits with `implementation started:
+       desktop`, `folder:` and `prompt:` lines. The app refuses "user_asked" on a turn that a
+       background task started, and a card carries no folder.
+       - `folder:` is this session's working directory → propose the session with
+         `start_session`: `initiation` "own_initiative", `context` "fresh", `use_worktree` false,
+         `permission_mode` "auto", the `prompt:` line as the prompt, a `background` naming the
+         plan; then stop.
+       - `folder:` is a different folder → propose no card. Call `wrap_up` with the ask «Запустить
+         имплементацию в папке <folder>?» and one reply button that sends «запусти»; then
+         stop. On that reply call `start_session`: `initiation` "user_asked", `context` "fresh",
+         `cwd` = the `folder:` line, `use_worktree` false, `permission_mode` "auto", the
+         `prompt:` line as the prompt, a `background` naming the plan.
+       - A refused start → give the user the prompt and the folder.
+     - Elsewhere the first available of: Ghostty 1.3+ (a new tab in the
        front window, a new window only when none is open) → Terminal.app (a new window). `serve` exits with
        `implementation started: terminal` → stop and report that the session runs in the
        terminal. macOS only — elsewhere the page shows the error and the user starts
