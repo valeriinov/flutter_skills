@@ -1,0 +1,122 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log-1.json",
+      "{case}/editors.json",
+      "{case}/rounds-1.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/r2"
+    ],
+    {
+      "copy": "{tmp}/r2/spec-next.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": [
+        [
+          [
+            "invalid"
+          ],
+          [
+            {
+              "lang": "en",
+              "key": "homeTitle",
+              "reason": "too long"
+            }
+          ]
+        ],
+        [
+          [
+            "interpreted"
+          ],
+          [
+            {
+              "lang": "en",
+              "key": "settingsTitle",
+              "text": "Settings!",
+              "by": "Editor A"
+            }
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log-2.json",
+      "{case}/editors.json",
+      "--append",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/a"
+    ],
+    [
+      "{approval}",
+      "check",
+      "{tmp}/a/spec-next.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--append"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/a/spec-next.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--append",
+      "--template",
+      "{template}",
+      "-o",
+      "{tmp}/a/page.html"
+    ],
+    [
+      "{case}/same_round.py",
+      "{approval}",
+      "{tmp}/r2/page.html",
+      "{tmp}/a/page.html"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "conflict plantWaterButton en",
+    "reconcile: artifact 7, project 0, conflict 1, added 0, removed 0",
+    "same round 2"
+  ],
+  "absent": [
+    "differs"
+  ]
+}

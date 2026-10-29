@@ -21,7 +21,7 @@ folder. Scratch files go to the session's scratch directory, written below as `<
 | finished translations are to be assessed | Review |
 | source strings are to be assessed, with no translation | Review, source only |
 | intent or text for a key absent from both files, or an existing key the user names | Add key |
-| exported approved brief and locale files | Apply approved |
+| approved texts of a ux-approval cut, after the user's "write here" or "PR" | Apply approved |
 | keys awaiting approval are to be checked before a PR | Pending check |
 
 ## Roles
@@ -58,8 +58,8 @@ Pick the role, never a model.
 - **Never overwrite an accepted translation** unless the user names the string. Never write the
   source file, with two exceptions. Add key writes to it only a key absent from both files or an
   existing key the user names; the values of other keys do not change; with no paths given, the
-  files come from the brief's `## Languages and files`. Apply approved writes the export's
-  approved keys (its section).
+  files come from the brief's `## Languages and files`. Apply approved writes the approved
+  keys of a ux-approval cut (its section).
 - **New terms** — a word by the Assemble criteria (product name or do-not-translate, domain word,
   word ambiguous out of context) missing from Terms gets a `status: proposal` row: Add key shows it
   at its gate and writes it after "yes"; Translate writes it with the step 10 decisions. `accepted`
@@ -118,7 +118,9 @@ target translation files, accepted translations. Output: a brief by
    - the brief path; the queue path `approval-queue.md` beside it;
    - adding a key → Add key; editing a translation → Translate or Review;
    - editing the text of an existing key → Add key with the named key;
-   - "before a PR — ux-translate, Pending check; its warnings go into the PR description".
+   - "before a PR — ux-translate, Pending check; its warnings go into the PR description";
+   - `Prod tag:` and `Test tag:` — the tag globs of prod and test builds; `Test branch:` — the
+     branch of test builds. ux-approval reads these lines and asks for a missing one.
 
    An earlier AGENTS.md line about the translation files is replaced by one line pointing to the
    section; no other AGENTS.md line changes except links to removed duplicates.
@@ -212,25 +214,24 @@ the user names.
    - dictated by the user and absent from the task → one question at this gate; "not approved"
      → queued.
 
+   After the queue write, the queue has an `Approval:` url → ask "append to the artifact?".
+   "Yes" runs ux-approval Append.
+
 The report names the project's next step from its AGENTS.md (key code generation).
 
 ## Apply approved
 
-Input: the ux-approval export `<slug>-r<n>-brief.md` and `<slug>-r<n>-<lang>.json`, and the
-Finalize report with its reconcile commit.
+Runs only from a ux-approval cut, after the user's "write here" or "PR". Input: that cut's
+`approved-<lang>.json`, `approved-keys.txt` and `brief.md`.
 
-1. **Final round** — only the export of a final round: the Finalize report or
-   `Approval: … final` in the queue. Otherwise stop and say why.
-2. **Changed since** — keys in `git diff <commit> -- <locale files>` are not overwritten; they go
-   to the report.
-3. **Texts** — every other export key that differs from the project is a named string: a ledger
-   per pair, Translate step 6 to exit 0, then both files are written in the project's key order.
-4. **Brief** — written to the path from Brief step 4 with
-   `Status: approved (<artifact round>, <date>)`. Terms merge: export rows win; project `proposal`
-   rows absent from the export stay. The `## Localization` section as in Brief step 4; duplicates
-   as in Brief step 4, deleted only after "yes".
-5. **Queue** — a queue key is approved when the export files hold it and the step 2 diff does not;
-   its row is removed, the rest stay. `Approval:` → `applied`.
+1. **Texts** — write a key only when the project file's value equals the entry's `was` or `round`.
+   Any other value goes to the report. Write a ledger per pair with `source` from the file. Run
+   Translate step 6 to exit 0, then write both files in the project's key order.
+2. **Brief** — on the run branch only, written to the path from Brief step 4 with
+   `Status: approved (round <n>, <date>)`. Terms merge: the cut's rows win; project `proposal`
+   rows missing from the cut's brief stay. The `## Localization` section as in Brief step 4.
+3. **Queue** — on the run branch only. Remove the row of a key in `approved-keys.txt` when step 1
+   wrote it in each `approved-<lang>.json` that lists it. The rest stay. `Approval:` stays `open`.
 
 The report names the project's next step from its AGENTS.md (key code generation).
 
@@ -253,6 +254,7 @@ In the user's language, one list each, empty ones omitted:
 - tight strings to check on screen, when the project has no screenshot source, and Add key keys
   with an empty `limit`;
 - new `proposal` terms; keys queued and removed from the queue; a `Status: draft` brief;
-- duplicates removed, and code glossaries named; keys left unapplied as changed since the commit;
+- duplicates removed, and code glossaries named; keys left unapplied because the project value
+  equals neither `was` nor `round`;
 - reviewer findings left unfixed by the loop exit rule;
 - "no language pack: <code>" when it applies.

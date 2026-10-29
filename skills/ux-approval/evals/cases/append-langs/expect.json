@@ -1,0 +1,150 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{cases}/append/log-1.json",
+      "{cases}/append/editors.json",
+      "{cases}/append/rounds-1.json",
+      "--project",
+      "{cases}/append/project-1",
+      "-o",
+      "{tmp}/r2"
+    ],
+    {
+      "copy": "{tmp}/r2/spec-next.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log.json",
+      "{cases}/append/editors.json",
+      "--append",
+      "--project",
+      "{case}/project-3",
+      "-o",
+      "{tmp}/a"
+    ],
+    {
+      "copy": "{tmp}/a/spec-next.json",
+      "to": "{tmp}/a/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/a/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--append",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/a/page.html",
+      "{case}/log.json",
+      "{cases}/append/editors.json",
+      "--append",
+      "--project",
+      "{cases}/append/project-1",
+      "-o",
+      "{tmp}/b"
+    ],
+    {
+      "read": "{tmp}/b/spec-next.json"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/a/page.html",
+      "{case}/log.json",
+      "{cases}/append/editors.json",
+      "{cases}/append/rounds-2.json",
+      "--project",
+      "{case}/project-3",
+      "-o",
+      "{tmp}/r3"
+    ],
+    {
+      "read": "{tmp}/r3/uk.json"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/a/page.html",
+      "{case}/log.json",
+      "{cases}/append/editors.json",
+      "--append",
+      "--project",
+      "{case}/project-4",
+      "-o",
+      "{tmp}/a2"
+    ],
+    {
+      "copy": "{tmp}/a2/spec-next.json",
+      "to": "{tmp}/a2/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/a2/spec.json",
+      "--previous",
+      "{tmp}/a/page.html",
+      "--append",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/a2/page.html",
+      "{case}/log.json",
+      "{cases}/append/editors.json",
+      "{cases}/append/rounds-2.json",
+      "--project",
+      "{case}/project-4",
+      "-o",
+      "{tmp}/r4"
+    ],
+    {
+      "read": "{tmp}/r4/uk.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "\"homeEmpty\": \"Тут ще порожньо\""
+  ],
+  "absent": [
+    "\"value\": \"Мої квіти\"",
+    "\"Nothing here yet\"",
+    "Мої рослинки"
+  ]
+}

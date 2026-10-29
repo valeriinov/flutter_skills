@@ -1,0 +1,47 @@
+[
+  {
+    "object": "key.homeTitle",
+    "by": "ed-a",
+    "at": "2026-03-01T09:00:00.000Z",
+    "round": 1,
+    "pick": "custom",
+    "text": "Plants",
+    "reviewed": false
+  },
+  {
+    "object": "review.uk.homeEmpty",
+    "by": "ed-a",
+    "at": "2026-03-01T09:01:00.000Z",
+    "round": 1,
+    "pick": "accept",
+    "text": null,
+    "reviewed": false
+  },
+  {
+    "object": "key.settingsTitle",
+    "by": "ed-b",
+    "at": "2026-03-01T09:02:00.000Z",
+    "round": 1,
+    "pick": null,
+    "text": null,
+    "reviewed": true
+  },
+  {
+    "object": "key.plantWaterButton",
+    "by": "ed-a",
+    "at": "2026-03-01T09:03:00.000Z",
+    "round": 1,
+    "pick": "custom",
+    "text": "Water now",
+    "reviewed": false
+  },
+  {
+    "object": "key.settingsReminder",
+    "by": "ed-b",
+    "at": "2026-03-01T09:04:00.000Z",
+    "round": 1,
+    "pick": null,
+    "text": null,
+    "reviewed": true
+  }
+]

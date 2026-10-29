@@ -6,15 +6,15 @@ and reviewers never get it. The first writer creates it: Add key, Translate or R
 first row, ux-approval with its `Approval:` line and an empty table. A key approved by its task or
 design never enters it.
 
-- **`Approval:`** — written by ux-approval after each publication (`open`; Finalize → `final`);
-  Apply approved sets `applied`. No line → no artifact yet.
+- **`Approval:`** — written by ux-approval after each publication; its state is always `open`.
+  No line → no artifact yet.
 - **Rows** — added by Add key, Translate and Review by the rules in `SKILL.md`; removed by Apply
-  approved once the export approves the key.
+  approved when a cut approves the key in every language.
 
 ```markdown
 # Approval queue
 
-Approval: <artifact url>, round <n>, <open | final | applied>
+Approval: <artifact url>, round <n>, open
 
 | key | date |
 |---|---|

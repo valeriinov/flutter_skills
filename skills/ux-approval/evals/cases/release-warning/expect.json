@@ -1,0 +1,62 @@
+{
+  "steps": [
+    [
+      "{skills}/ux-approval/evals/git_fixture.py",
+      "{tmp}/repo"
+    ],
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": [
+        [
+          [
+            "approved"
+          ],
+          {
+            "uk.homeTitle": {
+              "round": 1,
+              "value": "Мої рослини"
+            },
+            "uk.homeEmpty": {
+              "round": 1,
+              "value": "Додайте першу рослину"
+            }
+          }
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "stages",
+      "{tmp}/r1/spec.json",
+      "--project",
+      "{tmp}/repo",
+      "--prod-tag",
+      "v*_PROD",
+      "--test-tag",
+      "v9*"
+    ],
+    {
+      "read": "{tmp}/repo/pubspec.yaml"
+    },
+    [
+      "{approval}",
+      "stages",
+      "{tmp}/r1/spec.json",
+      "--project",
+      "{tmp}/repo",
+      "--prod-tag",
+      "v*_PROD",
+      "--test-tag",
+      "v*_FOR_TEST"
+    ]
+  ],
+  "exit": 0,
+  "fragments": [
+    "releases: prod v1.0.0b1_PROD 1.0.0+1, test none\n\nname: garden_notes",
+    "release 1.0.1+2: unapproved 10: en.commonOk, en.homeEmpty, en.homeTitle, en.plantDaysLeft, en.plantWaterButton, en.plantWaterDone, en.settingsReminder, en.settingsTitle, uk.commonOk, uk.homeEmpty\n"
+  ],
+  "absent": [
+    "uk.homeTitle"
+  ]
+}

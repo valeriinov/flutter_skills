@@ -1,0 +1,20 @@
+[
+  {
+    "object": "key.plantWaterButton",
+    "by": "ed-a",
+    "at": "2026-03-01T09:00:00.000Z",
+    "round": 1,
+    "pick": "custom",
+    "text": "Water now",
+    "reviewed": false
+  },
+  {
+    "object": "term.полив",
+    "by": "ed-a",
+    "at": "2026-03-01T09:01:00.000Z",
+    "round": 1,
+    "pick": "watering",
+    "text": null,
+    "reviewed": false
+  }
+]

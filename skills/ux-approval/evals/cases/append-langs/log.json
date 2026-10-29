@@ -1,0 +1,29 @@
+[
+  {
+    "object": "source.homeTitle",
+    "by": "ed-a",
+    "at": "2026-03-03T09:00:00.000Z",
+    "round": 2,
+    "pick": "custom",
+    "text": "Мої рослинки",
+    "reviewed": false
+  },
+  {
+    "object": "source.homeEmpty",
+    "by": "ed-a",
+    "at": "2026-03-03T09:00:00.000Z",
+    "round": 2,
+    "pick": "custom",
+    "text": "Тут ще порожньо",
+    "reviewed": false
+  },
+  {
+    "object": "key.homeEmpty",
+    "by": "ed-a",
+    "at": "2026-03-03T09:00:00.000Z",
+    "round": 2,
+    "pick": "custom",
+    "text": "Nothing here yet",
+    "reviewed": false
+  }
+]

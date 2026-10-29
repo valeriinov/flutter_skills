@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ed-a",
+    "data": {
+      "email": "",
+      "name": "Editor A",
+      "firstSeenAt": "2026-03-01T08:00:00Z"
+    }
+  },
+  {
+    "id": "ed-b",
+    "data": {
+      "email": "",
+      "name": "Editor B",
+      "firstSeenAt": "2026-03-01T08:05:00Z"
+    }
+  },
+  {
+    "id": "ed-c",
+    "data": {
+      "email": "",
+      "name": "Editor C",
+      "firstSeenAt": "2026-03-01T08:10:00Z"
+    }
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "homeTitle": "Мої рослини",
+  "homeEmpty": "Додайте першу рослину",
+  "plantWaterButton": "Полити",
+  "plantWaterDone": "Полито: {name}",
+  "plantDaysLeft": {
+    "one": "{count} день до поливу",
+    "few": "{count} дні до поливу",
+    "many": "{count} днів до поливу",
+    "other": "{count} дня до поливу"
+  },
+  "settingsTitle": "Налаштування",
+  "settingsReminder": "Нагадування",
+  "commonOk": "OK"
+}

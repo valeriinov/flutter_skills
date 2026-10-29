@@ -10,6 +10,7 @@
              [["interpreted"], [{"lang": "en", "key": "homeTitle", "text": "Plants (для однини plant)", "by": "Editor A"}]],
              [["review"], [{"lang": "en", "key": "plantWaterDone", "severity": "minor", "was": "Watered: {plant}", "proposal": "",
                             "why": "Editor A changed this text in round 1; check it"}]]]},
+    ["{approval}", "deliver", "{tmp}/r2/spec.json", "--previous", "{tmp}/r1/page.html", "--project", "{cases}/project", "-o", "{tmp}/r2"],
     ["{approval}", "check", "{tmp}/r2/spec.json", "--previous", "{tmp}/r1/page.html"],
     ["{approval}", "build", "{tmp}/r2/spec.json", "--previous", "{tmp}/r1/page.html", "--template", "{template}", "--stats"]
   ],

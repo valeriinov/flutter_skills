@@ -2,14 +2,20 @@
 """Check a round spec, build the approval page with every round, apply a closed round.
 
 Usage:
-  approval.py check <spec> [--previous <page.html>]
-  approval.py build <spec> [--previous <page.html>] [--template <path>] [-o <page.html>] [--stats]
+  approval.py check <spec> [--previous <page.html>] [--append]
+  approval.py build <spec> [--previous <page.html>] [--append] [--template <path>] [-o <page.html>] [--stats]
   approval.py apply <page.html> <log.json> <editors.json> <round.json> --project <root> -o <dir>
+  approval.py apply <page.html> <log.json> <editors.json> --append --project <root> -o <dir>
+  approval.py stages <spec> --project <root> --prod-tag <glob> --test-tag <glob>
+  approval.py deliver <spec-next.json> --previous <page.html> --project <root> -o <dir>
 
 check prints `ok` or one `spec:<where>: <problem>` line per problem. build embeds every round
 into the template's page-data slot and writes page.html beside the spec. apply takes the latest
 answer of each editor in the closed round, settles disputes by the round's priority, reconciles
 each key with the project files against `base`, and writes the next round's inputs into <dir>.
+apply --append applies no answers and rebuilds the open round from the project. --append lets
+check and build accept that rebuilt round. stages writes the build stage of every text into the
+spec. deliver lists the approved texts the project lacks.
 Exit: 0 ok, 1 spec problems, 2 usage error, unreadable input or <dir> inside <root>.
 """
 
@@ -19,7 +25,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 DATA_SLOT = '/*__DATA__*/'
@@ -33,7 +39,8 @@ CHANGE_KINDS = ('project', 'conflict', 'added')
 KEYED_SECTIONS = ('review', 'projectChanges', 'invalid', 'interpreted')
 SOURCE_SECTIONS = ('identical', 'codeDefects')
 COLLECTIONS = {'keys': 'key', 'terms': 'id', 'questions': 'id', 'review': 'id', 'batches': 'id'}
-ROUND_SCALARS = ('brief', 'origin', 'fullReview')
+ROUND_SCALARS = ('brief', 'origin', 'fullReview', 'releases')
+STAGES = ('prod', 'test', 'dev')
 STATS_LIST_LIMIT = 20
 DECISIONS_HEADING = '## Decisions'
 OPEN_QUESTIONS_HEADING = '## Open questions'
@@ -62,20 +69,36 @@ def parse_args(argv):
     check_parser = commands.add_parser('check')
     check_parser.add_argument('spec', type=Path)
     check_parser.add_argument('--previous', type=Path)
+    check_parser.add_argument('--append', action='store_true')
     check_parser.set_defaults(run=run_check)
     build_parser = commands.add_parser('build')
     build_parser.add_argument('spec', type=Path)
     build_parser.add_argument('--previous', type=Path)
+    build_parser.add_argument('--append', action='store_true')
     build_parser.add_argument('--template', type=Path, default=TEMPLATE)
     build_parser.add_argument('-o', '--output', type=Path)
     build_parser.add_argument('--stats', action='store_true')
     build_parser.set_defaults(run=run_build)
     apply_parser = commands.add_parser('apply')
-    for name in ('page', 'log', 'editors', 'round'):
+    for name in ('page', 'log', 'editors'):
         apply_parser.add_argument(name, type=Path)
+    apply_parser.add_argument('round', type=Path, nargs='?')
+    apply_parser.add_argument('--append', action='store_true')
     apply_parser.add_argument('--project', type=Path, required=True)
     apply_parser.add_argument('-o', '--output', type=Path, required=True)
     apply_parser.set_defaults(run=run_apply)
+    stages_parser = commands.add_parser('stages')
+    stages_parser.add_argument('spec', type=Path)
+    stages_parser.add_argument('--project', type=Path, required=True)
+    stages_parser.add_argument('--prod-tag', required=True)
+    stages_parser.add_argument('--test-tag', required=True)
+    stages_parser.set_defaults(run=run_stages)
+    deliver_parser = commands.add_parser('deliver')
+    deliver_parser.add_argument('spec', type=Path)
+    deliver_parser.add_argument('--previous', type=Path, required=True)
+    deliver_parser.add_argument('--project', type=Path, required=True)
+    deliver_parser.add_argument('-o', '--output', type=Path, required=True)
+    deliver_parser.set_defaults(run=run_deliver)
     return parser.parse_args(argv)
 
 
@@ -156,20 +179,20 @@ def load_spec(path):
 def run_check(args):
     spec = load_spec(args.spec)
     previous = read_page(args.previous) if args.previous else None
-    if report_problems(spec, previous):
+    if report_problems(spec, previous, args.append):
         return 1
     print('ok')
     return 0
 
 
-def report_problems(spec, previous):
-    found = problems(spec, previous)
+def report_problems(spec, previous, append):
+    found = problems(spec, previous, append)
     for problem in found:
         print(f'spec:{problem}', file=sys.stderr)
     return bool(found)
 
 
-def problems(spec, previous):
+def problems(spec, previous, append):
     found = head_problems(spec)
     if found:
         return found
@@ -185,7 +208,8 @@ def problems(spec, previous):
     found += defect_problems(spec)
     found += risk_problems(spec)
     found += full_review_problems(spec)
-    found += round_problems(spec, previous)
+    found += stage_problems(spec, values)
+    found += round_problems(spec, previous, append)
     return found
 
 
@@ -438,7 +462,7 @@ def full_review_problems(spec):
                     for lang, number in reviewed.items() if not isinstance(number, int) or not 1 <= number <= spec['round']]
 
 
-def round_problems(spec, previous):
+def round_problems(spec, previous, append):
     if previous is None:
         return [] if spec['round'] == 1 else [f'round: {spec["round"]} needs --previous <page.html>']
     history = full_rounds(previous['rounds'])
@@ -447,12 +471,68 @@ def round_problems(spec, previous):
     if first_target(spec['files']) != first_target(previous['files']):
         found.append(f'files.targets[0]: {first_target(spec["files"])}, the previous page translates first '
                      f'to {first_target(previous["files"])}; key.<localeKey> ids belong to the first translation')
-    if spec['round'] != last['round'] + 1:
-        found.append(f'round: {spec["round"]}, expected {last["round"] + 1} after the previous page')
+    expected = last['round'] if append else last['round'] + 1
+    if spec['round'] != expected:
+        found.append(f'round: {spec["round"]}, expected {expected} {"with" if append else "after"} the previous page')
     titles = {question['id']: question.get('title') for entry in history for question in entry['questions']}
     return found + [f'questions.{question.get("id")}: title differs from the previous round'
                     for question in spec.get('questions', [])
                     if question.get('id') in titles and question.get('title') != titles[question['id']]]
+
+
+def stage_problems(spec, values):
+    found = release_problems(spec.get('releases'))
+    stages = spec.get('stages', {})
+    approved = spec.get('approved', {})
+    if not isinstance(stages, dict):
+        found.append('stages: must be an object')
+        stages = {}
+    if not isinstance(approved, dict):
+        found.append('approved: must be an object')
+        approved = {}
+    found += [f'{section}.{text_id}: key not in {text_id.partition(".")[0]} values'
+              for section, items in (('stages', stages), ('approved', approved)) for text_id in items
+              if not is_text_id(text_id, values)]
+    found += [f'stages.{text_id}: {problem}' for text_id, item in stages.items() for problem in stage_entry_problems(item)]
+    found += [f'approved.{text_id}: must be {{round: 1 to {spec["round"]}, value}}'
+              for text_id, item in approved.items() if not is_approval(item, spec['round'])]
+    return found + [f'approved.{text_id}: value differs from files' for text_id, item in approved.items()
+                    if is_text_id(text_id, values) and is_approval(item, spec['round'])
+                    and item['value'] != values[text_id.partition('.')[0]][text_id.partition('.')[2]]]
+
+
+def release_problems(releases):
+    if releases is None:
+        return []
+    if not isinstance(releases, dict) or set(releases) != {'prod', 'test'}:
+        return ['releases: must be {prod, test}']
+    return [f'releases.{name}: must be null or {{tag, version}}' for name, release in releases.items()
+            if release is not None and not is_release(release)]
+
+
+def is_release(release):
+    return isinstance(release, dict) and isinstance(release.get('tag'), str) and isinstance(release.get('version'), str)
+
+
+def is_text_id(text_id, values):
+    lang, _, key = text_id.partition('.')
+    return key in values.get(lang, {})
+
+
+def stage_entry_problems(item):
+    if not isinstance(item, dict):
+        return ['must be an object']
+    found = [] if item.get('stage') in STAGES else [f'stage must be one of {STAGES}']
+    found += [] if isinstance(item.get('inTest'), bool) else ['inTest must be true or false']
+    if 'prodText' in item and not isinstance(item['prodText'], (str, dict)):
+        found.append('prodText must be a string or an object')
+    return found
+
+
+def is_approval(item, number):
+    if not isinstance(item, dict) or item.get('value') is None:
+        return False
+    return isinstance(item.get('round'), int) and 1 <= item['round'] <= number
 
 
 def is_blank(value):
@@ -476,14 +556,14 @@ def canonical(value):
 def run_build(args):
     spec = load_spec(args.spec)
     previous = read_page(args.previous) if args.previous else None
-    if report_problems(spec, previous):
+    if report_problems(spec, previous, args.append):
         return 1
     if not args.template.is_file():
         raise InputError(f'no such file: {args.template}')
     template = args.template.read_text(encoding='utf-8')
     if DATA_SLOT not in template:
         raise InputError(f'{args.template}: no {DATA_SLOT} slot')
-    data = page_data(spec, previous)
+    data = page_data(spec, previous, args.append)
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     output = args.output or args.spec.parent / 'page.html'
     title = f'<title>{html.escape(spec["title"])}</title>\n'
@@ -494,8 +574,9 @@ def run_build(args):
     return 0
 
 
-def page_data(spec, previous):
+def page_data(spec, previous, append):
     rounds = previous['rounds'] if previous else []
+    rounds = rounds[:-1] if append else rounds
     history = full_rounds(rounds)
     last = history[-1] if history else None
     current = full_round(spec, last)
@@ -564,6 +645,7 @@ def full_round(spec, last):
         'origin': spec.get('origin') or {'branch': '', 'commit': ''},
         'brief': spec.get('brief', ''),
         'fullReview': spec.get('fullReview', {}),
+        'releases': spec.get('releases') or {'prod': None, 'test': None},
         'keys': keys,
         'terms': [term_entry(term, questions) for term in spec.get('terms', [])],
         'questions': [question_entry(question) for question in questions],
@@ -615,6 +697,8 @@ def key_index(spec):
         'defects': {item['key']: defect_details(item) for item in spec.get('codeDefects', [])},
         'identical': {item['key']: item.get('why') for item in spec.get('identical', [])},
         'compositions': [composition_entry(item) for item in spec.get('compositions', [])],
+        'stages': spec.get('stages', {}),
+        'approved': spec.get('approved', {}),
     }
 
 
@@ -659,17 +743,24 @@ def key_entry(key, spec, index, previous_values):
         'identical': key in index['identical'],
         'identicalWhy': index['identical'].get(key),
         'compositions': [item for item in index['compositions'] if key in item['keys']],
-        'projectChange': [{'lang': item['lang'], 'kind': item['kind'], 'value': item.get('value')}
-                          for item in index['projectChanges'].get(key, [])],
+        'projectChange': [project_change(item) for item in index['projectChanges'].get(key, [])],
         'invalid': [{'lang': item['lang'], 'reason': item.get('reason', '')} for item in index['invalid'].get(key, [])],
         'interpreted': [{'lang': item['lang'], 'text': item.get('text', ''), 'by': item.get('by', '')}
                         for item in index['interpreted'].get(key, [])],
         'changed': changed_langs(key, values, previous_values, langs),
+        'stage': {lang: index['stages'][f'{lang}.{key}'] for lang in langs if f'{lang}.{key}' in index['stages']},
+        'approved': {lang: index['approved'][f'{lang}.{key}']['round'] for lang in langs
+                     if f'{lang}.{key}' in index['approved']},
     }
     entry['confidence'], entry['reasons'] = confidence(entry, rows, index['emptyTerms'])
     entry['langs'] = {lang: lang_confidence(entry, rows, index['emptyTerms'], lang, lang != langs[0])
                       for lang in langs if lang in values}
     return entry
+
+
+def project_change(item):
+    change = {'lang': item['lang'], 'kind': item['kind'], 'value': item.get('value')}
+    return dict(change, since=item['since']) if item.get('since') else change
 
 
 def text_of(value):
@@ -803,17 +894,26 @@ def run_apply(args):
     output = args.output.resolve()
     if output.is_relative_to(root):
         raise InputError(f'-o {args.output} lies inside --project {args.project}; use a scratch directory')
+    if (args.round is None) != args.append:
+        raise InputError('apply takes <round.json> to close a round, or --append without it')
     data = read_page(args.page)
     last = full_rounds(data['rounds'])[-1]
     if last.get('final'):
         raise InputError(f'{args.page}: round {last["round"]} is final')
-    closing = closing_doc(load_json(args.round), last['round'])
+    closing = {} if args.append else closing_doc(load_json(args.round), last['round'])
     editors = {doc_id: doc for doc_id, doc in documents(load_json(args.editors)) if doc_id is not None}
     events = round_events(load_json(args.log), last['round'], closing.get('closedAt'))
     project = project_values(data, root)
     draft = Draft(data, last, closing, editors)
-    apply_answers(draft, events)
+    events = [event for event in events if not is_stale(draft, event)]
+    if args.append:
+        draft.append_at = utc_now()
+        draft.round_answers = answered_texts(draft, answer_slots(draft, latest_answers(events)[0]))
+    else:
+        apply_answers(draft, events)
+    answered = answered_texts(draft, draft.answered_slots)
     draft.reconcile(project)
+    draft.approved = approved_texts(draft, answered)
     output.mkdir(parents=True, exist_ok=True)
     write_outputs(draft, output, root)
     reviewed = last.get('fullReview') or {}
@@ -839,6 +939,28 @@ def round_id(doc_id):
 
 def round_events(raw, number, closed_at):
     return [doc for _, doc in documents(raw) if is_round_event(doc, number, closed_at)]
+
+
+def is_stale(draft, event):
+    key, langs = event_texts(draft, event['object'])
+    changes = draft.keys.get(key, {}).get('projectChange', [])
+    since = [change['since'] for change in changes if change.get('since') and change['lang'] in langs]
+    return bool(since) and str(event.get('at', '')) < max(since)
+
+
+def event_texts(draft, object_id):
+    kind, _, rest = object_id.partition('.')
+    if kind == 'key':
+        key, lang = key_object(draft, rest)
+        return key, (edit_lang(draft, key, lang),) if key else ()
+    if kind == 'review':
+        lang, _, key = rest.partition('.')
+        return key, (lang,)
+    return (rest, (draft.source,)) if kind == 'source' else (None, ())
+
+
+def utc_now():
+    return datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
 
 def is_round_event(doc, number, closed_at):
@@ -887,9 +1009,13 @@ class Draft:
         self.answered = set()
         self.answered_slots = set()
         self.order = list(self.keys)
+        self.kinds = {}
         self.base = {}
         self.changes = []
         self.removed = []
+        self.append_at = None
+        self.round_answers = {}
+        self.approved = {}
 
     def name(self, editor):
         doc = self.editors.get(editor, {})
@@ -929,8 +1055,9 @@ class Draft:
             return self.add_key(key, project)
         base = self.keys[key].get('base', {})
         kinds = [self.reconcile_value(key, lang, base.get(lang), project[lang].get(key)) for lang in self.langs]
+        self.kinds[key] = next((kind for kind in ('conflict', 'project') if kind in kinds), 'artifact')
         self.base[key] = {lang: project[lang][key] for lang in self.langs if key in project[lang]}
-        return next((kind for kind in ('conflict', 'project') if kind in kinds), 'artifact')
+        return self.kinds[key]
 
     def reconcile_value(self, key, lang, base, project_value):
         artifact = self.values[lang].get(key)
@@ -938,12 +1065,23 @@ class Draft:
             return None
         if project_value == base and not self.is_open_conflict(key, lang):
             return None
-        if artifact == base:
+        if artifact == base and not self.is_answered_in_round(key, lang, base, project_value):
             self.put(lang, key, project_value)
             self.note(lang, key, 'project', project_value)
             return 'project'
-        self.note(lang, key, 'conflict', project_value)
+        self.note(lang, key, 'conflict', project_value, self.conflict_since(key, lang, base, project_value))
         return 'conflict'
+
+    def is_answered_in_round(self, key, lang, base, project_value):
+        return f'{lang}.{key}' in self.round_answers and project_value != base
+
+    def conflict_since(self, key, lang, base, project_value):
+        if self.is_answered_in_round(key, lang, base, project_value):
+            return self.append_at
+        changes = [change for change in conflict_changes(self.keys[key]) if change['lang'] == lang and change.get('since')]
+        if self.append_at:
+            return max((change['since'] for change in changes), default=None)
+        return next((change['since'] for change in changes if change.get('value') == project_value), None)
 
     def is_open_conflict(self, key, lang):
         return (key, lang) not in self.answered and lang in [change['lang'] for change in conflict_changes(self.keys[key])]
@@ -962,8 +1100,9 @@ class Draft:
             return
         self.values[lang][key] = value
 
-    def note(self, lang, key, kind, value):
-        self.changes.append({'lang': lang, 'key': key, 'kind': kind, 'value': value})
+    def note(self, lang, key, kind, value, since=None):
+        change = {'lang': lang, 'key': key, 'kind': kind, 'value': value}
+        self.changes.append(dict(change, since=since) if since else change)
         print(f'{kind} {key} {lang}')
 
 
@@ -983,6 +1122,29 @@ def apply_answers(draft, events):
         apply_answer(draft, by_editor[winner]['object'], by_editor[winner])
         apply_displaced_keeps(draft, events_by_editor[winner], by_editor[winner])
     print(f'answers {len(answers)}, disputes {len(draft.disputes)}, withdrawn {len(withdrawn)}')
+
+
+def answered_texts(draft, slots):
+    texts = {}
+    for slot in slots:
+        lang, _, key = slot.partition('.')
+        if lang in draft.langs and key in draft.keys:
+            texts.update({f'{text_lang}.{key}': draft.values[text_lang].get(key) for text_lang in (lang, draft.source)})
+    return {text_id: value for text_id, value in texts.items() if value is not None}
+
+
+def approved_texts(draft, answered):
+    changed = {f'{change["lang"]}.{change["key"]}' for change in draft.changes}
+    approved = {f'{lang}.{key}': {'round': round_number, 'value': draft.values[lang][key]}
+                for key, entry in draft.keys.items() for lang, round_number in entry.get('approved', {}).items()
+                if is_carried(draft, key, lang, entry)}
+    approved.update({text_id: {'round': draft.last['round'], 'value': value} for text_id, value in answered.items()
+                     if text_id not in changed})
+    return {text_id: approved[text_id] for text_id in sorted(approved) if text_id.partition('.')[2] in draft.order}
+
+
+def is_carried(draft, key, lang, entry):
+    return draft.kinds.get(key) == 'artifact' and draft.values[lang].get(key) == entry['values'].get(lang)
 
 
 def latest_answers(events):
@@ -1239,19 +1401,20 @@ def next_spec(draft, root):
         'ui': data['ui'],
         'product': data['product'],
         'slug': data['slug'],
-        'round': last['round'] + 1,
+        'round': last['round'] if draft.append_at else last['round'] + 1,
         'final': False,
-        'origin': project_origin(root),
-        'brief': updated_brief(last.get('brief') or '', draft),
+        'origin': next_origin(draft, root),
+        'brief': (last.get('brief') or '') if draft.append_at else updated_brief(last.get('brief') or '', draft),
         'fullReview': last.get('fullReview') or {},
         'files': {'source': file_spec(draft, draft.source, values, base),
                   'targets': [file_spec(draft, lang, values, base) for lang in draft.targets]},
         'terms': [next_term(term, kept) for term in draft.terms.values()],
         'questions': [question for question_id, question in draft.questions.items() if question_id not in decided],
         'review': next_review(draft, kept),
-        'projectChanges': draft.changes,
-        'invalid': [],
-        'interpreted': [],
+        'projectChanges': kept_items(draft, 'projectChange', draft.changes, kept),
+        'invalid': kept_items(draft, 'invalid', [], kept),
+        'interpreted': kept_items(draft, 'interpreted', [], kept),
+        'approved': draft.approved,
         'rejected': [item for item in draft.rejected if item['key'] in kept],
         'codeDefects': [dict({'key': entry['key'], 'text': entry['codeDefect']}, **(entry.get('defect') or {}))
                         for entry in last['keys'] if entry['codeDefect'] and entry['key'] in kept],
@@ -1261,6 +1424,21 @@ def next_spec(draft, root):
         'compositions': kept_compositions(last['keys'], kept),
         'batches': [dict(batch, expected=counts.get(batch['id'], 0)) for batch in batches],
     }
+
+
+def next_origin(draft, root):
+    origin = project_origin(root)
+    page_origin = draft.last.get('origin') or {}
+    return page_origin if draft.append_at and page_origin.get('commit') == origin['commit'] else origin
+
+
+def kept_items(draft, name, new, kept):
+    if not draft.append_at:
+        return new
+    replaced = {(item['lang'], item['key']) for item in new}
+    carried = [dict(item, key=key) for key, entry in draft.keys.items() for item in entry[name]
+               if key in kept and (item['lang'], key) not in replaced and item.get('kind') != 'conflict']
+    return carried + new
 
 
 def file_spec(draft, lang, values, base):
@@ -1290,12 +1468,12 @@ def risk_groups(entries, kept):
 
 
 def project_origin(root):
-    return {'branch': git(root, '--abbrev-ref', 'HEAD'), 'commit': git(root, 'HEAD')}
+    return {'branch': git(root, 'rev-parse', '--abbrev-ref', 'HEAD'), 'commit': git(root, 'rev-parse', 'HEAD')}
 
 
-def git(root, *revision):
+def git(root, *args):
     try:
-        result = subprocess.run(['git', '-C', str(root), 'rev-parse', *revision], capture_output=True, text=True)
+        result = subprocess.run(['git', '-C', str(root), *args], capture_output=True, text=True)
     except OSError:
         return ''
     return result.stdout.strip() if result.returncode == 0 else ''
@@ -1445,6 +1623,124 @@ def free_text_markdown(draft):
     if not draft.free_text:
         lines.append('No own variants or comments.')
     return '\n'.join(lines) + '\n'
+
+
+# ---------------------------------------------------------------- stages
+
+def run_stages(args):
+    root = args.project.resolve()
+    spec = load_json(args.spec)
+    if not isinstance(spec, dict) or not isinstance(spec.get('files'), dict):
+        raise InputError(f'{args.spec}: not a round spec')
+    entries = file_entries(with_targets(spec['files']))
+    prod = release(root, args.prod_tag)
+    test = release(root, args.test_tag)
+    if prod and test and commit_time(root, test) <= commit_time(root, prod):
+        print(f'test tag {test["tag"]} dropped: its commit is not newer than prod {prod["tag"]}')
+        test = None
+    prod_texts = texts_at(root, prod, entries)
+    test_texts = texts_at(root, test, entries)
+    spec['releases'] = {'prod': prod, 'test': test}
+    spec['stages'] = {f'{entry["lang"]}.{key}': text_stage(f'{entry["lang"]}.{key}', value, prod_texts, test_texts)
+                      for entry in entries for key, value in entry['values'].items()}
+    write_json(args.spec, spec)
+    print(f'releases: prod {release_label(prod)}, test {release_label(test)}')
+    if test:
+        unapproved = unapproved_texts(test_texts, prod_texts, spec.get('approved', {}))
+        print(f'release {test["version"]}: unapproved {len(unapproved)}: {", ".join(unapproved)}')
+    return 0
+
+
+def release(root, pattern):
+    tags = git(root, 'tag', '--list', pattern, '--sort=-v:refname').splitlines()
+    if not tags:
+        return None
+    match = re.search(r'^version:\s*(\S+)', git(root, 'show', f'{tags[0]}:./pubspec.yaml'), re.M)
+    return {'tag': tags[0], 'version': match.group(1) if match else tags[0]}
+
+
+def commit_time(root, release):
+    return int(git(root, 'log', '-1', '--format=%ct', f'{release["tag"]}^{{commit}}'))
+
+
+def texts_at(root, tag, entries):
+    if tag is None:
+        return {}
+    texts = {}
+    for entry in entries:
+        try:
+            loaded = json.loads(git(root, 'show', f'{tag["tag"]}:./{entry["path"]}') or '{}')
+        except json.JSONDecodeError:
+            raise InputError(f'{tag["tag"]}:{entry["path"]}: invalid JSON') from None
+        texts.update({f'{entry["lang"]}.{key}': value for key, value in loaded.items()} if isinstance(loaded, dict) else {})
+    return texts
+
+
+def text_stage(text_id, value, prod_texts, test_texts):
+    in_prod = text_id in prod_texts and prod_texts[text_id] == value
+    in_test = text_id in test_texts and test_texts[text_id] == value
+    stage = {'stage': 'prod' if in_prod else 'test' if in_test else 'dev', 'inTest': in_test}
+    return dict(stage, prodText=prod_texts[text_id]) if text_id in prod_texts and not in_prod else stage
+
+
+def release_label(item):
+    return f'{item["tag"]} {item["version"]}' if item else 'none'
+
+
+def unapproved_texts(test_texts, prod_texts, approved):
+    return sorted(text_id for text_id, value in test_texts.items()
+                  if prod_texts.get(text_id) != value and approved.get(text_id, {}).get('value') != value)
+
+
+# ---------------------------------------------------------------- deliver
+
+def run_deliver(args):
+    root = args.project.resolve()
+    spec = load_spec(args.spec)
+    seen = {entry['key']: entry['values'] for entry in full_rounds(read_page(args.previous)['rounds'])[-1]['keys']}
+    project = project_values(spec, root)
+    entries = file_entries(spec['files'])
+    held = held_texts(spec, args.spec.parent / 'suspect.jsonl')
+    approved = spec.get('approved', {})
+    dropped = sorted(text_id for text_id, item in approved.items() if text_id in held or item['value'] != spec_value(spec, text_id))
+    spec['approved'] = {text_id: item for text_id, item in approved.items() if text_id not in dropped}
+    write_json(args.spec, spec)
+    args.output.mkdir(parents=True, exist_ok=True)
+    for entry in entries:
+        lang = entry['lang']
+        items = [delivery(entry, spec, key, item, seen) for key, item in approved_in(spec, lang).items()
+                 if project[lang].get(key) != item['value']]
+        write_json(args.output / f'approved-{lang}.json', items)
+        print(f'approved {lang}: {len(items)} not in the project')
+    complete = [key for key in source_values(spec)
+                if all(f'{entry["lang"]}.{key}' in spec['approved'] for entry in entries if key in entry['values'])]
+    (args.output / 'approved-keys.txt').write_text(''.join(f'{key}\n' for key in complete), encoding='utf-8')
+    for text_id in dropped:
+        print(f'not approved {text_id}')
+    return 0
+
+
+def held_texts(spec, suspects_path):
+    held = {f'{item["lang"]}.{item["key"]}' for name in ('invalid', 'interpreted') for item in spec.get(name, [])}
+    if not suspects_path.is_file():
+        return held
+    lines = suspects_path.read_text(encoding='utf-8').splitlines()
+    return held | {f'{line["lang"]}.{line["key"]}' for line in map(json.loads, filter(str.strip, lines))}
+
+
+def approved_in(spec, lang):
+    return {text_id.partition('.')[2]: item for text_id, item in spec['approved'].items()
+            if text_id.partition('.')[0] == lang}
+
+
+def spec_value(spec, text_id):
+    lang, _, key = text_id.partition('.')
+    return values_by_lang(spec).get(lang, {}).get(key)
+
+
+def delivery(entry, spec, key, item, seen):
+    return {'key': key, 'source': source_values(spec).get(key), 'round': seen.get(key, {}).get(entry['lang']),
+            'was': entry['base'].get(key), 'value': item['value']}
 
 
 if __name__ == '__main__':

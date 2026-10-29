@@ -1,0 +1,136 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log-1.json",
+      "{case}/editors.json",
+      "{case}/rounds-1.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/r2"
+    ],
+    {
+      "copy": "{tmp}/r2/spec-next.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": [
+        [
+          [
+            "invalid"
+          ],
+          [
+            {
+              "lang": "en",
+              "key": "homeTitle",
+              "reason": "too long"
+            }
+          ]
+        ]
+      ]
+    },
+    [
+      "{approval}",
+      "deliver",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/d1"
+    ],
+    {
+      "read": "{tmp}/r2/spec.json"
+    },
+    {
+      "read": "{tmp}/d1/approved-uk.json"
+    },
+    {
+      "read": "{tmp}/d1/approved-en.json"
+    },
+    {
+      "read": "{tmp}/d1/approved-keys.txt"
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}"
+    ],
+    {
+      "read": "{tmp}/r2/page.html"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log-2.json",
+      "{case}/editors.json",
+      "{case}/rounds-2.json",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/r3"
+    ],
+    [
+      "{approval}",
+      "deliver",
+      "{tmp}/r3/spec-next.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--project",
+      "{case}/project",
+      "-o",
+      "{tmp}/d2"
+    ],
+    {
+      "read": "{tmp}/d2/approved-uk.json"
+    }
+  ],
+  "exit": 0,
+  "fragments": [
+    "\"en.settingsTitle\": {\n      \"round\": 1,\n      \"value\": \"Settings\"\n    }",
+    "\"uk.settingsTitle\": {\n      \"round\": 1,\n      \"value\": \"Налаштування\"\n    }",
+    "\"uk.homeEmpty\": {\n      \"round\": 1,\n      \"value\": \"Додайте свою першу рослину\"\n    }",
+    "\"uk.plantWaterButton\": {\n      \"round\": 1,\n      \"value\": \"Полити\"\n    }",
+    "\"en.settingsReminder\": {\n      \"round\": 1,\n      \"value\": \"Watering reminders\"\n    }",
+    "not approved en.homeTitle",
+    "approved uk: 1 not in the project",
+    "approved en: 0 not in the project",
+    "\"key\": \"homeEmpty\",\n    \"source\": \"Додайте свою першу рослину\",\n    \"round\": \"Додайте першу рослину\",\n    \"was\": \"Додайте першу рослину\",\n    \"value\": \"Додайте свою першу рослину\"",
+    "\nsettingsTitle\n",
+    "\"approved\":{\"en\":1},\"confidence\"",
+    "\"key\": \"homeEmpty\",\n    \"source\": \"Додайте свою першу рослину\",\n    \"round\": \"Додайте свою першу рослину\",\n    \"was\": \"Додайте першу рослину\",\n    \"value\": \"Додайте свою першу рослину\""
+  ],
+  "absent": [
+    "\"en.homeTitle\"",
+    "\"en.plantWaterButton\"",
+    "\"uk.settingsReminder\"",
+    "\"uk.commonOk\"",
+    "\"en.commonOk\""
+  ]
+}

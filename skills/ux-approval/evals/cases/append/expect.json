@@ -1,0 +1,122 @@
+{
+  "steps": [
+    {
+      "copy": "{cases}/spec-r1/spec.json",
+      "to": "{tmp}/r1/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r1/spec.json",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r1/page.html",
+      "{case}/log-1.json",
+      "{case}/editors.json",
+      "{case}/rounds-1.json",
+      "--project",
+      "{case}/project-1",
+      "-o",
+      "{tmp}/r2"
+    ],
+    {
+      "copy": "{tmp}/r2/spec-next.json",
+      "to": "{tmp}/r2/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "build",
+      "{tmp}/r2/spec.json",
+      "--previous",
+      "{tmp}/r1/page.html",
+      "--template",
+      "{template}"
+    ],
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/r2/page.html",
+      "{case}/log-2.json",
+      "{case}/editors.json",
+      "--append",
+      "--project",
+      "{case}/project-2",
+      "-o",
+      "{tmp}/a"
+    ],
+    {
+      "copy": "{tmp}/a/spec-next.json",
+      "to": "{tmp}/a/spec.json",
+      "set": []
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/a/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--append"
+    ],
+    [
+      "{approval}",
+      "build",
+      "{tmp}/a/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html",
+      "--append",
+      "--template",
+      "{template}",
+      "--stats"
+    ],
+    {
+      "read": "{tmp}/a/page.html"
+    },
+    [
+      "{approval}",
+      "apply",
+      "{tmp}/a/page.html",
+      "{case}/log-3.json",
+      "{case}/editors.json",
+      "{case}/rounds-2.json",
+      "--project",
+      "{case}/project-2",
+      "-o",
+      "{tmp}/r3"
+    ],
+    {
+      "read": "{tmp}/r3/uk.json"
+    },
+    [
+      "{approval}",
+      "check",
+      "{tmp}/a/spec.json",
+      "--previous",
+      "{tmp}/r2/page.html"
+    ]
+  ],
+  "exit": 1,
+  "fragments": [
+    "conflict homeTitle uk",
+    "removed commonOk",
+    "\"projectChange\":[{\"lang\":\"uk\",\"kind\":\"conflict\",\"value\":\"Мої квіти\",\"since\":\"20",
+    "\"projectChange\":[{\"lang\":\"en\",\"kind\":\"project\",\"value\":\"Preferences\"}]",
+    "\"projectChange\":[{\"lang\":\"uk\",\"kind\":\"added\",\"value\":\"Перейменувати\"},{\"lang\":\"en\",\"kind\":\"added\",\"value\":\"Rename\"}]",
+    "rounds 2\n",
+    "round 2: keys 8 (delta 4), terms 3 (delta 0), questions 2 (delta 0), review 3 (delta 0), batches 4 (delta 2), removed 1;",
+    "changed plantWaterButton: en",
+    "changed settingsTitle: en",
+    "answer key.homeTitle: project value (Editor B)",
+    "\"homeTitle\": \"Мої квіти\"",
+    "spec:round: 2, expected 3 after the previous page"
+  ],
+  "absent": [
+    "answer source.homeTitle",
+    "Мої рослинки"
+  ]
+}

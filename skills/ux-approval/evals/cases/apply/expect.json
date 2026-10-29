@@ -69,7 +69,7 @@
     "Preferences",
     "Okay",
     "- Як перекладати «полив»",
-    "\"round\": 1,",
+    "\"round\": 1,\n  \"final\"",
     "Late water",
     "Withdrawn remark",
     "\"why\": \"the empty state speaks to the owner of the list\"",
