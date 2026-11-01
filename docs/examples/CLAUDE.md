@@ -11,6 +11,12 @@ Rules proposed from retrospectives or usage reports need recurrence evidence:
 rule goes into the skill/file where it bit, not into global instructions. No
 new skill for a rarely-performed operation.
 
+### Delegation
+
+- A wide search, reads across many files, a log or diff analysis, or other long
+  tool output goes to an `Explore` or `general-purpose` subagent. The main
+  session keeps the conclusion, not the file dumps.
+
 ### Auto mode
 
 - When the auto-mode classifier denies a step the task needs, name the command
