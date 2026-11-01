@@ -22,7 +22,8 @@ MAX_SECTION_NODES = 6
 MAX_FLOW_EDGES = 7
 MAX_OVERVIEW_FLOW_NODES = 10
 MAX_OVERVIEW_FLOW_EDGES = 12
-FLOW_KINDS = ('step', 'check', 'result')
+FLOW_KINDS = ('start', 'step', 'check', 'result', 'fail')
+FLOW_GLYPHS = {'start': '▸ ', 'result': '✓ ', 'fail': '✕ '}
 MAX_LABEL_CHARS = 40
 MAX_LINK_WORDS = 3
 MAX_BRANCH_LABEL_WORDS = 6
@@ -43,6 +44,14 @@ WIDE_LABELS = {
     'ru': {'swipe': 'Листайте вбок', 'full': 'Целиком'},
     'uk': {'swipe': 'Гортайте вбік', 'full': 'Повністю'},
     'en': {'swipe': 'Scroll sideways', 'full': 'Full screen'},
+}
+FLOW_LABELS = {
+    'ru': {'start': 'вход', 'result': 'итог', 'fail': 'провал', 'back': 'возврат',
+           'repo': 'Что меняется в репозитории'},
+    'uk': {'start': 'вхід', 'result': 'підсумок', 'fail': 'збій', 'back': 'повернення',
+           'repo': 'Що змінюється в репозиторії'},
+    'en': {'start': 'entry', 'result': 'outcome', 'fail': 'failure', 'back': 'return',
+           'repo': 'What changes in the repository'},
 }
 CONCEPT_LABELS = {
     'ru': {'title': 'Концепт', 'open': 'Развернуть всё', 'close': 'Свернуть всё',
@@ -162,6 +171,8 @@ def file_problems(owner, files):
     found = []
     for file in files:
         where = f'{owner}: file {file.get("path")}'
+        if not all(file.get('path', '').split('/')):
+            found.append(f'{where} is a folder or has an empty segment; name the files, not the folder')
         if file.get('status') not in FILE_STATUSES:
             found.append(f'{where} has no valid status')
         if file.get('status') != 'same' and not file.get('edits'):
@@ -238,7 +249,7 @@ def section_problems(doc, entities):
                   for view in section.get('views', []) if view.get('type') not in VIEW_TYPES]
     found += [f'entity {name}: {entity["status"]} but in no section'
               for name, entity in entities.items()
-              if entity.get('status') != 'same' and name not in covered]
+              if entity.get('status') != 'same' and not entity.get('artifact') and name not in covered]
     return found
 
 
@@ -249,7 +260,9 @@ def overview_flow_problems(doc, entities):
     found = flow_problems('overview flow', flow, entities, MAX_OVERVIEW_FLOW_NODES, MAX_OVERVIEW_FLOW_EDGES)
     shown = {node.get('entity') for node in flow.get('nodes', [])}
     found += [f'entity {name}: {entity["status"]} but not on the overview flow'
-              for name, entity in entities.items() if entity.get('status') != 'same' and name not in shown]
+              for name, entity in entities.items()
+              if entity.get('status') != 'same' and not entity.get('artifact') and name not in shown]
+    found += start_problems(flow)
     branches = [node for node in flow.get('nodes', []) if node.get('kind') == 'check']
     if len(branches) > MAX_OVERVIEW_BRANCHES:
         found.append(f'overview flow has {len(branches)} branches, limit {MAX_OVERVIEW_BRANCHES}; '
@@ -280,6 +293,22 @@ def overview_flow_problems(doc, entities):
     return found
 
 
+def start_problems(flow):
+    nodes = flow.get('nodes', [])
+    targets = {edge.get('to') for edge in flow.get('edges', []) if not edge.get('hidden')}
+    found = []
+    if not any(node.get('kind') == 'start' for node in nodes):
+        found.append('overview flow has no "start" node; mark the action that begins the flow')
+    for node in nodes:
+        name = node.get('id', '?')
+        if node.get('kind') == 'start' and name in targets:
+            found.append(f'overview flow: start {name} has an incoming arrow; a start only begins the flow')
+        if node.get('kind') != 'start' and name not in targets:
+            found.append(f'overview flow: node {name} has no incoming arrow; make it a "start" '
+                         'or a note on the step it feeds')
+    return found
+
+
 def branch_edges(flow):
     branches = {node['id'] for node in flow.get('nodes', []) if node.get('kind') == 'check'}
     return [edge for edge in flow.get('edges', []) if edge.get('from') in branches]
@@ -306,6 +335,8 @@ def flow_problems(where, flow, entities, max_nodes=MAX_SECTION_NODES, max_edges=
         name = node.get('id', '?')
         if node.get('entity') and node['entity'] not in entities:
             found.append(f'{where}: flow node {name} names unknown entity {node["entity"]}')
+        if entities.get(node.get('entity'), {}).get('artifact'):
+            found.append(f'{where}: flow node {name} is an artifact; a file, link or config takes no step')
         if not node.get('entity') and not node.get('label'):
             found.append(f'{where}: flow node {name} needs "label" or "entity"')
         if visible_length(node.get('label', '')) > MAX_LABEL_CHARS or visible_length(node.get('note', '')) > MAX_LABEL_CHARS:
@@ -314,16 +345,34 @@ def flow_problems(where, flow, entities, max_nodes=MAX_SECTION_NODES, max_edges=
             found.append(f'{where}: flow node {name} kind must be one of {FLOW_KINDS}')
         if node.get('status', 'same') not in STATUSES:
             found.append(f'{where}: flow node {name} status must be one of {STATUSES}')
-    branches = {node.get('id') for node in nodes if node.get('kind') == 'check'}
+    kinds = {node.get('id'): node.get('kind', 'step') for node in nodes}
     for edge in flow.get('edges', []):
         found += [f'{where}: flow arrow names unknown node {end}'
                   for end in (edge.get('from'), edge.get('to')) if end not in ids]
-        limit = MAX_BRANCH_LABEL_WORDS if edge.get('from') in branches else MAX_LINK_WORDS
-        if edge.get('from') in branches and VAGUE_VARIANT_RE.search(edge.get('label', '')):
-            found.append(f'{where}: variant "{edge.get("label")}" is vague; name the exact values it covers')
-        if len(edge.get('label', '').split()) > limit:
-            found.append(f'{where}: flow arrow label "{edge.get("label")}" over {limit} words')
+        found += arrow_label_problems(where, edge, kinds)
     return found
+
+
+def arrow_label_problems(where, edge, kinds):
+    label = edge.get('label', '')
+    if kinds.get(edge.get('from')) == 'check':
+        if VAGUE_VARIANT_RE.search(label):
+            return [f'{where}: variant "{label}" is vague; name the exact values it covers']
+        if len(label.split()) > MAX_BRANCH_LABEL_WORDS:
+            return [f'{where}: flow arrow label "{label}" over {MAX_BRANCH_LABEL_WORDS} words']
+        return []
+    if is_side_arrow(edge, kinds):
+        if len(label.split()) > MAX_LINK_WORDS:
+            return [f'{where}: flow arrow label "{label}" over {MAX_LINK_WORDS} words']
+        return []
+    if label:
+        return [f'{where}: arrow {edge.get("from")} → {edge.get("to")} has label "{label}"; a plain arrow '
+                'means "then", so drop it, or mark a return with "back": true']
+    return []
+
+
+def is_side_arrow(edge, kinds):
+    return bool(edge.get('back')) or kinds.get(edge.get('to')) == 'fail'
 
 
 def visible_length(text):
@@ -429,41 +478,67 @@ def node_label(entity, is_context, with_files):
     return '<br/>'.join(parts)
 
 
-FLOW_SHAPES = {'step': ('["', '"]'), 'check': ('{{"', '"}}'), 'result': ('(["', '"])')}
+FLOW_SHAPES = {'start': ('(["', '"])'), 'step': ('["', '"]'), 'check': ('{{"', '"}}'),
+               'result': ('(["', '"])'), 'fail': ('(["', '"])')}
 
 
-def flow_source(doc, flow):
+def flow_source(doc, flow, with_code=True):
     by_id = {entity['id']: entity for entity in doc.get('entities', [])}
     lines = ['flowchart TD']
-    for node in flow['nodes']:
-        entity = by_id.get(node.get('entity'))
-        status = node.get('status') or (entity or {}).get('status', 'same')
-        parts = [f'<b>{flow_text(node.get("label") or entity["name"])}</b>']
-        if entity and entity.get('code'):
-            parts.append(f"<span class='n-code'>{code_text(entity['code'])}</span>")
-        if node.get('note'):
-            parts.append(f"<span class='n-change'>{flow_text(node['note'])}</span>")
-        kind = node.get('kind', 'step')
-        css_class = 'branch' if kind == 'check' else status
-        open_shape, close_shape = FLOW_SHAPES[kind]
-        lines.append(f'  {node_id(node["id"])}{open_shape}{"<br/>".join(parts)}{close_shape}:::{css_class}')
-    branches = {node['id'] for node in flow['nodes'] if node.get('kind') == 'check'}
-    branch_edges = []
+    starts = [node for node in flow['nodes'] if node.get('kind') == 'start']
+    if len(starts) > 1:
+        lines += ['  subgraph starts [" "]', '    direction LR']
+        lines += [f'  {flow_node_source(node, by_id, with_code)}' for node in starts]
+        lines += ['  end', '  style starts fill:transparent,stroke:transparent']
+    lines += [flow_node_source(node, by_id, with_code) for node in flow['nodes']
+              if len(starts) < 2 or node.get('kind') != 'start']
+    lines += [f'  style {node_id(node["id"])} stroke:OK_STROKE,stroke-width:2.2px' for node in flow['nodes']
+              if node.get('kind') == 'result' and flow_node_status(node, by_id) != 'same']
+    kinds = {node['id']: node.get('kind', 'step') for node in flow['nodes']}
+    styles = {'BRANCH_STROKE,stroke-width:1.8px': [], 'FAIL_STROKE,stroke-width:1.6px': []}
     for index, edge in enumerate(flow.get('edges', [])):
         if edge.get('hidden'):
             lines.append(f'  {node_id(edge["from"])} ~~~ {node_id(edge["to"])}')
             continue
-        from_branch = edge['from'] in branches
+        from_branch = kinds.get(edge['from']) == 'check'
         if from_branch:
-            branch_edges.append(str(index))
+            styles['BRANCH_STROKE,stroke-width:1.8px'].append(str(index))
+        if kinds.get(edge['to']) == 'fail':
+            styles['FAIL_STROKE,stroke-width:1.6px'].append(str(index))
         text = edge_text(flow_text(edge.get('label', '')))
         if text and from_branch:
             text = f"<span class='n-branch'>{text}</span>"
         label = f'|{text}|' if text else ''
-        lines.append(f'  {node_id(edge["from"])} -->{label} {node_id(edge["to"])}')
-    if branch_edges:
-        lines.append(f'  linkStyle {",".join(branch_edges)} stroke:BRANCH_STROKE,stroke-width:1.8px')
+        arrow = '-.->' if is_side_arrow(edge, kinds) else '-->'
+        lines.append(f'  {node_id(edge["from"])} {arrow}{label} {node_id(edge["to"])}')
+    lines += [f'  linkStyle {",".join(indexes)} stroke:{style}' for style, indexes in styles.items() if indexes]
     return '\n'.join(lines)
+
+
+def flow_node_source(node, by_id, with_code):
+    entity = by_id.get(node.get('entity'))
+    kind = node.get('kind', 'step')
+    parts = [f'<b>{FLOW_GLYPHS.get(kind, "")}{flow_text(node.get("label") or entity["name"])}</b>']
+    if with_code and entity and entity.get('code'):
+        parts.append(f"<span class='n-code'>{code_text(entity['code'])}</span>")
+    if node.get('note'):
+        parts.append(f"<span class='n-change'>{flow_text(node['note'])}</span>")
+    open_shape, close_shape = FLOW_SHAPES[kind]
+    return f'  {node_id(node["id"])}{open_shape}{"<br/>".join(parts)}{close_shape}:::{flow_node_class(node, by_id)}'
+
+
+def flow_node_class(node, by_id):
+    kind = node.get('kind', 'step')
+    status = flow_node_status(node, by_id)
+    if kind == 'check':
+        return 'branch'
+    if kind in ('result', 'fail') and status == 'same':
+        return 'ok' if kind == 'result' else 'fail'
+    return status
+
+
+def flow_node_status(node, by_id):
+    return node.get('status') or by_id.get(node.get('entity'), {}).get('status', 'same')
 
 
 def node_id(name):
@@ -571,23 +646,46 @@ def sections_by_entity(doc):
     return mapping
 
 
-def legend(ui, with_branch=False):
-    keys = ('new', 'changed', 'branch') if with_branch else ('new', 'changed')
+def legend(doc, flow=None):
+    ui = doc['ui']
+    keys = ('new', 'changed', 'same', 'branch') if has_branch(doc) else ('new', 'changed', 'same')
     items = [f'<span class="{key}">{html.escape(ui[key])}</span>' for key in keys]
+    shapes = flow_labels(doc)
+    kinds = {node.get('kind', 'step') for node in (flow or {}).get('nodes', [])}
+    if any(edge.get('back') for edge in (flow or {}).get('edges', [])):
+        kinds.add('back')
+    items += [f'<span class="{key}">{html.escape(FLOW_GLYPHS.get(key, ""))}{html.escape(shapes[key])}</span>'
+              for key in ('start', 'result', 'fail', 'back') if key in kinds]
     return f'<div class="legend">{"".join(items)}</div>'
+
+
+def flow_labels(doc):
+    return FLOW_LABELS.get(doc.get('lang', 'ru'), FLOW_LABELS['en'])
+
+
+def artifacts_html(doc):
+    artifacts = [entity for entity in doc.get('entities', []) if entity.get('artifact') and entity['status'] != 'same']
+    if not doc.get('flow') or not artifacts:
+        return ''
+    rows = ''.join(f'<div class="art-row"><span class="mark {entity["status"]}"></span>'
+                   f'<span class="art-name">{inline(entity["name"])}'
+                   + (f' <code>{html.escape(entity["code"])}</code>' if entity.get('code') else '')
+                   + f'</span><span class="art-arrow">→</span><span>{inline(entity["change"])}</span></div>'
+                   for entity in artifacts)
+    return f'<div class="artifacts"><div class="eyebrow">{html.escape(flow_labels(doc)["repo"])}</div>{rows}</div>'
 
 
 def overview(doc):
     if not doc.get('entities'):
         return ''
     if doc.get('flow'):
-        source = flow_source(doc, doc['flow'])
+        source = flow_source(doc, doc['flow'], with_code=False)
     else:
         node_ids = {entity['id'] for entity in doc['entities']}
         source = mermaid_source(doc, node_ids, doc.get('links', []), 'TD')
     ui = doc['ui']
     return (f'<section class="overview"><h2>{html.escape(ui["overview"])}</h2>'
-            f'{diagram(source, wide_labels(doc))}{legend(ui, has_branch(doc))}</section>'
+            f'{diagram(source, wide_labels(doc))}{legend(doc, doc.get("flow"))}{artifacts_html(doc)}</section>'
             '<div class="zoom" hidden><button type="button" class="zoom-close" aria-label="close">×</button>'
             '<div class="zoom-body"></div></div>')
 
@@ -809,6 +907,8 @@ TOKENS_CSS = """
   --node-deleted-bg: #FFEBE9; --node-deleted-border: #CF222E; --node-deleted-fg: #A40E26;
   --node-branch-bg: #EDE4FF; --node-branch-border: #7A4FD6; --node-branch-fg: #4A2696;
   --node-context-bg: #FFFFFF; --node-context-border: #D5D9E3; --node-context-fg: #8A90A2;
+  --node-ok-bg: #FFFFFF; --node-ok-border: #1A7F37; --node-ok-fg: #116329;
+  --node-fail-bg: #FFFFFF; --node-fail-border: #CF222E; --node-fail-fg: #A40E26;
   --f-display: 'Unbounded', system-ui, sans-serif;
   --f-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
@@ -840,6 +940,7 @@ VISUAL_CSS = """.eyebrow { font-size: 12px; font-weight: 700; text-transform: up
 .diagram-full { min-height: 32px; padding: 2px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--card); font: inherit; font-weight: 600; color: var(--ink-3); cursor: pointer; }
 section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }
 .diagram .node rect { rx: 10px; ry: 10px; }
+:is(.diagram, .zoom-body) .node :is(rect, polygon) { filter: drop-shadow(0 2px 3px rgba(21, 24, 35, .10)); }
 .mermaid-src { display: none; }
 .n-code { display: inline-block; font-family: var(--f-mono); font-size: 14px; color: color-mix(in srgb, currentColor 80%, transparent); }
 .n-change { font-size: 15px; font-style: italic; }
@@ -855,6 +956,16 @@ section > .diagram { width: min(1100px, calc(100vw - 32px)); position: relative;
 }
 :is(.diagram, .zoom-body) .edgeLabel .n-branch, :is(.diagram, .zoom-body) .edgeLabel .n-branch .n-code { color: var(--node-branch-fg); }
 .legend .context::before { background: var(--node-context-bg); border-color: var(--node-context-border); border-style: dashed; }
+.legend :is(.start, .result, .fail)::before { width: 20px; border-radius: 999px; }
+.legend .start::before { background: var(--node-same-bg); border-color: var(--ink-2); }
+.legend .result::before { background: var(--node-ok-bg); border-color: var(--node-ok-border); border-width: 2px; }
+.legend .fail::before { background: var(--node-fail-bg); border-color: var(--node-fail-border); border-width: 2px; }
+.legend .back::before { width: 20px; height: 0; border: none; border-top: 2px dashed var(--ink-2); border-radius: 0; vertical-align: 3px; }
+.artifacts { margin: -14px 0 28px; padding: 10px 14px; background: var(--blue-bg2); border: 1px solid var(--blue-line); border-radius: 12px; }
+.artifacts .eyebrow { margin: 0 0 6px; }
+.art-row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; padding: 3px 0; }
+.art-row .mark { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid; }
+.art-name { font-weight: 600; } .art-arrow { color: var(--ink-2); }
 .sec { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 12px; transition: box-shadow .3s, border-color .3s; }
 .sec[open] { border-color: var(--blue-line); }
 .sec.flash { border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-bg); }
@@ -1020,9 +1131,10 @@ function bindFileTree(tree) {
 
 function renderVisual(root, options = {}) {
   const cssVar = name => getComputedStyle(root).getPropertyValue(name).trim();
-  const classDefs = () => ['new', 'changed', 'same', 'context', 'branch'].map(name =>
+  const classDefs = () => ['new', 'changed', 'same', 'context', 'branch', 'ok', 'fail'].map(name =>
     `  classDef ${name} fill:${cssVar(`--node-${name}-bg`)},stroke:${cssVar(`--node-${name}-border`)},` +
-    `color:${cssVar(`--node-${name}-fg`)},stroke-width:1.5px` + (name === 'context' ? ',stroke-dasharray:4 3' : ''));
+    `color:${cssVar(`--node-${name}-fg`)},stroke-width:${['ok', 'fail'].includes(name) ? '2.2px' : '1.5px'}` +
+    (name === 'context' ? ',stroke-dasharray:4 3' : ''));
   const config = {
     startOnLoad: false,
     securityLevel: 'strict',
@@ -1032,7 +1144,7 @@ function renderVisual(root, options = {}) {
       primaryBorderColor: cssVar('--line-2'), lineColor: cssVar('--ink-2'), textColor: cssVar('--ink'),
       edgeLabelBackground: cssVar('--card'), fontFamily: cssVar('--f-body'), fontSize: '17px',
     },
-    flowchart: { curve: 'basis', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: false },
+    flowchart: { curve: 'linear', nodeSpacing: 28, rankSpacing: 48, padding: 12, wrappingWidth: 200, htmlLabels: true, useMaxWidth: false },
     themeCSS: EDGE_LABEL_SIZE_CSS,
   };
   const LABEL_STOPS = [0.5, 0.62, 0.38, 0.72, 0.28, 0.8, 0.2];
@@ -1133,7 +1245,8 @@ function renderVisual(root, options = {}) {
     await document.fonts.ready;
     for (const pre of root.querySelectorAll('.mermaid-src')) {
       renderVisual.count = (renderVisual.count || 0) + 1;
-      const source = [pre.textContent.replaceAll('BRANCH_STROKE', cssVar('--node-branch-border')), ...classDefs()].join('\n');
+      const source = [pre.textContent.replaceAll('BRANCH_STROKE', cssVar('--node-branch-border'))
+        .replaceAll('FAIL_STROKE', cssVar('--node-fail-border')).replaceAll('OK_STROKE', cssVar('--node-ok-border')), ...classDefs()].join('\n');
       mermaid.initialize(config);
       const { svg } = await mermaid.render(`visual-${renderVisual.count}`, source);
       pre.insertAdjacentHTML('afterend', svg);

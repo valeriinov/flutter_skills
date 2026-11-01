@@ -13,11 +13,11 @@ Run the script from this skill's folder.
 The page is read top-down, and each level is enough on its own:
 
 1. **Overall diagram** — the whole document at a glance. A reader who looks only at it can retell
-   the document: what starts it, the one main branch with every variant, what each variant leads
-   to, what every side sees in the end. Every new or changed entity is on it; every write the
-   source makes is a node or a `note` on one. A secondary condition that lives inside one variant
-   ("only if the order has a discount") is a `note` on that node here and a branch in its own
-   section.
+   the document: every entry that starts it, the one main branch with every variant, what each
+   variant leads to, what every side sees in the end. Every new or changed entity is on it,
+   except an artifact; every write the source makes is a node or a `note` on one. A secondary
+   condition that lives inside one variant ("only if the order has a discount") is a `note` on
+   that node here and a branch in its own section.
 2. **Concept** — one collapsed card under the overall diagram: the whole idea in 3–5 sentences.
    It does not repeat `summary` and does not retell the diagram. The page adds a tree of every
    file the document names.
@@ -88,15 +88,17 @@ merges into the point it serves.
   "links": [{"from": "screen", "to": "export", "label": "starts"}],
   "flow": {
     "nodes": [
-      {"id": "tap", "label": "User taps Export", "entity": "screen"},
+      {"id": "tap", "label": "User taps Export", "entity": "screen", "kind": "start"},
       {"id": "has", "label": "Any orders?", "kind": "check"},
-      {"id": "csv", "entity": "export", "note": "one row per order"},
+      {"id": "csv", "label": "App writes the CSV file", "entity": "export", "note": "one row per order"},
+      {"id": "fail", "label": "Disk full: file not saved", "kind": "fail"},
       {"id": "empty", "label": "Message: nothing to export", "kind": "result"}
     ],
     "edges": [
-      {"from": "tap", "to": "has", "label": "checks"},
+      {"from": "tap", "to": "has"},
       {"from": "has", "to": "csv", "label": "one or more"},
-      {"from": "has", "to": "empty", "label": "none"}
+      {"from": "has", "to": "empty", "label": "none"},
+      {"from": "csv", "to": "fail", "label": "write error"}
     ]
   },
   "sections": [
@@ -108,13 +110,13 @@ merges into the point it serves.
      "takeaway": "Each order becomes one row; cancelled orders are left out.",
      "flow": {
        "nodes": [
-         {"id": "o", "label": "Each order", "entity": "export"},
+         {"id": "o", "label": "Export takes the next order", "entity": "export"},
          {"id": "st", "label": "Order status?", "kind": "check"},
          {"id": "row", "label": "Row in the file", "kind": "result"},
          {"id": "skip", "label": "Skipped", "kind": "result"}
        ],
        "edges": [
-         {"from": "o", "to": "st", "label": "checks"},
+         {"from": "o", "to": "st"},
          {"from": "st", "to": "row", "label": "`paid`, `shipped`"},
          {"from": "st", "to": "skip", "label": "`cancelled`"}
        ]},
@@ -130,8 +132,11 @@ merges into the point it serves.
 - Entity — `name` is what a non-developer calls it; `code` the identifier as written in code or
   on the wire (optional for actors such as "backend"); `change` what becomes different (required
   unless `same`); `files` every file the document changes for it — never a document it only
-  references.
-- File — `{"path", "status", "edits"}`. `status` is `new`, `changed`, `same` or `deleted`;
+  references. `"artifact": true` marks a file, link or config that takes no step at run time: an
+  old skill sent to the trash, a symlink, an export list. An artifact stays off every `flow`. The
+  page lists it under the overall diagram as "name → change".
+- File — `{"path", "status", "edits"}`; `path` names one file, never a folder (`lib/flow/`): list
+  every file of a new folder. `status` is `new`, `changed`, `same` or `deleted`;
   `deleted` is for files only. `edits` — `[{"kind", "text"}]`, required unless `same`; `kind` is
   `add`, `change`, `remove` or `rename`. One edit is one line with the name from the code
   (`` class `OrderExport` ``, `` `_compress` → `_compressImage` ``); a test file names the cases it
@@ -140,24 +145,37 @@ merges into the point it serves.
 - Overall diagram — a top-level `flow` when the source describes behaviour (a contract, a
   feature); without it the page draws `entities` + `links`, which fits a set of code changes (a
   plan). A link `label` is a verb: who calls, feeds, reads or writes whom.
-- Flow node — `{"id", "label", "entity", "kind", "status", "note"}`. `entity` reuses an entity's
-  name, code and status; `kind` is `step` (default), `check` (a branch question) or `result`, and
-  may be combined with `entity`; `label` and `note` ≤40 characters not counting backticks; `note`
-  says what changes.
+- Flow node — `{"id", "label", "entity", "kind", "status", "note"}`. `label` says who does what
+  ("App writes the CSV file"), never only a component name. `entity` reuses an entity's name,
+  code and status; the overall diagram hides the code, a section diagram shows it. `kind`:
+  - `start` — an action or event that begins the flow; drawn as a pill with ▸ in the top row.
+    Every entry the source names is a `start`, however deep it joins the flow.
+  - `step` (default) — one thing someone or something does.
+  - `check` — a branch question.
+  - `result` — where a variant ends; drawn with ✓, white when `same`, else in its status colour
+    with a green border.
+  - `fail` — an error end; drawn with ✕ and a red border.
+
+  `kind` may be combined with `entity`; `label` and `note` ≤40 characters not counting backticks;
+  `note` says what changes. A source of data that only feeds a step (a CI that reports versions)
+  is a `note` on that step, never a `start`.
 - A `note` tells what happens at its own node. A write or step that comes later in the source's
   order sits on the later node, never as a "+ also" note on an earlier one. A rule the source
   gives for every case ("metadata first, then messages") goes where every case is shown, not into
   one variant's section.
-- Flow edge — `{"from", "to", "label"}`; `"hidden": true` only places a node below another.
+- Flow edge — `{"from", "to", "label", "back"}`; `"hidden": true` only places a node below
+  another.
   - An arrow out of a `check` is a variant: its label names the exact values or the condition it
     covers (`` `paid`, `shipped` ``, "not the order's owner"), ≤6 words — never "else",
     "the rest", "and later", or an order like "first"/"second" when the source branches on a
     state. Every case the source names gets its own arrow; never merge cases into "other".
-  - Any other arrow carries an action verb, ≤3 words.
+  - An arrow into a `fail` node is a red dashed side exit; its label names the error, ≤3 words.
+  - `"back": true` is a dashed return to an earlier node ("after saving, the check runs
+    again"); its label says when, ≤3 words. Never write a return into a variant label.
+  - Any other arrow has no label: an arrow already means "then".
   - An arrow leaving a node applies to every case that reaches it. When a later step holds for
     one variant only ("after `received`"), give that variant its own node and start the arrow
-    there, or name the variant in the arrow's label; never let two variants join a node whose
-    next step only one of them takes.
+    there. Never let two variants join a node whose next step only one of them takes.
   - The page draws branches, their arrows and their variant labels in their own colour and lists
     them in the legend (`ui.branch`). Every variation the source describes — outcome by status,
     role, presence of a value — is a `check` node, never parallel steps or a `note`.
@@ -188,7 +206,11 @@ merges into the point it serves.
 - Size: ≤8 entities, ≤10 links; overall flow ≤10 nodes, ≤12 arrows and one level of branching
   (at most one `check`); at most 6 sections; a section flow ≤6 nodes and ≤7 arrows; an entity
   diagram ≤6 nodes with neighbours.
-- Coverage: every new or changed entity is on the overall flow and in some section; every section
+- Entries: the overall flow has at least one `start`; a `start` has no incoming arrow, and every
+  other node has one.
+- Arrows: only an arrow out of a `check`, into a `fail` or marked `back` carries a label.
+- Coverage: every new or changed entity but an artifact is on the overall flow and in some
+  section; an artifact is on no flow; every section
   shares an entity with the overall flow and has a diagram; a section flow has a node the overall
   flow does not, never reuses the overall branch's variants and never repeats an overall note; under an overall flow a section
   draws a `flow`, not entities already on it; no section repeats the entity diagram of an earlier
@@ -196,7 +218,8 @@ merges into the point it serves.
 - Text: `name`, `code`, `change` ≤40 chars; labels as above; vague variants rejected; no sentence
   in `lines` over 25 words; a `takeaway` in every section; `concept` is present, ≤5 sentences, each
   ≤25 words.
-- Files: `status` is one of `new`, `changed`, `same`, `deleted`; every file but a `same` one has
+- Files: a `path` has no empty segment, so no trailing `/`; `status` is one of `new`, `changed`,
+  `same`, `deleted`; every file but a `same` one has
   `edits`; an edit `kind` is one of `add`,
   `change`, `remove`, `rename`; an edit `text` ≤15 words.
 - Payloads: a changed field shows its `values` or children; a merged `a · b` node is unchanged and
