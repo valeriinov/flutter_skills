@@ -36,6 +36,8 @@ Collect what exists, then ask once, in a single question, for whatever is still 
 ## 3. Mine the client — it is the source of truth for the wire shape
 
 Launch 1–2 parallel read-only exploration agents (`Explore` in Claude Code) over the client code.
+In Claude Code, give each agent the `model` of role `scout` from `~/.claude/model-routing.json`.
+The value `inherit`, a missing role or a missing file → no `model`.
 Each returns, with `file:line`:
 
 - the models and parsers that will consume the payload — exact field names, types, nullability;

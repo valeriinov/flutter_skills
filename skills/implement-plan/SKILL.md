@@ -38,7 +38,9 @@ description: Implement a plan file step by step, verify, then review the diff. U
    steps editing the same files go together, a stage is one chunk — and spawns
    a fresh worker per chunk with the plan path, the chunk's step ids and their
    `verify`, demanding a reply of at most 15 lines: what changed, the verify
-   result, deviations. A single chunk (the user named one step, or every step
+   result, deviations. In Claude Code, each worker gets the `model` of role
+   `implement-worker` from `~/.claude/model-routing.json`. The value `inherit`,
+   a missing role or a missing file → no `model`. A single chunk (the user named one step, or every step
    edits the same files) → the main session implements it itself, no worker.
    A step with a device run longer than a few minutes is launched by the main
    session in the background with its report written to a file; reading the
@@ -65,7 +67,8 @@ description: Implement a plan file step by step, verify, then review the diff. U
    Before fixing, record a snapshot — `git stash create` (empty output →
    `HEAD`) — and the list `git ls-files --others --exclude-standard`. Fix every
    verified finding, Minor included, yourself; spawn up to 4 workers only when
-   there are more findings than you fix yourself. Then one
+   there are more findings than you fix yourself. These workers take role
+   `fix-worker` from `~/.claude/model-routing.json` by the step 5 rule. Then one
    re-review, whatever the size of the fix: one `code-reviewer` over `git diff <snapshot>` plus, read whole,
    the untracked files the fix created (absent from that list) or edited,
    Significant and above; verify and fix what it finds, no third round. When

@@ -11,11 +11,14 @@ produced by `plan_tool.py render`, never written by hand. Both commands run from
 
 ## Roles
 
-Models are pinned by the role definitions; pick the role, never a model.
+Models are pinned by the role definitions and by `~/.claude/model-routing.json`; pick the role,
+never a model. In Claude Code, a node with a routing role gets that role's `model`. The value
+`inherit`, a missing role or a missing file → no `model`.
 
 | node | Claude Code | Codex |
 |---|---|---|
-| extractor, scout | `Explore` | `explorer` |
+| extractor | `Explore` | `explorer` |
+| scout | `Explore`, routing role `scout` | `explorer` |
 | review | `plan-reviewer` (`<plugin>:plan-reviewer` as a plugin) | `code-reviewer` with the plan-reviewer criteria |
 | brief and contract review | `visual-reviewer` (`<plugin>:visual-reviewer` as a plugin) | `explorer` with the visual-reviewer criteria, told to read only the JSON and its source (no Codex role is code-blind, so the prompt carries the restriction) |
 

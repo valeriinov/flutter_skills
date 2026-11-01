@@ -26,7 +26,9 @@ then findings. No retelling of the diff, no added summary. Nothing left → од
 Once confirmed, record a snapshot — `git stash create` (empty output → `HEAD`)
 — and the list `git ls-files --others --exclude-standard`, then fix every
 finding the user confirmed, Minor included, yourself; spawn up to 4 workers only when
-there are more findings than you fix yourself. Then one
+there are more findings than you fix yourself. In Claude Code, each worker gets the `model` of
+role `fix-worker` from `~/.claude/model-routing.json`. The value `inherit`, a missing role or a
+missing file → no `model`. Then one
 re-review: one `code-reviewer` over `git diff <snapshot>` plus, read whole, the
 untracked files the fix created (absent from that list) or edited, Significant
 and above; verify and fix what it finds, no third round.
