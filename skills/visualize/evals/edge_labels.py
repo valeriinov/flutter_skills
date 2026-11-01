@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import visualize  # noqa: E402
 
-EDGE = re.compile(r'-->\|(.*)\| \S+$')
+EDGE = re.compile(r'-\.?->\|(.*)\| \S+$')
 RAW = re.compile(r'[()\[\]{}|]')
 
 

@@ -1,0 +1,66 @@
+{
+  "title": "Order export to CSV",
+  "summary": "The orders screen saves the selected orders as one CSV file.",
+  "concept": "Orders stay inside the app today. A new export class turns every selected order into a CSV row. Two entries start the export: a button and a menu item.",
+  "lang": "en",
+  "ui": {"new": "new", "changed": "changes", "same": "unchanged", "context": "nearby, unchanged",
+         "overview": "Whole picture", "files": "Files", "branch": "branch by condition"},
+  "entities": [
+    {"id": "button", "name": "Export button", "code": "ExportButton", "status": "changed",
+     "change": "starts the export",
+     "files": [{"path": "lib/orders/export_button.dart", "status": "changed",
+                "edits": [{"kind": "change", "text": "`onTap` starts `OrderExport`"}]}]},
+    {"id": "export", "name": "Order export", "code": "OrderExport", "status": "new",
+     "change": "orders to CSV rows",
+     "files": [{"path": "lib/export/order_export.dart", "status": "new",
+                "edits": [{"kind": "add", "text": "class `OrderExport`"}]}]},
+    {"id": "notes", "name": "Export notes", "code": "docs/export.md", "status": "new", "artifact": true,
+     "change": "columns and their sources",
+     "files": [{"path": "docs/export.md", "status": "new",
+                "edits": [{"kind": "add", "text": "table of columns"}]}]}
+  ],
+  "flow": {
+    "nodes": [
+      {"id": "tap", "label": "User taps Export", "entity": "button", "kind": "start"},
+      {"id": "menu", "label": "User picks Export in the menu", "kind": "start"},
+      {"id": "sel", "label": "Orders selected?", "kind": "check"},
+      {"id": "pick", "label": "User picks orders"},
+      {"id": "csv", "label": "App writes the CSV file", "entity": "export", "note": "one row per order"},
+      {"id": "fail", "label": "File not saved", "kind": "fail"},
+      {"id": "done", "label": "File is in Downloads", "kind": "result"}
+    ],
+    "edges": [
+      {"from": "tap", "to": "sel"},
+      {"from": "menu", "to": "sel"},
+      {"from": "sel", "to": "csv", "label": "one or more"},
+      {"from": "sel", "to": "pick", "label": "none"},
+      {"from": "pick", "to": "sel", "label": "after picking", "back": true},
+      {"from": "csv", "to": "done"},
+      {"from": "csv", "to": "fail", "label": "disk full"}
+    ]
+  },
+  "sections": [
+    {"title": "Rows follow the order status",
+     "takeaway": "Each paid order becomes one row; cancelled orders are left out.",
+     "flow": {
+       "nodes": [
+         {"id": "o", "label": "Export takes the next order", "entity": "export"},
+         {"id": "st", "label": "Order status?", "kind": "check"},
+         {"id": "row", "label": "Row in the file", "kind": "result"},
+         {"id": "skip", "label": "Order skipped", "kind": "result"}
+       ],
+       "edges": [
+         {"from": "o", "to": "st"},
+         {"from": "st", "to": "row", "label": "`paid`"},
+         {"from": "st", "to": "skip", "label": "`cancelled`"}
+       ]}},
+    {"title": "The button shows progress",
+     "takeaway": "The button turns into a spinner until the file is saved.",
+     "flow": {
+       "nodes": [
+         {"id": "b1", "label": "Button shows a spinner", "entity": "button"},
+         {"id": "b2", "label": "Spinner hides", "kind": "result"}
+       ],
+       "edges": [{"from": "b1", "to": "b2"}]}}
+  ]
+}
