@@ -1,0 +1,5 @@
+{
+  "scout": { "model": "haiku", "since": "2026-11-01" },
+  "implement-worker": { "model": "sonnet", "since": "2026-11-01" },
+  "fix-worker": { "model": "sonnet", "since": "2026-11-01" }
+}

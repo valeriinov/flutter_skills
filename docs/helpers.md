@@ -17,6 +17,11 @@ Snapshots referenced below live in `docs/examples/`:
   It also registers the `anthropics/skills` marketplace, unrelated to the
   plugins below — keep or drop it.
 - `docs/examples/CLAUDE.md` — the author's personal `~/.claude/CLAUDE.md`, verbatim.
+- `docs/examples/model-routing.json` — the author's `~/.claude/model-routing.json`, verbatim.
+  It maps a subagent role to a model: `scout` for search in `make-plan` and
+  `backend-contract`, `implement-worker` and `fix-worker` for `implement-plan` and
+  `review-changes`. Copy it to `~/.claude/model-routing.json` to use it. The skills read only
+  `model`. The value `inherit`, a missing role or a missing file keeps the default model.
 
 ## Plugins (Claude Code)
 
