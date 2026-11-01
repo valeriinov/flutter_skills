@@ -83,7 +83,8 @@ merges into the point it serves.
      "change": "export button", "files": [{"path": "lib/orders/orders_screen.dart", "status": "changed",
                                            "edits": [{"kind": "add", "text": "button `Export` in the app bar"}]}]},
     {"id": "export", "name": "Order export", "code": "OrderExport", "status": "new",
-     "change": "orders to CSV rows", "files": [{"path": "lib/export/order_export.dart", "status": "new"}]}
+     "change": "orders to CSV rows", "files": [{"path": "lib/export/order_export.dart", "status": "new",
+                                                "edits": [{"kind": "add", "text": "class `OrderExport`"}]}]}
   ],
   "links": [{"from": "screen", "to": "export", "label": "starts"}],
   "flow": {
@@ -104,7 +105,18 @@ merges into the point it serves.
   "sections": [
     {"title": "The orders screen gets an export button",
      "takeaway": "One button on the orders screen saves every order as a CSV file.",
-     "entities": ["screen"],
+     "flow": {
+       "nodes": [
+         {"id": "bar", "label": "Screen shows Export in the app bar", "entity": "screen"},
+         {"id": "ld", "label": "Orders loaded?", "kind": "check"},
+         {"id": "on", "label": "Button is active", "kind": "result"},
+         {"id": "off", "label": "Button is greyed out", "kind": "result"}
+       ],
+       "edges": [
+         {"from": "bar", "to": "ld"},
+         {"from": "ld", "to": "on", "label": "loaded"},
+         {"from": "ld", "to": "off", "label": "still loading"}
+       ]},
      "lines": [{"label": "Now", "text": "Orders can only be viewed."}]},
     {"title": "Rows follow the order list",
      "takeaway": "Each order becomes one row; cancelled orders are left out.",
