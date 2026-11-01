@@ -50,9 +50,11 @@ second request everything the first already carries.
 ## 3. Pick the depth
 
 - ≤ 25 non-generated files — one `code-reviewer` agent over the branch diff.
-- Over 25 — two passes, each with one agent per layer of the project's actual tree (4 layers:
-  domain / data / presentation / tests, or whatever the repo has), up to 8 agents, then
-  deduplicate their findings yourself.
+- Over 25 — two passes. The first pass has one agent per layer of the project's actual tree
+  (4 layers: domain / data / presentation / tests, or whatever the repo has). The second pass
+  is one agent over the whole diff. It checks the contracts between layers (a mock or data source against
+  the production behaviour, a test that imports another layer) and the files no layer owns
+  (readme, docs, scripts). Then deduplicate their findings yourself.
 
 This is search and verification only: the findings go into the document, nothing is fixed
 and there is no re-review.

@@ -58,10 +58,9 @@ description: Implement a plan file step by step, verify, then review the diff. U
    ask it to check plan compliance (every planned step implemented, nothing
    beyond plan scope) alongside its normal criteria.
    The prompt carries no file list and no "out of scope". Depth by the count of
-   non-generated files in the range: ≤ 25 — one agent; over 25 — two passes,
-   each with one agent per layer of the project's actual tree (4 layers:
-   domain / data / presentation / tests, or whatever the repo has), up to 8
-   agents, as `review-pr` §3. Verify each finding against the code yourself;
+   non-generated files in the range: ≤ 25 — one agent; over 25 — two passes
+   as `review-pr` §3: one agent per layer of the project's actual tree, then
+   one agent over the whole range. Verify each finding against the code yourself;
    drop the ones that do not hold, naming in one line which and why.
    Before fixing, record a snapshot — `git stash create` (empty output →
    `HEAD`) — and the list `git ls-files --others --exclude-standard`. Fix every
