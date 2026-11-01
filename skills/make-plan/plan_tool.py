@@ -619,13 +619,14 @@ def make_handler(plan_path):
                 if line is None:
                     self.reply(400, 'text/plain; charset=utf-8', 'comment not found')
                     return
-                self.reply(200, 'application/json', json.dumps({'line': line}, ensure_ascii=False))
+                self.reply(200, 'application/json',
+                           json.dumps({'line': line, 'version': plan_version(plan_path)}, ensure_ascii=False))
                 return
             if self.path == '/comments/delete':
                 if not delete_comment(plan_path, self.read_payload()):
                     self.reply(400, 'text/plain; charset=utf-8', 'comment not found')
                     return
-                self.reply(200, 'application/json', json.dumps({'ok': True}))
+                self.reply(200, 'application/json', json.dumps({'ok': True, 'version': plan_version(plan_path)}))
                 return
             if self.path != '/comments':
                 self.send_error(404)
@@ -634,7 +635,8 @@ def make_handler(plan_path):
             if line is None:
                 self.reply(400, 'text/plain; charset=utf-8', 'anchor and text are required')
                 return
-            self.reply(200, 'application/json', json.dumps({'line': line}, ensure_ascii=False))
+            self.reply(200, 'application/json',
+                       json.dumps({'line': line, 'version': plan_version(plan_path)}, ensure_ascii=False))
 
         def dictation(self):
             session_id, action = DICTATION_ROUTE_RE.match(self.path).groups()
