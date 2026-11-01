@@ -111,6 +111,8 @@ parallel, so all sit on its last node); never add a node to it.
 - A backend contract, ticket or design decides what happens and the wire shape, never how the
   client does it: steps follow the scout's precedent; names and error handling are the project's.
   Each departure is an open question with two options — the project's way / the input's.
+- A question for an outside party (business analyst, backend) uses the recipient's words: no
+  file, table, contract or step name. Each such question carries the proposal the client would ship.
 - An assumption without evidence (`file:line` or `verify:`) is a blocker: verify it now or mark
   the plan blocked on it. A claim about a package or SDK API's behaviour cites the line in
   that package's own source (pub cache, package sources), never the project's call site or memory
