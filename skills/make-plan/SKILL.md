@@ -12,8 +12,8 @@ produced by `plan_tool.py render`, never written by hand. Both commands run from
 ## Roles
 
 Models are pinned by the role definitions and by `~/.claude/model-routing.json`; pick the role,
-never a model. In Claude Code, a node with a routing role gets that role's `model`. The value
-`inherit`, a missing role or a missing file → no `model`.
+never a model. In Claude Code, a hook gives a node with a routing role that role's `model`. A
+scout's description starts with `Scout`, a re-scout included.
 
 | node | Claude Code | Codex |
 |---|---|---|
