@@ -127,5 +127,9 @@
     "add-openrouter-picker-model": "off",
     "anthropic-skills:morning": "off",
     "anthropic-skills:import-memory": "off"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }

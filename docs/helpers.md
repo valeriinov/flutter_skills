@@ -11,7 +11,7 @@ git clone https://github.com/valeriinov/flutter_skills.git && cd flutter_skills
 
 Snapshots referenced below live in `docs/examples/`:
 
-- `docs/examples/settings.json` — only the `hooks`, `enabledPlugins` and
+- `docs/examples/settings.json` — only the `hooks`, `enabledPlugins`, `attribution` and
   `extraKnownMarketplaces` keys. It is not a complete
   settings file: **merge** these keys into your own `~/.claude/settings.json`.
   It also registers the `anthropics/skills` marketplace, unrelated to the
