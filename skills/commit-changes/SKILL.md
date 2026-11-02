@@ -42,7 +42,7 @@ Examples: `feature: ABC-123 - add received state to the order banner`,
 4. Show the split as a short table (message | paths) and go on committing — the user's
    request was the confirmation. Ask only when a group is genuinely ambiguous.
 5. Per commit: `git add <explicit paths>`, then `git commit -q -m "<message>"` — with
-   `--no-verify` when the project's rule file grants it for a series (see "Checks fail on
+   `--no-verify` when the project's rule file grants it (see "Checks fail on
    commit" below): the gate already ran in step 2, and a hook re-running it per commit is
    the waste that grant exists to stop. Reach for `git add -A` only as a deliberate final
    sweep, and name it in the report.
@@ -58,8 +58,8 @@ Examples: `feature: ABC-123 - add received state to the order banner`,
   then retry that same commit.
 - Checks fail on commit: fix the cause. `--no-verify` is the user's call, never yours —
   reach for it only after they say so, and only for the commit they said it about.
-  One standing exception: a project `AGENTS.md`/`CLAUDE.md` may grant the flag for a
-  series of commits carved out of one working tree, on the condition it names (the
+  One standing exception: a project `AGENTS.md`/`CLAUDE.md` may grant the flag for
+  commits carved out of one working tree, a series or a lone commit, on the condition it names (the
   gate run green first, the tree untouched since). That written grant is the user
   saying so — honour it without asking again, and hold the message format by hand,
   since the flag silences `commit-msg` too.
