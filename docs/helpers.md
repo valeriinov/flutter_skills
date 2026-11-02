@@ -20,8 +20,11 @@ Snapshots referenced below live in `docs/examples/`:
 - `docs/examples/model-routing.json` — the author's `~/.claude/model-routing.json`, verbatim.
   It maps a subagent role to a model: `scout` for search in `make-plan` and
   `backend-contract`, `implement-worker` and `fix-worker` for `implement-plan` and
-  `review-changes`. Copy it to `~/.claude/model-routing.json` to use it. The skills read only
-  `model`. The value `inherit`, a missing role or a missing file keeps the default model.
+  `review-changes`. Copy it to `~/.claude/model-routing.json` to use it. The hook
+  `docs/examples/hooks/model-routing.py` reads only `model` and sets it on the `Agent` call. It
+  finds the role from the last skill in the transcript, the agent type and the description
+  prefix (`Scout…`, `Fix…`). The value `inherit`, any other call or a missing file keeps the
+  default model.
 
 ## Plugins (Claude Code)
 
@@ -85,7 +88,7 @@ Three scripts. Two of them put every worktree Claude Code creates in
 
 ```bash
 mkdir -p ~/.claude/hooks
-cp docs/examples/hooks/*.sh ~/.claude/hooks/
+cp docs/examples/hooks/*.sh docs/examples/hooks/*.py ~/.claude/hooks/
 ```
 
 Wired by the two `$HOME/.claude/hooks/...` entries in the settings example:
