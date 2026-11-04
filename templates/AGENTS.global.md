@@ -270,6 +270,8 @@ Precedence when it collides with the rules above:
 - Do not explicitly declare the variable type on the left side of `=` if the type is already defined
   or obvious on the right side.
 - Never use the `!` null assertion operator. Instead, handle nullability explicitly.
+- A screen, flow or sheet does not return data or a flag to its opener on close
+  (`pop(value)`, `push<T>`). Only a picker returns the value it picks.
 - After every code change: run formatting and static analysis with zero errors.
     - Run `fvm dart format . && fvm dart analyze` (or without `fvm` prefix if not used)
 
