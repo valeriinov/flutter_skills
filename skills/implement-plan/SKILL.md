@@ -67,7 +67,10 @@ description: Implement a plan file step by step, verify, then review the diff. U
    Before fixing, record a snapshot — `git stash create` (empty output →
    `HEAD`) — and the list `git ls-files --others --exclude-standard`. Fix every
    verified finding, Minor included, yourself; spawn up to 4 workers only when
-   there are more findings than you fix yourself. These workers take role
+   there are more findings than you fix yourself.
+   A fix that changes behaviour gets a test that fails without the fix and passes with it.
+   A fix with no behaviour to test gets no test: docs, comments, names, code format, a moved file.
+   These workers take role
    `fix-worker`: each description starts with `Fix`, and the hook from step 5
    gives the model. Then one
    re-review, whatever the size of the fix: one `code-reviewer` over `git diff <snapshot>` plus, read whole,
