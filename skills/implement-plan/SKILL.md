@@ -52,7 +52,11 @@ description: Implement a plan file step by step, verify, then review the diff. U
    and must fail; the failure path the requirements name has a test of its own.
    Then reread every comment line the diff adds and delete each one the comment
    rule does not allow.
-7. When the plan or its last stage is done, run the `code-reviewer` agent
+7. Dartdoc: when the diff changes `.dart` files, run `python3
+   ../clarifier/clarify.py check <worktree or current tree> --dart --base <plan
+   base sha>` from this skill's folder (no `base:` in the plan → `--base HEAD`).
+   Fix each hint on the lines the diff changes. Then run the check a second time.
+8. When the plan or its last stage is done, run the `code-reviewer` agent
    (listed as `<plugin>:code-reviewer` when installed as a plugin; if no such
    agent is available, do the review inline by the same criteria and say so)
    on the range `<plan base sha>...HEAD` plus uncommitted changes (no `base:` in
@@ -77,7 +81,7 @@ description: Implement a plan file step by step, verify, then review the diff. U
    the untracked files the fix created (absent from that list) or edited,
    Significant and above; verify and fix what it finds, no third round. When
    running a stage, set its status cell to `done`.
-8. Report in Russian, one line each: что теперь работает, результат проверки,
+9. Report in Russian, one line each: что теперь работает, результат проверки,
    вердикт ревьюера, отклонения от плана (только если есть). End with a single
    offer to commit — never commit without confirmation. When `brief.json`
    lies beside the plan, the user reads only the brief page. In a question,

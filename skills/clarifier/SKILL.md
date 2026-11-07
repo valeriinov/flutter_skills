@@ -36,9 +36,11 @@ skill's job, on a separate request.
   required; for `.json` (a `visualize` document, `brief.json` included) the language comes from
   its `lang` field. A bad language or minutes value → usage line, exit 2.
 - `check <path>... --instructions|--dart [--lang ru|uk|en] [--words <file>] [--unlisted]
-  [--summary]` reads skill, agent and rule files or the `///` lines of Dart files. With a
+  [--base <ref>] [--summary]` reads skill, agent and rule files or the `///` lines of Dart files. With a
   folder, the check reads every `.md` file. With `--dart`, it reads every `.dart` file and skips
-  generated ones (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.config.dart`). The language
+  generated ones (`*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `*.config.dart`). With
+  `--base <ref>`, the check reads only the files in each path that are different from `<ref>` in the
+  git working tree, and the untracked files. A git error → `git:` line, exit 2. The language
   defaults to `en`. Every finding is a `hint:`, then `ok`, exit 0.
 - Errors (exit 1): words over `minutes × rate` (ru and uk 160/min, en 190/min); a sentence over
   25 words; a paragraph over 5 sentences; a list over 5 items; a nested list; with `--source`,

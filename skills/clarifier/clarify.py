@@ -4,6 +4,7 @@
 With --instructions (skill, agent and rule bodies) or --dart (Dartdoc), check writing rules instead."""
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,10 +15,11 @@ MAX_PARAGRAPH_SENTENCES = 5
 MAX_LIST_ITEMS = 5
 USAGE = ('usage: clarify.py check <file> [--lang ru|uk|en] [--source <src>] [--minutes N]\n'
          '       clarify.py check <path>... --instructions|--dart [--lang ru|uk|en] [--words <file>] [--unlisted]\n'
+         '       [--base <ref>]\n'
          '       [--summary]')
 DEFAULT_WORDS = '~/.claude/ste/words.json'
 TECHNICAL_WORDS = Path(__file__).with_name('technical.txt')
-VALUE_OPTIONS = {'--lang', '--source', '--minutes', '--words'}
+VALUE_OPTIONS = {'--lang', '--source', '--minutes', '--words', '--base'}
 KNOWN_ABBREVIATIONS = {'API', 'URL', 'JSON', 'CSV', 'HTML', 'PR', 'UI', 'UX', 'SDK', 'LLM', 'ISO', 'QA'}
 
 SENTENCE_RE = re.compile(r'(?<=[.!?…])\s+')
@@ -333,6 +335,13 @@ def rule_check(argv):
     dart = '--dart' in argv
     rules = {'lang': lang, 'modals': not dart, 'technical': technical_words(), 'unlisted': '--unlisted' in argv,
              'words': ste_words(Path(option(argv, '--words') or DEFAULT_WORDS).expanduser())}
+    base = option(argv, '--base')
+    if base:
+        try:
+            paths = [path for path in changed_files(paths, base) if is_checked_file(path, dart)]
+        except subprocess.CalledProcessError as error:
+            print(f'git: {error.stderr.strip()}', file=sys.stderr)
+            return 2
     findings = []
     for path in files_of(paths, dart):
         findings += rule_findings(rule_blocks(path, dart), rules)
@@ -350,6 +359,18 @@ def positionals(argv):
             continue
         result.append(arg)
     return result
+
+def changed_files(paths, base):
+    result = []
+    for path in paths:
+        folder = path if path.is_dir() else path.parent
+        names = git(folder, 'diff', '--name-only', '--relative', base, '--', path.resolve())
+        names += git(folder, 'ls-files', '--others', '--exclude-standard', '--', path.resolve())
+        result += [folder / name for name in names.split('\n') if name]
+    return sorted(dict.fromkeys(result))
+
+def git(folder, *args):
+    return subprocess.run(['git', '-C', str(folder), *args], capture_output=True, text=True, check=True).stdout
 
 def technical_words():
     if not TECHNICAL_WORDS.exists():
@@ -370,6 +391,11 @@ def folder_files(folder, dart):
     if not dart:
         return sorted(path for path in folder.rglob('*.md') if path.is_file())
     return sorted(path for path in folder.rglob('*.dart') if is_hand_written_dart(path))
+
+def is_checked_file(path, dart):
+    if dart:
+        return path.suffix == '.dart' and is_hand_written_dart(path)
+    return path.is_file() and path.suffix == '.md'
 
 def is_hand_written_dart(path):
     return path.is_file() and not path.name.endswith(GENERATED_DART_SUFFIXES)
