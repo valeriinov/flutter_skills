@@ -24,6 +24,11 @@ Before implementing:
   A document handed to people — a contract, a decision or design doc — carries
   no "unverified" marker: the point is researched before writing, and what
   cannot be obtained is stated as a fact about its availability.
+- A document handed to people needs no other source. Each question or proposal in it
+  states the problem, the current state, the proposal, its cost and the
+  alternatives. It never points to a plan or a chat the reader has not seen.
+- In a document handed to people, the actor is a named side (the client, the
+  backend, the product owner), never "we".
 - Project first. A backend contract, a ticket, a business analyst's note or a
   design knows nothing of the client's architecture, patterns or glossary. It
   decides what happens (the business) and the wire shape (the backend); how the
