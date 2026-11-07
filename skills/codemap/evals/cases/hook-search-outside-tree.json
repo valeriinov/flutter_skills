@@ -1,0 +1,74 @@
+{
+  "steps": [
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-o1",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git grep -n 'CounterStore' feature/other-branch -- lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-o2",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "B=feature/other-branch; git grep -n 'CounterStore' $B -- lib | cat"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-o3",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "d=$(ls -d /tmp/pkg); grep -rn 'CounterStore' \"$d/lib\""
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-o4",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cd /tmp && grep -rn 'CounterStore' lib"
+        }
+      },
+      "expect": [
+        "<empty>"
+      ]
+    },
+    {
+      "hook": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session-o5",
+        "cwd": "$ROOT",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git grep -n 'CounterStore' -- lib"
+        }
+      },
+      "expect": [
+        "codemap index for `CounterStore`"
+      ]
+    }
+  ]
+}

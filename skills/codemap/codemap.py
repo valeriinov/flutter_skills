@@ -55,7 +55,9 @@ at most `--budget` tokens (one token is four characters).
   names (in backticks, or a class name), without declaration lists.
 - PreToolUse of a Grep, or of a Bash command that runs grep, rg or git grep
   inside a Dart project: the `show` answer for up to two searched identifiers,
-  at most 5000 characters in all; the search runs as well.
+  at most 5000 characters in all; the search runs as well. A search of another
+  revision or of a path in an unexpanded variable gets no answer. A `cd` before
+  the search sets the base of its relative paths.
 - PreToolUse of a Bash `sed -n A,Bp`, `cat` or `cat | sed -n A,Bp` of a .dart
   file, and PostToolUse of a Read: the declarations of other files that the
   read lines use, with their location.
@@ -1349,10 +1351,20 @@ def searched(payload):
     if tool_name != "Bash":
         return None
     for operator, tokens in raw_segments(str(tool_input.get("command") or "")):
+        if tokens[0] == "cd":
+            cwd = changed_directory(cwd, tokens[1:])
+            continue
         search = searched_in_segment(operator, tokens, cwd)
         if search is not None:
             return search
     return None
+
+
+def changed_directory(cwd, arguments):
+    target = arguments[0] if arguments else "~"
+    if cwd is None or target.startswith("$"):
+        return None
+    return absolute(cwd, target)
 
 
 def searched_in_segment(operator, tokens, cwd):
@@ -1362,10 +1374,24 @@ def searched_in_segment(operator, tokens, cwd):
     patterns, paths = split_arguments(arguments)
     if not paths and (operator == "|" or name not in DIRECTORY_SEARCHES):
         return None
+    if is_outside_working_tree(name, arguments, paths, cwd):
+        return None
     names = identifiers(patterns)
     if not names:
         return None
     return names, absolute(cwd, paths[0] if paths else "")
+
+
+def is_outside_working_tree(name, arguments, paths, cwd):
+    if cwd is None or any(path.startswith("$") for path in paths):
+        return True
+    return name == "git grep" and has_revision(arguments, cwd)
+
+
+def has_revision(arguments, cwd):
+    before_paths = arguments[: arguments.index("--")] if "--" in arguments else arguments
+    _, positional = split_arguments(before_paths)
+    return any(not os.path.exists(absolute(cwd, token)) for token in positional)
 
 
 def absolute(cwd, path):

@@ -80,7 +80,9 @@ folder that has `.dart_tool/package_config.json`.
 - UserPromptSubmit: the answer for up to two identifiers that the prompt names in backticks or
   as a class name. A name with more than three declarations gets no answer here.
 - PreToolUse `Bash` or `Grep`: a grep, rg or git grep search gets the answer for up to two
-  identifiers, at most 5000 characters.
+  identifiers, at most 5000 characters. A search of another revision or of a path in an
+  unexpanded variable gets no answer: the index holds only the working tree. A `cd` before the
+  search sets the base of its relative paths.
 - PreToolUse `Bash` with `sed -n A,Bp`, `cat` or `cat | sed -n A,Bp` of a `.dart` file, and
   PostToolUse `Read`: the declarations of other files that the read lines use, with
   `file:line`.
