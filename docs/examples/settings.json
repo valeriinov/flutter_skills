@@ -105,16 +105,9 @@
     ]
   },
   "enabledPlugins": {
-    "claude-hud@claude-hud": true,
     "typesafe@typesafe-ai": true
   },
   "extraKnownMarketplaces": {
-    "claude-hud": {
-      "source": {
-        "source": "github",
-        "repo": "jarrodwatts/claude-hud"
-      }
-    },
     "typesafe-ai": {
       "source": {
         "source": "github",
