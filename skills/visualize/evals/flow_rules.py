@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the flow grammar: entries, arrow labels, outcomes, artifacts and file paths.
+"""Check the flow grammar: overall flow, entries, arrow labels, outcomes, artifacts and file paths.
 
 Usage: flow_rules.py   (uses flow-rules.visual.json beside this script)
 
@@ -44,6 +44,10 @@ def draw_an_artifact(doc):
     doc['flow']['edges'].append({'from': 'done', 'to': 'doc'})
 
 
+def drop_the_overall_flow(doc):
+    del doc['flow']
+
+
 CASES = [
     ('a plain arrow with a label', label_plain_arrow, 'has label "checks"'),
     ('a folder as a file path', name_a_folder, 'name the files, not the folder'),
@@ -51,6 +55,7 @@ CASES = [
     ('a node nothing leads to', feed_without_start, 'node ci has no incoming arrow'),
     ('an arrow into a start', enter_a_start, 'start menu has an incoming arrow'),
     ('an artifact drawn as a step', draw_an_artifact, 'is an artifact'),
+    ('a branching section under an entity graph', drop_the_overall_flow, 'draw the overall diagram as a "flow"'),
 ]
 
 

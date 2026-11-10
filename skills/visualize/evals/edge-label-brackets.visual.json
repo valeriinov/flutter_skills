@@ -88,15 +88,32 @@
     {
       "title": "The orders screen gets an export button",
       "takeaway": "One button on the orders screen saves every order as a CSV file.",
-      "entities": [
-        "screen"
-      ],
       "lines": [
         {
           "label": "Now",
           "text": "Orders can only be viewed."
         }
-      ]
+      ],
+      "flow": {
+        "nodes": [
+          {
+            "id": "bar",
+            "label": "Screen shows Export in the app bar",
+            "entity": "screen"
+          },
+          {
+            "id": "on",
+            "label": "Button is active",
+            "kind": "result"
+          }
+        ],
+        "edges": [
+          {
+            "from": "bar",
+            "to": "on"
+          }
+        ]
+      }
     },
     {
       "title": "Rows follow the order list",
@@ -172,5 +189,45 @@
         }
       ]
     }
-  ]
+  ],
+  "flow": {
+    "nodes": [
+      {
+        "id": "tap",
+        "label": "User taps Export",
+        "entity": "screen",
+        "kind": "start"
+      },
+      {
+        "id": "csv",
+        "label": "App writes the CSV file",
+        "entity": "export"
+      },
+      {
+        "id": "done",
+        "label": "File is in Downloads",
+        "kind": "result"
+      },
+      {
+        "id": "full",
+        "label": "File not saved",
+        "kind": "fail"
+      }
+    ],
+    "edges": [
+      {
+        "from": "tap",
+        "to": "csv"
+      },
+      {
+        "from": "csv",
+        "to": "done"
+      },
+      {
+        "from": "csv",
+        "to": "full",
+        "label": "disk (full)"
+      }
+    ]
+  }
 }
