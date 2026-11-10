@@ -154,9 +154,10 @@ merges into the point it serves.
   (`` class `OrderExport` ``, `` `_compress` → `_compressImage` ``); a test file names the cases it
   adds or changes. A click on the file in the tree shows its edits; a `same` file stays out of the
   tree.
-- Overall diagram — a top-level `flow` when the source describes behaviour (a contract, a
-  feature); without it the page draws `entities` + `links`, which fits a set of code changes (a
-  plan). A link `label` is a verb: who calls, feeds, reads or writes whom.
+- Overall diagram — a top-level `flow` when the source describes behaviour: a contract, a
+  feature, or a plan that changes what the user or the app does. Only a set of code changes with
+  no run-time scenario (a refactor, a rename, a move of files) leaves out `flow`. Then the page
+  draws `entities` + `links`, and a link `label` is a verb: who calls, feeds, reads or writes whom.
 - Flow node — `{"id", "label", "entity", "kind", "status", "note"}`. `label` says who does what
   ("App writes the CSV file"), never only a component name. `entity` reuses an entity's name,
   code and status; the overall diagram hides the code, a section diagram shows it. `kind`:
@@ -218,6 +219,7 @@ merges into the point it serves.
 - Size: ≤8 entities, ≤10 links; overall flow ≤10 nodes, ≤12 arrows and one level of branching
   (at most one `check`); at most 6 sections; a section flow ≤6 nodes and ≤7 arrows; an entity
   diagram ≤6 nodes with neighbours.
+- Behaviour: a section flow with a `check` needs a top-level `flow`.
 - Entries: the overall flow has at least one `start`; a `start` has no incoming arrow, and every
   other node has one.
 - Arrows: only an arrow out of a `check`, into a `fail` or marked `back` carries a label.

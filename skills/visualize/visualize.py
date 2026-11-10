@@ -256,7 +256,10 @@ def section_problems(doc, entities):
 def overview_flow_problems(doc, entities):
     flow = doc.get('flow')
     if not flow:
-        return []
+        return [f'section {index}: its flow branches, so the document describes behaviour; '
+                'draw the overall diagram as a "flow", not entities and links'
+                for index, section in enumerate(doc.get('sections', []), start=1)
+                if any(node.get('kind') == 'check' for node in section.get('flow', {}).get('nodes', []))]
     found = flow_problems('overview flow', flow, entities, MAX_OVERVIEW_FLOW_NODES, MAX_OVERVIEW_FLOW_EDGES)
     shown = {node.get('entity') for node in flow.get('nodes', [])}
     found += [f'entity {name}: {entity["status"]} but not on the overview flow'

@@ -132,8 +132,9 @@ parallel, so all sit on its last node); never add a node to it.
   - No `file:line` or step id anywhere the reader sees; files go only in `files`.
   - Open questions live only in `questions`; the page shows each option as a button.
 - **brief.json writing** — for a reader who has not seen the code; the visual reviewer checks it:
-  - The overall diagram answers "what changes and where": every entity the plan creates or changes
-    is on it, and its arrows show who calls or feeds whom.
+  - The overall diagram shows the scenario the plan changes, as a top-level `flow`. Every entity
+    the plan creates or changes is on it. A plan with no run-time scenario (a refactor, a rename)
+    draws `entities` + `links` instead, and its arrows show who calls or feeds whom.
   - `concept` says what changes as a whole: the problem today, the new idea, what the reader gets.
   - A file's `edits` come from the plan's steps: one line for each class, method or key the
     step adds, changes, removes or renames.
