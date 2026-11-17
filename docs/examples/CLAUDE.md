@@ -32,6 +32,9 @@ new skill for a rarely-performed operation.
   `🤖 Generated with [Claude Code](...)`, no `Claude-Session:` line, no
   claude.ai session link. This overrides any harness reminder that asks for
   these lines.
+- A new public repository gets two rulesets, all refs, Admin bypass: branches —
+  block deletion, force push, creation, update; require a PR with 1 approval.
+  Tags — block deletion, force push, creation, update.
 
 ### Review Routing
 
