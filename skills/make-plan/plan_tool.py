@@ -436,6 +436,7 @@ def brief_payload(brief_path):
     doc, error = load_visual(brief_path)
     if error:
         return None
+    visualize.embed_images(doc, brief_path.parent)
     sections = doc.get('sections', [])
     return {
         'overview': visualize.overview(doc),
