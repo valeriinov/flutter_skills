@@ -1186,22 +1186,24 @@ function renderVisual(root, options = {}) {
     const paths = [...svg.querySelectorAll('.edgePaths path')];
     const nodes = [...svg.querySelectorAll('g.node')].map(node => svgBox(svg, node));
     const placed = [];
-    [...svg.querySelectorAll('g.edgeLabel')].forEach((label, index) => {
-      const path = paths[index];
-      if (!path || !label.getAttribute('transform')) return;
-      const shape = labelShape(svg, label);
-      if (!shape) return;
-      const length = path.getTotalLength();
-      const candidates = LABEL_STOPS.map(stop => path.getPointAtLength(length * stop));
-      const others = paths.filter(other => other !== path).flatMap(pathSamples);
-      const clearOfLabels = candidate => !placed.some(box => boxesOverlap(box, labelBox(shape, candidate)));
-      const clearOfNodes = candidate => !nodes.some(box => boxesOverlap(box, labelBox(shape, candidate)));
-      const clearOfPaths = candidate => !others.some(sample => pointInBox(sample, labelBox(shape, candidate)));
-      const clearOfBoxes = candidate => clearOfLabels(candidate) && clearOfNodes(candidate);
-      const point = candidates.find(candidate => clearOfBoxes(candidate) && clearOfPaths(candidate))
-        || candidates.find(clearOfBoxes) || shape.anchor;
-      placed.push(labelBox(shape, point));
-      label.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+    const clearOf = (item, box, strict) => !placed.some(other => boxesOverlap(other, box))
+      && !nodes.some(node => boxesOverlap(node, box))
+      && (!strict || paths.every(path => path === item.path || !samples.get(path).some(sample => pointInBox(sample, box))));
+    const put = (item, point) => {
+      placed.push(labelBox(item.shape, point));
+      item.label.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+      item.placed = true;
+    };
+    sourceGroups(items, nodes, samples).forEach(group => placeInRows(group, samples, clearOf, put));
+    items.filter(item => !item.placed).forEach(item => placeOnCurve(item, clearOf, put));
+  };
+  const sourceGroups = (items, nodes, samples) => {
+    const groups = new Map();
+    items.forEach(item => {
+      const points = samples.get(item.path);
+      if (points[points.length - 1].y <= points[0].y) return;
+      const source = nodes.reduce((best, node, index) => (boxDistance(node, points[0]) < boxDistance(nodes[best], points[0]) ? index : best), 0);
+      groups.set(source, [...(groups.get(source) || []), item]);
     });
   };
   const openSections = targets => targets.forEach((id, i) => {
@@ -1241,6 +1243,10 @@ function renderVisual(root, options = {}) {
     fitDiagram(svg);
     if (placedLabels.has(svg)) return;
     placedLabels.add(svg);
+  const LABEL_ROWS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
+  const boxDistance = (box, point) => Math.hypot(Math.max(box.left - point.x, 0, point.x - box.right),
+    Math.max(box.top - point.y, 0, point.y - box.bottom));
+  const pointAtY = (points, y) => points.reduce((best, point) => (Math.abs(point.y - y) < Math.abs(best.y - y) ? point : best));
     placeLabelsOnCurves(svg);
   }));
   root.querySelectorAll('.ftree').forEach(bindFileTree);
@@ -1268,6 +1274,41 @@ function renderVisual(root, options = {}) {
         onNode(id, closeZoom, node);
       });
     });
+    return [...groups.values()].filter(group => group.length > 1);
+  };
+  const placeInRows = (group, samples, clearOf, put) => {
+    const spans = group.map(item => samples.get(item.path));
+    const top = Math.max(...spans.map(points => points[0].y));
+    const bottom = Math.min(...spans.map(points => points[points.length - 1].y));
+    if (bottom <= top) return;
+    const rowY = fraction => top + (bottom - top) * fraction;
+    const xAtMiddle = item => pointAtY(samples.get(item.path), rowY(0.5)).x;
+    const ordered = [...group].sort((a, b) => xAtMiddle(a) - xAtMiddle(b));
+    const layout = rows => ordered.map((item, index) => {
+      const point = pointAtY(samples.get(item.path), rowY(rows[index % rows.length]));
+      return { item, point, box: labelBox(item.shape, point) };
+    });
+    const fits = (spots, strict) => spots.every((spot, index) => clearOf(spot.item, spot.box, strict)
+      && spots.slice(0, index).every(other => !boxesOverlap(other.box, spot.box)));
+    const height = Math.max(...group.map(item => item.shape.height));
+    const offCentre = rows => rows.reduce((sum, row) => sum + Math.abs(row - 0.5), 0);
+    const pairs = LABEL_ROWS.flatMap(first => LABEL_ROWS.map(second => [first, second]))
+      .filter(([first, second]) => Math.abs(rowY(first) - rowY(second)) >= height)
+      .sort((a, b) => offCentre(a) - offCentre(b));
+    const layouts = [...LABEL_ROWS.map(row => [row]), ...pairs];
+    for (const strict of [true, false]) {
+      const spots = layouts.map(layout).find(candidate => fits(candidate, strict));
+      if (spots) {
+        spots.forEach(spot => put(spot.item, spot.point));
+        return;
+      }
+    }
+  };
+  const placeOnCurve = (item, clearOf, put) => {
+    const length = item.path.getTotalLength();
+    const candidates = [...LABEL_STOPS.map(stop => item.path.getPointAtLength(length * stop)), item.shape.anchor];
+    const fits = strict => candidates.find(point => clearOf(item, labelBox(item.shape, point), strict));
+    put(item, fits(true) || fits(false) || item.shape.anchor);
     const openZoom = svg => {
       const copy = svg.cloneNode(true);
       const natural = svg.viewBox.baseVal.width;

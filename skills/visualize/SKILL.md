@@ -56,7 +56,9 @@ merges into the point it serves.
 8. **Render** — `python3 visualize.py render <json>` writes `<json stem>.html` beside it.
 9. **Look** — open the page in a browser at 375px and 1280px; a mermaid error shows as an error
    box, not a failed command. At 375px diagram labels are no smaller than 12px and a wider diagram
-   scrolls sideways under a "full screen" button; at 1280px every diagram fits its card. The
+   scrolls sideways under a "full screen" button; at 1280px every diagram fits its card. No arrow
+   label overlaps another label or a node. The labels of arrows from one node stand in one row.
+   When neighbours do not fit side by side, they stand in two rows. The
    button labels come from the script by `lang` (ru, uk, en; English otherwise), not from `ui`.
    Then hand the page to the user.
 
