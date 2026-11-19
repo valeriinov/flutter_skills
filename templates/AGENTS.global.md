@@ -73,6 +73,8 @@ The test: Every changed line should trace directly to the user's request.
 
 - When moving changes between worktrees or branches, do not commit them without
   the user's explicit request.
+- A pull request opens as a draft (`gh pr create --draft`): a draft runs no CI.
+  `gh pr ready` only when the user names that request after their review.
 - After you push a PR branch from a worktree, run
   `bash ~/.claude/skills/implement-plan/prune_worktrees.sh <worktree>` without a
   question. The script removes only a clean worktree whose HEAD is on a remote branch and
