@@ -61,6 +61,17 @@ CONCEPT_LABELS = {
     'en': {'title': 'Concept', 'open': 'Expand all', 'close': 'Collapse all',
            'hint': 'Click a file to see what changes in it.'},
 }
+QUESTION_LABELS = {
+    'ru': {'more': 'Подробнее', 'now': 'Сейчас.', 'problem': 'Проблема.', 'proposal': 'Предложение.',
+           'recommended': 'рекомендую', 'pros_cons': 'Плюсы и минусы', 'pros': 'Плюсы', 'cons': 'Минусы'},
+    'uk': {'more': 'Докладніше', 'now': 'Зараз.', 'problem': 'Проблема.', 'proposal': 'Пропозиція.',
+           'recommended': 'рекомендую', 'pros_cons': 'Плюси й мінуси', 'pros': 'Плюси', 'cons': 'Мінуси'},
+    'en': {'more': 'More', 'now': 'Now.', 'problem': 'Problem.', 'proposal': 'Proposal.',
+           'recommended': 'recommended', 'pros_cons': 'Pros and cons', 'pros': 'Pros', 'cons': 'Cons'},
+}
+QUESTION_DETAIL_KEYS = ('now', 'problem', 'proposal')
+MAX_GIST_SENTENCES = 2
+MAX_OPTION_POINTS = 3
 
 
 def main():
@@ -419,17 +430,32 @@ def question_problems(doc):
     found = []
     for index, question in enumerate(doc.get('questions', []), start=1):
         where = f'question {index}'
-        found += [f'{where}: missing "{key}"' for key in ('title', 'gist', 'options', 'recommendation')
+        found += [f'{where}: missing "{key}"' for key in ('title', 'gist', 'details', 'options', 'recommendation')
                   if not question.get(key)]
+        found += [f'{where}: "details" missing "{key}"' for key in QUESTION_DETAIL_KEYS
+                  if question.get('details') and not question['details'].get(key)]
+        sentences = [sentence for sentence in SENTENCE_RE.split(question.get('gist', '').strip()) if sentence]
+        if len(sentences) > MAX_GIST_SENTENCES:
+            found.append(f'{where}: "gist" has {len(sentences)} sentences, limit {MAX_GIST_SENTENCES}; '
+                         f'move the rest to "details"')
         options = question.get('options', [])
         if len(options) < 2:
             found.append(f'{where}: needs at least 2 options')
         for option in options:
-            found += [f'{where}: option {option.get("key")} missing "{key}"'
-                      for key in ('key', 'text', 'consequence') if not option.get(key)]
+            found += option_problems(where, option)
         keys = [option.get('key') for option in options]
         if question.get('recommendation', {}).get('key') not in keys:
             found.append(f'{where}: recommendation key must be one of {keys}')
+    return found
+
+
+def option_problems(where, option):
+    where = f'{where}: option {option.get("key")}'
+    found = [f'{where} missing "{key}"' for key in ('key', 'text', 'consequence') if not option.get(key)]
+    if not option.get('pros'):
+        found.append(f'{where} has no "pros"; an option with no real advantage is not offered')
+    found += [f'{where}: {len(option.get(key, []))} "{key}", limit {MAX_OPTION_POINTS}'
+              for key in ('pros', 'cons') if len(option.get(key, [])) > MAX_OPTION_POINTS]
     return found
 
 
@@ -613,21 +639,45 @@ def questions_html(doc):
     if not questions:
         return ''
     ui = doc['ui']
-    cards = [question_card(ui, index, question) for index, question in enumerate(questions, start=1)]
+    labels = QUESTION_LABELS.get(doc.get('lang', 'ru'), QUESTION_LABELS['en'])
+    cards = [question_card(ui, labels, index, question) for index, question in enumerate(questions, start=1)]
     return f'<section id="decide"><h2>{html.escape(ui["decide"])}</h2>{"".join(cards)}</section>'
 
 
-def question_card(ui, index, question):
+def question_card(ui, labels, index, question):
     recommended = question['recommendation']['key']
-    options = ''.join(
-        f'<li class="{"recommended" if option["key"] == recommended else ""}">'
-        f'<b>{html.escape(option["key"])} · {inline(option["text"])}</b>'
-        f'<span class="consequence">{inline(option["consequence"])}</span></li>'
-        for option in question['options'])
+    options = ''.join(option_item(labels, option, option['key'] == recommended) for option in question['options'])
     return (f'<div class="h2-block decision"><h3>{html.escape(ui["question"])} {index} · {inline(question["title"])}</h3>'
-            f'<p>{inline(question["gist"])}</p><ul class="options">{options}</ul>'
+            f'<p>{inline(question["gist"])}</p>{question_details(labels, question)}<ul class="options">{options}</ul>'
             f'<p class="recommendation"><span class="point-label">{html.escape(ui["recommend"])}:</span>'
             f'{html.escape(recommended)} — {inline(question["recommendation"].get("why", ""))}</p></div>')
+
+
+def question_details(labels, question):
+    details = question.get('details', {})
+    paragraphs = ''.join(f'<p><b>{html.escape(labels[key])}</b> {inline(details[key])}</p>'
+                         for key in QUESTION_DETAIL_KEYS if details.get(key))
+    if not paragraphs:
+        return ''
+    return f'<details class="q-more"><summary>{html.escape(labels["more"])}</summary>{paragraphs}</details>'
+
+
+def option_item(labels, option, recommended):
+    badge = f'<span class="badge-rec">{html.escape(labels["recommended"])}</span>' if recommended else ''
+    return (f'<li class="{"recommended" if recommended else ""}">'
+            f'<b>{html.escape(option["key"])} · {inline(option["text"])}{badge}</b>'
+            f'<span class="consequence">{inline(option["consequence"])}</span>{pros_and_cons(labels, option)}</li>')
+
+
+def pros_and_cons(labels, option):
+    pros = option.get('pros', [])
+    cons = option.get('cons', [])
+    if not pros and not cons:
+        return ''
+    lists = ''.join(f'<div class="pc-head">{html.escape(labels[key])}</div><ul>{"".join(f"<li>{inline(point)}</li>" for point in points)}</ul>'
+                    for key, points in (('pros', pros), ('cons', cons)) if points)
+    return (f'<details class="pc"><summary>{html.escape(labels["pros_cons"])}'
+            f' <span class="n">+{len(pros)} / −{len(cons)}</span></summary>{lists}</details>')
 
 
 def sections_html(doc):
@@ -1033,9 +1083,18 @@ details[open] > summary .pm::before { content: "−"; }
 #decide h2 { color: #9A4312; }
 .decision { border-color: #E08A4F; background: #FFF8F3; }
 .options { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
-.options li { background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; }
-.options li.recommended { border-color: var(--blue-l); box-shadow: inset 0 0 0 1px var(--blue-l); }
+.options > li { background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; }
+.options > li.recommended { border-color: var(--blue-l); box-shadow: inset 0 0 0 1px var(--blue-l); }
 .consequence { color: var(--ink-2); font-size: 15px; }
+.badge-rec { font-size: 12px; font-weight: 700; color: var(--blue-d); background: var(--blue-bg); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+details.q-more { margin: 4px 0 8px; }
+details.q-more summary { cursor: pointer; color: var(--blue-d); font-weight: 600; font-size: 14px; }
+details.q-more p { margin: 6px 0; }
+details.pc { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
+details.pc summary { cursor: pointer; font-weight: 600; color: var(--ink-3); }
+details.pc .n { font-weight: 500; color: var(--ink-2); }
+details.pc .pc-head { font-weight: 600; color: var(--ink-3); margin-top: 4px; }
+details.pc ul { margin: 2px 0 0; padding-left: 20px; }
 .recommendation { font-size: 15px; }
 .diagram g.node { cursor: pointer; }
 :is(section.overview, .sec-body) > .diagram { cursor: zoom-in; transition: border-color .15s, box-shadow .15s; }
@@ -1182,9 +1241,19 @@ function renderVisual(root, options = {}) {
     const length = path.getTotalLength();
     return Array.from({ length: Math.ceil(length / 4) + 1 }, (_, step) => path.getPointAtLength(Math.min(step * 4, length)));
   };
+  const LABEL_ROWS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
+  const boxDistance = (box, point) => Math.hypot(Math.max(box.left - point.x, 0, point.x - box.right),
+    Math.max(box.top - point.y, 0, point.y - box.bottom));
+  const pointAtY = (points, y) => points.reduce((best, point) => (Math.abs(point.y - y) < Math.abs(best.y - y) ? point : best));
   const placeLabelsOnCurves = svg => {
     const paths = [...svg.querySelectorAll('.edgePaths path')];
     const nodes = [...svg.querySelectorAll('g.node')].map(node => svgBox(svg, node));
+    const samples = new Map(paths.map(path => [path, pathSamples(path)]));
+    const items = [...svg.querySelectorAll('g.edgeLabel')]
+      .map((label, index) => ({ label, path: paths[index] }))
+      .filter(item => item.path && item.label.getAttribute('transform'))
+      .map(item => ({ ...item, shape: labelShape(svg, item.label) }))
+      .filter(item => item.shape);
     const placed = [];
     const clearOf = (item, box, strict) => !placed.some(other => boxesOverlap(other, box))
       && !nodes.some(node => boxesOverlap(node, box))
@@ -1205,6 +1274,41 @@ function renderVisual(root, options = {}) {
       const source = nodes.reduce((best, node, index) => (boxDistance(node, points[0]) < boxDistance(nodes[best], points[0]) ? index : best), 0);
       groups.set(source, [...(groups.get(source) || []), item]);
     });
+    return [...groups.values()].filter(group => group.length > 1);
+  };
+  const placeInRows = (group, samples, clearOf, put) => {
+    const spans = group.map(item => samples.get(item.path));
+    const top = Math.max(...spans.map(points => points[0].y));
+    const bottom = Math.min(...spans.map(points => points[points.length - 1].y));
+    if (bottom <= top) return;
+    const rowY = fraction => top + (bottom - top) * fraction;
+    const xAtMiddle = item => pointAtY(samples.get(item.path), rowY(0.5)).x;
+    const ordered = [...group].sort((a, b) => xAtMiddle(a) - xAtMiddle(b));
+    const layout = rows => ordered.map((item, index) => {
+      const point = pointAtY(samples.get(item.path), rowY(rows[index % rows.length]));
+      return { item, point, box: labelBox(item.shape, point) };
+    });
+    const fits = (spots, strict) => spots.every((spot, index) => clearOf(spot.item, spot.box, strict)
+      && spots.slice(0, index).every(other => !boxesOverlap(other.box, spot.box)));
+    const height = Math.max(...group.map(item => item.shape.height));
+    const offCentre = rows => rows.reduce((sum, row) => sum + Math.abs(row - 0.5), 0);
+    const pairs = LABEL_ROWS.flatMap(first => LABEL_ROWS.map(second => [first, second]))
+      .filter(([first, second]) => Math.abs(rowY(first) - rowY(second)) >= height)
+      .sort((a, b) => offCentre(a) - offCentre(b));
+    const layouts = [...LABEL_ROWS.map(row => [row]), ...pairs];
+    for (const strict of [true, false]) {
+      const spots = layouts.map(layout).find(candidate => fits(candidate, strict));
+      if (spots) {
+        spots.forEach(spot => put(spot.item, spot.point));
+        return;
+      }
+    }
+  };
+  const placeOnCurve = (item, clearOf, put) => {
+    const length = item.path.getTotalLength();
+    const candidates = [...LABEL_STOPS.map(stop => item.path.getPointAtLength(length * stop)), item.shape.anchor];
+    const fits = strict => candidates.find(point => clearOf(item, labelBox(item.shape, point), strict));
+    put(item, fits(true) || fits(false) || item.shape.anchor);
   };
   const openSections = targets => targets.forEach((id, i) => {
     const card = root.querySelector(`#${id}`);
@@ -1243,10 +1347,6 @@ function renderVisual(root, options = {}) {
     fitDiagram(svg);
     if (placedLabels.has(svg)) return;
     placedLabels.add(svg);
-  const LABEL_ROWS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
-  const boxDistance = (box, point) => Math.hypot(Math.max(box.left - point.x, 0, point.x - box.right),
-    Math.max(box.top - point.y, 0, point.y - box.bottom));
-  const pointAtY = (points, y) => points.reduce((best, point) => (Math.abs(point.y - y) < Math.abs(best.y - y) ? point : best));
     placeLabelsOnCurves(svg);
   }));
   root.querySelectorAll('.ftree').forEach(bindFileTree);
@@ -1274,41 +1374,6 @@ function renderVisual(root, options = {}) {
         onNode(id, closeZoom, node);
       });
     });
-    return [...groups.values()].filter(group => group.length > 1);
-  };
-  const placeInRows = (group, samples, clearOf, put) => {
-    const spans = group.map(item => samples.get(item.path));
-    const top = Math.max(...spans.map(points => points[0].y));
-    const bottom = Math.min(...spans.map(points => points[points.length - 1].y));
-    if (bottom <= top) return;
-    const rowY = fraction => top + (bottom - top) * fraction;
-    const xAtMiddle = item => pointAtY(samples.get(item.path), rowY(0.5)).x;
-    const ordered = [...group].sort((a, b) => xAtMiddle(a) - xAtMiddle(b));
-    const layout = rows => ordered.map((item, index) => {
-      const point = pointAtY(samples.get(item.path), rowY(rows[index % rows.length]));
-      return { item, point, box: labelBox(item.shape, point) };
-    });
-    const fits = (spots, strict) => spots.every((spot, index) => clearOf(spot.item, spot.box, strict)
-      && spots.slice(0, index).every(other => !boxesOverlap(other.box, spot.box)));
-    const height = Math.max(...group.map(item => item.shape.height));
-    const offCentre = rows => rows.reduce((sum, row) => sum + Math.abs(row - 0.5), 0);
-    const pairs = LABEL_ROWS.flatMap(first => LABEL_ROWS.map(second => [first, second]))
-      .filter(([first, second]) => Math.abs(rowY(first) - rowY(second)) >= height)
-      .sort((a, b) => offCentre(a) - offCentre(b));
-    const layouts = [...LABEL_ROWS.map(row => [row]), ...pairs];
-    for (const strict of [true, false]) {
-      const spots = layouts.map(layout).find(candidate => fits(candidate, strict));
-      if (spots) {
-        spots.forEach(spot => put(spot.item, spot.point));
-        return;
-      }
-    }
-  };
-  const placeOnCurve = (item, clearOf, put) => {
-    const length = item.path.getTotalLength();
-    const candidates = [...LABEL_STOPS.map(stop => item.path.getPointAtLength(length * stop)), item.shape.anchor];
-    const fits = strict => candidates.find(point => clearOf(item, labelBox(item.shape, point), strict));
-    put(item, fits(true) || fits(false) || item.shape.anchor);
     const openZoom = svg => {
       const copy = svg.cloneNode(true);
       const natural = svg.viewBox.baseVal.width;

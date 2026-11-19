@@ -74,10 +74,15 @@ merges into the point it serves.
          "overview": "Whole picture", "files": "Files", "branch": "branch by condition",
          "decide": "To decide", "question": "Question", "recommend": "Recommend"},
   "questions": [
-    {"title": "Export cancelled orders too?",
-     "gist": "The source does not say; a cancelled order has no total, so its row would be half empty.",
-     "options": [{"key": "A", "text": "Skip them", "consequence": "the file holds only paid orders"},
-                 {"key": "B", "text": "Export them", "consequence": "accounting sees every order"}],
+    {"title": "Does the file include cancelled orders?",
+     "gist": "The source does not say. A cancelled order has no total.",
+     "details": {"now": "The orders screen shows paid and cancelled orders together.",
+                 "problem": "A cancelled order would give a row with an empty total, for example order 1042.",
+                 "proposal": "The export skips cancelled orders."},
+     "options": [{"key": "A", "text": "Skip them", "consequence": "The file holds only paid orders.",
+                  "pros": ["Every row has a total."], "cons": ["Accounting does not see cancellations."]},
+                 {"key": "B", "text": "Export them", "consequence": "The file holds every order.",
+                  "pros": ["Accounting sees every order."]}],
      "recommendation": {"key": "A", "why": "the export is for accounting"}}
   ],
   "entities": [
@@ -212,8 +217,17 @@ merges into the point it serves.
 - Verification — a plan's tests and manual checks become one `lines` entry per section saying
   what they prove ("Tests: day rollover compresses yesterday, deletes expired"); test files go
   in `files`. Individual test cases are not listed.
-- Question — `gist` says what is undecided, why it matters and what it affects, with an example;
-  every option names its consequence; `recommendation` picks one and says why.
+- Question — the reader sees the short layer first and opens the details on demand:
+  - `title` is one short question in plain words: no options, no code names.
+  - `gist` is 1–2 sentences: what the source leaves open and why the reader decides it now.
+  - `details` holds `now` (how it works today), `problem` (with one concrete example) and
+    `proposal`, one short paragraph each. The page collapses it under "More".
+  - An option is `text` (a short name) and `consequence` (one sentence: what the user gets if
+    they choose this option).
+  - `pros` and `cons` hold at most 3 short points each; the page collapses them under the option.
+    Write only a real, objective point. An option without a real disadvantage has no `cons`.
+    Do not offer an option without a real advantage, so every option has `pros`.
+  - `recommendation` picks one option and says why.
 - Text fields accept `` `code` ``, `**bold**`, `~~struck~~` and `[text](https://…)` links.
 
 ## What `check` enforces
@@ -239,7 +253,8 @@ merges into the point it serves.
   `edits`; an edit `kind` is one of `add`,
   `change`, `remove`, `rename`; an edit `text` ≤15 words.
 - Payloads: a changed field shows its `values` or children; a merged `a · b` node is unchanged and
-  has no example. Questions are complete.
+  has no example. Questions are complete: `gist` ≤2 sentences, `details` with `now`, `problem`,
+  `proposal`; every option has `pros`; `pros` and `cons` ≤3 each.
 
 ## What `check` cannot see
 

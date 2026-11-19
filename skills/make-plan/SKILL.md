@@ -140,8 +140,11 @@ parallel, so all sit on its last node); never add a node to it.
     step adds, changes, removes or renames.
   - A section's `title` is the result in plain words, its `takeaway` the conclusion, its diagram
     the change it makes; `lines` hold only how it is today and what the diagram cannot carry.
-  - A question's `gist` is understandable without the code: what is being decided, why it needs
-    deciding and what it affects, with a concrete example.
+  - A question follows visualize's question shape: a short `title` and `gist` first, then
+    `details` (`now`, `problem` with a concrete example, `proposal`) collapsed. The reader
+    understands every part without the code.
+  - Each option has only real, objective `pros` and `cons`. An option without a real
+    disadvantage has no `cons`. Do not offer an option without a real advantage.
   - A term the reader may not know is replaced or explained on first use (clarifier: term on first use).
 - **Stages** only if at least one holds: more than one change contract (things the project rules
   require to change together in one commit); a part leaves the build green with its own gate; a
@@ -159,9 +162,14 @@ parallel, so all sit on its last node); never add a node to it.
 The user reads only the brief page. In a question, reply or report to the user, name a step by the
 title of the brief section that names it. When that section names more than one step, add ` · `
 and the step heading text without its `S<n> · ` prefix. Never show a bare step id (S5, T2) to the
-user. A question to the user has the shape of a brief question. It says what the user must decide and why it is important. Then it
-gives one concrete example, 2–3 options with the consequence of each, and a recommendation. Write
-it in plain words for a reader who has not seen the code. Before you send a question, write it to
+user. A question to the user has the shape of a brief question, in this order:
+1. One short question and 1–2 sentences: what the user must decide and why now.
+2. 2–3 options. Each option has a short name and one sentence with its consequence.
+3. The recommendation and its reason.
+4. One line that offers the details. Give them only when the user asks. The details are how it
+   works now, the problem with one example, the proposal, and the pros and cons of each option. Write
+   only real pros and cons; an option without a real disadvantage gets no cons line.
+Write it in plain words for a reader who has not seen the code. Before you send a question, write it to
 a temporary `.md` file and run `python3 ../clarifier/clarify.py check <file> --lang ru` from this
 skill's folder; fix each error and each hint.
 

@@ -197,6 +197,20 @@ main .h2-block > h2:first-child { margin-top: 16px; }
 .decision-options button.recommended { border-color: var(--blue-line); }
 .decision-options button.chosen { background: var(--blue-bg); border-color: var(--blue-l); color: var(--blue-d); box-shadow: inset 0 0 0 1px var(--blue-l); }
 .decision-options button .consequence { display: block; font-weight: 500; font-size: 14px; color: var(--ink-2); }
+.decision-option { display: flex; flex-direction: column; gap: 4px; }
+.decision-option > button { width: 100%; }
+.badge-rec { font-size: 12px; font-weight: 700; color: var(--blue-d); background: var(--blue-bg); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+:is(.decision-more, .decision-pc, .q-more, .pc), :is(.decision-more, .decision-pc, .q-more, .pc)[open] { background: none; border: 0; border-radius: 0; padding: 0; }
+:is(.decision-more, .decision-pc, .q-more, .pc) > summary { min-height: 0; justify-content: flex-start; gap: 6px; }
+:is(.decision-more, .decision-pc, .q-more, .pc) > summary::after { width: 6px; height: 6px; }
+.decision-more { margin: 4px 0 8px; }
+.decision-more summary { cursor: pointer; color: var(--blue-d); font-weight: 600; font-size: 14px; }
+.decision-more p { margin: 6px 0; }
+.decision-pc { margin: 0 14px; font-size: 14px; color: var(--ink-2); }
+.decision-pc summary { cursor: pointer; font-weight: 600; color: var(--ink-3); }
+.decision-pc .n { font-weight: 500; color: var(--ink-2); }
+.decision-pc .pc-head { font-weight: 600; color: var(--ink-3); margin-top: 4px; }
+.decision-pc ul { margin: 2px 0 0; padding-left: 20px; }
 .decision-recommendation { font-size: 14px; color: var(--ink-2); }
 #review-bar {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 32px)); z-index: 5;
@@ -1357,12 +1371,16 @@ function decisionCard(question, n) {
   question.options.forEach(option => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.innerHTML = marked.parseInline(`${option.key} · ${option.text}`) +
+    const badge = option.key === recommended ? '<span class="badge-rec">рекомендую</span>' : '';
+    button.innerHTML = marked.parseInline(`${option.key} · ${option.text}`) + badge +
       `<span class="consequence">${marked.parseInline(option.consequence)}</span>`;
     if (option.key === recommended) button.classList.add('recommended');
     button.addEventListener('click', () => chooseOption(region, option.key));
     region.buttons.set(option.key, button);
-    options.appendChild(button);
+    const wrap = document.createElement('div');
+    wrap.className = 'decision-option';
+    wrap.append(button, ...prosAndCons(option));
+    options.appendChild(wrap);
   });
   const freeButton = textButton('Свой вариант…', '');
   freeButton.addEventListener('click', () => openPopupBelow(freeButton, { region, quote: '', prefix: FREE_ANSWER }));
@@ -1372,8 +1390,34 @@ function decisionCard(question, n) {
   const recommendation = document.createElement('div');
   recommendation.className = 'decision-recommendation';
   recommendation.innerHTML = marked.parseInline(`Рекомендую: ${recommended} — ${question.recommendation.why}`);
-  el.append(title, gist, options, recommendation);
+  el.append(title, gist, ...questionDetails(question), options, recommendation);
   return { el, regions: [region] };
+}
+
+function questionDetails(question) {
+  const details = question.details || {};
+  const parts = [['now', 'Сейчас.'], ['problem', 'Проблема.'], ['proposal', 'Предложение.']]
+    .filter(([key]) => details[key])
+    .map(([key, label]) => `<p><b>${label}</b> ${marked.parseInline(details[key])}</p>`);
+  if (!parts.length) return [];
+  const more = document.createElement('details');
+  more.className = 'decision-more';
+  more.innerHTML = `<summary>Подробнее</summary>${parts.join('')}`;
+  return [more];
+}
+
+function prosAndCons(option) {
+  const pros = option.pros || [];
+  const cons = option.cons || [];
+  if (!pros.length && !cons.length) return [];
+  const list = (label, points) => (points.length
+    ? `<div class="pc-head">${label}</div><ul>${points.map(point => `<li>${marked.parseInline(point)}</li>`).join('')}</ul>`
+    : '');
+  const box = document.createElement('details');
+  box.className = 'decision-pc';
+  box.innerHTML = `<summary>Плюсы и минусы <span class="n">+${pros.length} / −${cons.length}</span></summary>` +
+    list('Плюсы', pros) + list('Минусы', cons);
+  return [box];
 }
 
 function labelledParagraph(label, markdown, className) {

@@ -17,18 +17,32 @@
   },
   "questions": [
     {
-      "title": "Export cancelled orders too?",
-      "gist": "The source does not say; a cancelled order has no total, so its row would be half empty.",
+      "title": "Does the file include cancelled orders?",
+      "gist": "The source does not say. A cancelled order has no total.",
+      "details": {
+        "now": "The orders screen shows paid and cancelled orders together.",
+        "problem": "A cancelled order would give a row with an empty total, for example order 1042.",
+        "proposal": "The export skips cancelled orders."
+      },
       "options": [
         {
           "key": "A",
           "text": "Skip them",
-          "consequence": "the file holds only paid orders"
+          "consequence": "The file holds only paid orders.",
+          "pros": [
+            "Every row has a total."
+          ],
+          "cons": [
+            "Accounting does not see cancellations."
+          ]
         },
         {
           "key": "B",
           "text": "Export them",
-          "consequence": "accounting sees every order"
+          "consequence": "The file holds every order.",
+          "pros": [
+            "Accounting sees every order."
+          ]
         }
       ],
       "recommendation": {
